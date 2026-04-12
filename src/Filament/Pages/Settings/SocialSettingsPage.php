@@ -1,0 +1,129 @@
+<?php
+
+namespace Dashed\DashedMarketing\Filament\Pages\Settings;
+
+use Filament\Pages\Page;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
+use Dashed\DashedCore\Classes\Sites;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Contracts\HasSchemas;
+use Dashed\DashedCore\Models\Customsetting;
+use Filament\Forms\Components\CheckboxList;
+use Dashed\DashedCore\Traits\HasSettingsPermission;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Components\Section;
+
+class SocialSettingsPage extends Page implements HasSchemas
+{
+    use InteractsWithSchemas;
+    use HasSettingsPermission;
+
+    protected static bool $shouldRegisterNavigation = false;
+
+    protected static ?string $title = 'Social media instellingen';
+
+    protected string $view = 'dashed-core::settings.pages.default-settings';
+
+    public array $data = [];
+
+    public function mount(): void
+    {
+        $platforms = Customsetting::get('social_platforms');
+
+        $this->form->fill([
+            'social_platforms' => $platforms ? (is_array($platforms) ? $platforms : json_decode($platforms, true)) : [],
+            'social_target_audience' => Customsetting::get('social_target_audience'),
+            'social_usps' => Customsetting::get('social_usps'),
+            'social_fal_api_key' => Customsetting::get('social_fal_api_key'),
+            'social_notification_email' => Customsetting::get('social_notification_email'),
+            'social_notify_due' => (bool) Customsetting::get('social_notify_due', null, true),
+            'social_notify_missed' => (bool) Customsetting::get('social_notify_missed', null, true),
+            'social_notify_weekly_gaps' => (bool) Customsetting::get('social_notify_weekly_gaps', null, true),
+            'social_notify_holidays' => (bool) Customsetting::get('social_notify_holidays', null, true),
+        ]);
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        $platformOptions = array_map(
+            fn ($p) => $p['label'],
+            config('dashed-marketing.platforms', [])
+        );
+
+        return $schema->schema([
+            Section::make('Platforms')
+                ->schema([
+                    CheckboxList::make('social_platforms')
+                        ->label('Actieve platforms')
+                        ->options($platformOptions)
+                        ->columns(3),
+                ]),
+
+            Section::make('AI context')
+                ->schema([
+                    Textarea::make('social_target_audience')
+                        ->label('Doelgroep')
+                        ->helperText('Beschrijf je doelgroep voor social media posts.')
+                        ->rows(3),
+                    Textarea::make('social_usps')
+                        ->label('Unique Selling Points')
+                        ->helperText('De belangrijkste USPs van je product/dienst.')
+                        ->rows(3),
+                ]),
+
+            Section::make('Afbeelding generatie (FAL.ai)')
+                ->schema([
+                    TextInput::make('social_fal_api_key')
+                        ->label('FAL.ai API sleutel')
+                        ->password()
+                        ->revealable()
+                        ->placeholder('fal-...')
+                        ->helperText('Je vindt je API sleutel op fal.ai → API Keys.'),
+                ]),
+
+            Section::make('Meldingen')
+                ->schema([
+                    TextInput::make('social_notification_email')
+                        ->label('Notificatie e-mailadres')
+                        ->email()
+                        ->helperText('Laat leeg om het standaard beheerder e-mailadres te gebruiken.'),
+                    Toggle::make('social_notify_due')
+                        ->label('Dagelijkse herinnering voor posts die vandaag geplaatst moeten worden'),
+                    Toggle::make('social_notify_missed')
+                        ->label('Melding bij gemiste posts'),
+                    Toggle::make('social_notify_weekly_gaps')
+                        ->label('Wekelijkse melding bij lege slots'),
+                    Toggle::make('social_notify_holidays')
+                        ->label('Herinnering bij aankomende feestdagen'),
+                ]),
+        ])->statePath('data');
+    }
+
+    public function submit(): void
+    {
+        $formData = $this->form->getState();
+
+        foreach (Sites::getSites() as $site) {
+            Customsetting::set('social_platforms', json_encode($formData['social_platforms'] ?? []), $site['id']);
+            Customsetting::set('social_target_audience', $formData['social_target_audience'] ?? null, $site['id']);
+            Customsetting::set('social_usps', $formData['social_usps'] ?? null, $site['id']);
+            Customsetting::set('social_fal_api_key', $formData['social_fal_api_key'] ?? null, $site['id']);
+            Customsetting::set('social_notification_email', $formData['social_notification_email'] ?? null, $site['id']);
+            Customsetting::set('social_notify_due', (int) ($formData['social_notify_due'] ?? true), $site['id']);
+            Customsetting::set('social_notify_missed', (int) ($formData['social_notify_missed'] ?? true), $site['id']);
+            Customsetting::set('social_notify_weekly_gaps', (int) ($formData['social_notify_weekly_gaps'] ?? true), $site['id']);
+            Customsetting::set('social_notify_holidays', (int) ($formData['social_notify_holidays'] ?? true), $site['id']);
+        }
+
+        Notification::make()
+            ->title('Social media instellingen opgeslagen')
+            ->success()
+            ->send();
+
+        redirect(SocialSettingsPage::getUrl());
+    }
+}
