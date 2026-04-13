@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Managers;
 
-use Dashed\DashedMarketing\Adapters\ManualKeywordDataProvider;
-use Dashed\DashedMarketing\Contracts\KeywordDataProvider;
 use InvalidArgumentException;
+use Dashed\DashedMarketing\Contracts\KeywordDataProvider;
+use Dashed\DashedMarketing\Adapters\ManualKeywordDataProvider;
 
 class KeywordDataManager
 {

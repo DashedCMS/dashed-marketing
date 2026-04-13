@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Services\ArticleSanitizer;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Services\ArticleSanitizer;
 
 class RegenerateContentSectionJob implements ShouldQueue
 {

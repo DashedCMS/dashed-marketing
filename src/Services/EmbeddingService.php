@@ -2,10 +2,10 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Dashed\DashedAi\Exceptions\EmbeddingNotSupportedException;
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentEmbedding;
 use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Models\ContentEmbedding;
+use Dashed\DashedAi\Exceptions\EmbeddingNotSupportedException;
 
 class EmbeddingService
 {

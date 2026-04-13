@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Managers;
 
-use Dashed\DashedMarketing\Contracts\ContentTemplate;
 use InvalidArgumentException;
+use Dashed\DashedMarketing\Contracts\ContentTemplate;
 
 class ContentTemplateRegistry
 {
@@ -28,6 +28,7 @@ class ContentTemplateRegistry
         if (! $this->has($contentType)) {
             throw new InvalidArgumentException("No template registered for [{$contentType}]");
         }
+
         return app($this->templates[$contentType]);
     }
 

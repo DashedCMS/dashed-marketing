@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\KeywordResearch;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\KeywordResearch;
 
 class ClusterKeywordsJob implements ShouldQueue
 {
@@ -38,6 +38,7 @@ class ClusterKeywordsJob implements ShouldQueue
 
         if ($keywords->isEmpty()) {
             $workspace->update(['status' => 'ready', 'progress_message' => 'Geen keywords om te clusteren.']);
+
             return;
         }
 
@@ -65,6 +66,7 @@ class ClusterKeywordsJob implements ShouldQueue
 
             if (empty($keywordList)) {
                 Log::warning('Cluster skipped (no valid keywords)', ['cluster' => $clusterData]);
+
                 continue;
             }
 

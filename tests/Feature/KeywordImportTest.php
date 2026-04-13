@@ -1,11 +1,11 @@
 <?php
 
-use Dashed\DashedMarketing\Jobs\ImportKeywordsJob;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\KeywordImport;
+use Dashed\DashedMarketing\Jobs\ImportKeywordsJob;
 use Dashed\DashedMarketing\Models\KeywordResearch;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 uses(\Tests\TestCase::class);
 

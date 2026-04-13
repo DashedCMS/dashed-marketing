@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Templates;
 
-use Dashed\DashedMarketing\Contracts\ContentTemplate;
 use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Contracts\ContentTemplate;
 
 class BlogArticleTemplate implements ContentTemplate
 {
@@ -70,6 +70,7 @@ TXT;
         foreach ($content['h2_sections'] ?? [] as $section) {
             if (($section['id'] ?? null) === 'intro') {
                 $blocks[] = ['type' => 'content', 'data' => ['content' => $section['body']]];
+
                 continue;
             }
             $blocks[] = ['type' => 'header', 'data' => ['title' => $section['heading']]];

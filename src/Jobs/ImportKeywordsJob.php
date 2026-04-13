@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\KeywordImport;
-use Dashed\DashedMarketing\Models\KeywordResearch;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
+use Dashed\DashedMarketing\Models\KeywordImport;
+use Dashed\DashedMarketing\Models\KeywordResearch;
 
 class ImportKeywordsJob implements ShouldQueue
 {
