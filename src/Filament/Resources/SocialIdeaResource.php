@@ -100,7 +100,8 @@ class SocialIdeaResource extends Resource
                     ->sortable(),
                 TextColumn::make('platform')
                     ->label('Platform')
-                    ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.platforms.{$state}.label", $state) : '-'),
+                    ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.platforms.{$state}.label", $state) : '-')
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -111,9 +112,11 @@ class SocialIdeaResource extends Resource
                         'used' => 'success',
                         'archived' => 'danger',
                         default => 'gray',
-                    }),
+                    })
+                    ->sortable(),
                 TextColumn::make('pillar.name')
-                    ->label('Pijler'),
+                    ->label('Pijler')
+                    ->sortable(['pillar_id']),
             ])
             ->filters([
                 SelectFilter::make('platform')
