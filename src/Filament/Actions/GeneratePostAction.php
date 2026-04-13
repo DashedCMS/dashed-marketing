@@ -88,15 +88,48 @@ class GeneratePostAction extends Action
                 ->label('Specifiek onderwerp')
                 ->nullable()
                 ->placeholder('Selecteer een item...')
-                ->options(function (callable $get) {
+                ->searchable()
+                ->getSearchResultsUsing(function (string $search, callable $get) {
                     $class = $get('subject_model_class');
                     if (! $class || ! class_exists($class)) {
                         return [];
                     }
 
-                    return $class::query()->limit(100)->get()->mapWithKeys(
-                        fn ($item) => [$item->id => $item->name ?? $item->title ?? "#{$item->id}"]
+                    $query = $class::query();
+                    $model = new $class;
+                    $columns = [];
+                    foreach (['name', 'title'] as $column) {
+                        if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $column)) {
+                            $columns[] = $column;
+                        }
+                    }
+
+                    if (empty($columns)) {
+                        $query->where($model->getKeyName(), 'like', "%{$search}%");
+                    } else {
+                        $query->where(function ($q) use ($columns, $search) {
+                            foreach ($columns as $column) {
+                                $q->orWhere($column, 'like', "%{$search}%");
+                            }
+                        });
+                    }
+
+                    return $query->limit(500)->get()->mapWithKeys(
+                        fn ($item) => [$item->getKey() => $item->name ?? $item->title ?? "#{$item->getKey()}"]
                     )->toArray();
+                })
+                ->getOptionLabelUsing(function ($value, callable $get) {
+                    $class = $get('subject_model_class');
+                    if (! $value || ! $class || ! class_exists($class)) {
+                        return null;
+                    }
+
+                    $item = $class::find($value);
+                    if (! $item) {
+                        return null;
+                    }
+
+                    return $item->name ?? $item->title ?? "#{$item->getKey()}";
                 })
                 ->visible(fn (callable $get) => (bool) $get('subject_model_class')),
 
