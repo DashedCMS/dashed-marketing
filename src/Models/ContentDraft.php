@@ -24,12 +24,16 @@ class ContentDraft extends Model
         'subject_id',
         'applied_by',
         'applied_at',
+        'h2_sections',
+        'history',
     ];
 
     protected $casts = [
         'content_plan' => 'array',
         'article_content' => 'array',
         'applied_at' => 'datetime',
+        'h2_sections' => 'array',
+        'history' => 'array',
     ];
 
     public function contentCluster(): BelongsTo
@@ -69,5 +73,16 @@ class ContentDraft extends Model
             'failed' => 'danger',
             default => 'gray',
         };
+    }
+
+    public function pushHistory(array $snapshot): void
+    {
+        $history = $this->history ?? [];
+        array_unshift($history, [
+            'at' => now()->toIso8601String(),
+            'h2_sections' => $snapshot,
+        ]);
+        $this->history = array_slice($history, 0, 3);
+        $this->save();
     }
 }
