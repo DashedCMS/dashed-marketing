@@ -3,7 +3,6 @@
 namespace Dashed\DashedMarketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Keyword extends Model
@@ -11,8 +10,8 @@ class Keyword extends Model
     protected $table = 'dashed__keywords';
 
     protected $fillable = [
-        'keyword_research_id',
         'keyword',
+        'locale',
         'type',
         'search_intent',
         'difficulty',
@@ -35,11 +34,6 @@ class Keyword extends Model
         'match_score' => 'decimal:3',
         'enriched_at' => 'datetime',
     ];
-
-    public function keywordResearch(): BelongsTo
-    {
-        return $this->belongsTo(KeywordResearch::class, 'keyword_research_id');
-    }
 
     public function contentClusters(): BelongsToMany
     {
@@ -113,6 +107,11 @@ class Keyword extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    public function scopeForLocale($query, string $locale)
+    {
+        return $query->where('locale', $locale);
     }
 
     public function matchedSubject()

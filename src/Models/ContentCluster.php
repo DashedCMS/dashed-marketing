@@ -3,26 +3,25 @@
 namespace Dashed\DashedMarketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ContentCluster extends Model
 {
     protected $table = 'dashed__content_clusters';
 
     protected $fillable = [
-        'keyword_research_id',
         'name',
+        'locale',
         'theme',
         'content_type',
         'description',
         'status',
     ];
 
-    public function keywordResearch(): BelongsTo
+    public function scopeForLocale($query, string $locale)
     {
-        return $this->belongsTo(KeywordResearch::class, 'keyword_research_id');
+        return $query->where('locale', $locale);
     }
 
     public function keywords(): BelongsToMany
