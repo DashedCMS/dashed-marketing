@@ -47,9 +47,11 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
                 .(! empty($idea->tags) ? "\nTags: ".implode(', ', (array) $idea->tags) : '')
             );
 
+            $subject = $idea->subject ?? $idea;
+
             GenerateSocialPostJob::dispatch(
                 platform: $platform,
-                subject: $idea,
+                subject: $subject,
                 pillarId: $idea->pillar_id,
                 campaignId: null,
                 toneOverride: null,

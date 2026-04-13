@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Models;
 use Dashed\DashedCore\Classes\Sites;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class SocialIdea extends Model
 {
@@ -15,6 +16,8 @@ class SocialIdea extends Model
         'title',
         'platform',
         'pillar_id',
+        'subject_type',
+        'subject_id',
         'notes',
         'status',
         'tags',
@@ -45,6 +48,11 @@ class SocialIdea extends Model
     public function pillar(): BelongsTo
     {
         return $this->belongsTo(SocialPillar::class, 'pillar_id');
+    }
+
+    public function subject(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     public function getStatusLabelAttribute(): string

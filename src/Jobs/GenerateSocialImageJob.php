@@ -76,48 +76,32 @@ class GenerateSocialImageJob implements ShouldQueue
      *
      * @return array{0: string, 1: array}
      */
+    /**
+     * Reference-image mode: fal nano-banana/edit (Google Gemini 2.5 Flash Image edit).
+     * Exceptionally faithful to the input subject — keeps products pixel-accurate
+     * while applying the prompt as an edit instruction.
+     *
+     * @return array{0: string, 1: array}
+     */
     private function buildKontextRequest(): array
     {
         $userPrompt = trim((string) $this->post->image_prompt);
 
-        $prompt = 'CRITICAL PRESERVATION RULES — THE PRODUCT IN THE REFERENCE IMAGE MUST STAY 100% IDENTICAL: '
-            .'keep the exact same shape, silhouette, proportions, dimensions, colors, color gradients, '
-            .'materials, textures, logos, labels, typography, stitching, packaging and every fine detail. '
-            .'Do not redraw, restyle, reinterpret, recolor, reshape, retexture or "improve" the product. '
-            .'Treat the product pixels as fixed and non-negotiable. Copy the product pixel-for-pixel. '
-            .'Only change the surrounding scene (background, environment, lighting, props, models, '
-            .'camera angle on the scene) and only as explicitly described below. '
-            .'If the instruction below would change any aspect of the product itself, ignore that part '
-            .'of the instruction and keep the product unchanged. '
-            ."\n\nScene instruction: ".$userPrompt;
+        $prompt = 'Keep the product in the input image 100% identical: same exact shape, silhouette, '
+            .'proportions, colors, materials, textures, logos, labels and every fine detail. '
+            .'Do not redraw, restyle, recolor or reshape the product in any way. '
+            .'Only change the background, environment, lighting and surrounding scene as described. '
+            ."\n\nScene: ".$userPrompt;
 
         return [
-            'https://fal.run/fal-ai/flux-pro/kontext/max',
+            'https://fal.run/fal-ai/nano-banana/edit',
             [
                 'prompt' => $prompt,
-                'image_url' => $this->referenceImageUrl,
-                'aspect_ratio' => $this->mapKontextAspectRatio($this->ratio),
+                'image_urls' => [$this->referenceImageUrl],
                 'num_images' => 1,
-                'safety_tolerance' => '2',
                 'output_format' => 'png',
             ],
         ];
-    }
-
-    private function mapKontextAspectRatio(string $ratio): string
-    {
-        return match ($ratio) {
-            '1:1' => '1:1',
-            '4:5', '3:4' => '3:4',
-            '9:16' => '9:16',
-            '9:21' => '9:21',
-            '2:3' => '2:3',
-            '4:3' => '4:3',
-            '3:2' => '3:2',
-            '16:9' => '16:9',
-            '21:9' => '21:9',
-            default => '1:1',
-        };
     }
 
     private function downloadAndStore(string $url): void

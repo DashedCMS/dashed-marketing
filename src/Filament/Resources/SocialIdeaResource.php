@@ -78,6 +78,58 @@ class SocialIdeaResource extends Resource
                             ->searchable()
                             ->preload()
                             ->nullable(),
+                        Select::make('subject_type')
+                            ->label('Onderwerp type')
+                            ->options(function () {
+                                $options = [];
+                                foreach (cms()->builder('routeModels') ?? [] as $modelConfig) {
+                                    $class = $modelConfig['class'] ?? null;
+                                    if ($class && class_exists($class)) {
+                                        $options[$class] = $modelConfig['name'] ?? class_basename($class);
+                                    }
+                                }
+
+                                return $options;
+                            })
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(fn (callable $set) => $set('subject_id', null))
+                            ->placeholder('Geen specifiek onderwerp'),
+                        Select::make('subject_id')
+                            ->label('Specifiek onderwerp')
+                            ->nullable()
+                            ->searchable()
+                            ->getSearchResultsUsing(function (string $search, callable $get) {
+                                $class = $get('subject_type');
+                                if (! $class || ! class_exists($class)) {
+                                    return [];
+                                }
+
+                                return $class::query()
+                                    ->where(function ($q) use ($search, $class) {
+                                        $model = new $class;
+                                        foreach (['name', 'title'] as $col) {
+                                            if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $col)) {
+                                                $q->orWhere($col, 'like', "%{$search}%");
+                                            }
+                                        }
+                                    })
+                                    ->limit(50)
+                                    ->get()
+                                    ->mapWithKeys(fn ($m) => [$m->getKey() => $m->name ?? $m->title ?? "#{$m->getKey()}"])
+                                    ->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value, callable $get) {
+                                $class = $get('subject_type');
+                                if (! $value || ! $class || ! class_exists($class)) {
+                                    return null;
+                                }
+
+                                $item = $class::find($value);
+
+                                return $item ? ($item->name ?? $item->title ?? "#{$item->getKey()}") : null;
+                            })
+                            ->visible(fn (callable $get) => (bool) $get('subject_type')),
                         TagsInput::make('tags')
                             ->label('Tags')
                             ->nullable(),
@@ -157,9 +209,11 @@ class SocialIdeaResource extends Resource
                             .(! empty($record->tags) ? "\nTags: ".implode(', ', (array) $record->tags) : '')
                         );
 
+                        $subject = $record->subject ?? $record;
+
                         GenerateSocialPostJob::dispatch(
                             platform: $platform,
-                            subject: $record,
+                            subject: $subject,
                             pillarId: $record->pillar_id,
                             campaignId: null,
                             toneOverride: null,

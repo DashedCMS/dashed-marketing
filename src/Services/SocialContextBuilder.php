@@ -158,17 +158,25 @@ class SocialContextBuilder
 
     private function addVisitableModels(array &$sections, ?Model $subject): void
     {
+        $routeModels = cms()->builder('routeModels');
+        $classToKey = [];
+        foreach ($routeModels as $key => $modelConfig) {
+            if (! empty($modelConfig['class'])) {
+                $classToKey[$modelConfig['class']] = $key;
+            }
+        }
+
         if ($subject) {
-            $sections[] = "## Onderwerp\n".$this->serializeModel($subject);
+            $refKey = $classToKey[get_class($subject)] ?? null;
+            $sections[] = "## Onderwerp\n".$this->serializeModel($subject, $refKey);
 
             return;
         }
 
         $maxProducts = config('dashed-marketing.context_builder.max_products', 50);
-        $routeModels = cms()->builder('routeModels');
         $items = [];
 
-        foreach ($routeModels as $modelConfig) {
+        foreach ($routeModels as $key => $modelConfig) {
             $class = $modelConfig['class'] ?? null;
             if (! $class || ! class_exists($class)) {
                 continue;
@@ -178,7 +186,7 @@ class SocialContextBuilder
             $models = $query->get();
 
             foreach ($models as $model) {
-                $items[] = $this->serializeModel($model);
+                $items[] = $this->serializeModel($model, $key);
                 if (count($items) >= $maxProducts) {
                     break 2;
                 }
@@ -186,7 +194,10 @@ class SocialContextBuilder
         }
 
         if ($items) {
-            $sections[] = "## Beschikbare content\n".implode("\n", $items);
+            $intro = "Gebruik de [ref:type:id] tags om te verwijzen naar een specifiek item. "
+                ."Beschikbare types: ".implode(', ', array_keys($classToKey)).".";
+
+            $sections[] = "## Beschikbare content\n".$intro."\n".implode("\n", $items);
         }
     }
 
@@ -208,7 +219,7 @@ class SocialContextBuilder
         $sections[] = "## Platform regels\n".implode("\n", $parts);
     }
 
-    private function serializeModel(Model $model): string
+    private function serializeModel(Model $model, ?string $refKey = null): string
     {
         $attributes = $model->attributesToArray();
 
@@ -226,6 +237,8 @@ class SocialContextBuilder
         $rawName = $filtered['name'] ?? $filtered['title'] ?? class_basename($model)." #{$model->id}";
         $name = is_array($rawName) ? (reset($rawName) ?: class_basename($model)." #{$model->id}") : $rawName;
 
-        return "- {$name}: ".json_encode($filtered, JSON_UNESCAPED_UNICODE);
+        $ref = $refKey ? "[ref:{$refKey}:{$model->getKey()}] " : '';
+
+        return "- {$ref}{$name}: ".json_encode($filtered, JSON_UNESCAPED_UNICODE);
     }
 }
