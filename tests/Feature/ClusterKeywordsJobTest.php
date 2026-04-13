@@ -1,12 +1,11 @@
 <?php
 
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\KeywordResearch;
 use Dashed\DashedMarketing\Jobs\ClusterKeywordsJob;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 uses(\Tests\TestCase::class);
 
@@ -14,22 +13,11 @@ beforeEach(function () {
     Schema::dropIfExists('dashed__content_cluster_keyword');
     Schema::dropIfExists('dashed__content_clusters');
     Schema::dropIfExists('dashed__keywords');
-    Schema::dropIfExists('dashed__keyword_researches');
-
-    Schema::create('dashed__keyword_researches', function (Blueprint $table) {
-        $table->id();
-        $table->string('seed_keyword');
-        $table->string('locale', 10)->default('nl');
-        $table->string('status')->default('pending');
-        $table->text('progress_message')->nullable();
-        $table->text('error_message')->nullable();
-        $table->timestamps();
-    });
 
     Schema::create('dashed__keywords', function (Blueprint $table) {
         $table->id();
-        $table->unsignedBigInteger('keyword_research_id');
         $table->string('keyword');
+        $table->string('locale', 8)->default('nl');
         $table->string('type')->default('secondary');
         $table->string('search_intent')->default('informational');
         $table->string('difficulty')->default('medium');
@@ -49,8 +37,8 @@ beforeEach(function () {
 
     Schema::create('dashed__content_clusters', function (Blueprint $table) {
         $table->id();
-        $table->unsignedBigInteger('keyword_research_id')->nullable();
         $table->string('name');
+        $table->string('locale', 8)->default('nl');
         $table->string('theme')->nullable();
         $table->string('content_type')->default('blog');
         $table->text('description')->nullable();
@@ -66,22 +54,16 @@ beforeEach(function () {
 });
 
 it('creates clusters from approved keywords only, rejecting hallucinated ones', function () {
-    $workspace = KeywordResearch::create([
-        'seed_keyword' => 'waxinelichthouder',
-        'locale' => 'nl',
-        'status' => 'ready',
-    ]);
-
     Keyword::create([
-        'keyword_research_id' => $workspace->id,
         'keyword' => 'waxinelichthouder modern',
+        'locale' => 'nl',
         'type' => 'primary',
         'status' => 'new',
         'source' => 'manual',
     ]);
     Keyword::create([
-        'keyword_research_id' => $workspace->id,
         'keyword' => 'design waxinelichthouder',
+        'locale' => 'nl',
         'type' => 'primary',
         'status' => 'new',
         'source' => 'manual',
@@ -99,9 +81,10 @@ it('creates clusters from approved keywords only, rejecting hallucinated ones', 
         ],
     ]);
 
-    (new ClusterKeywordsJob($workspace->id, 'full'))->handle();
+    (new ClusterKeywordsJob('nl', 'full'))->handle();
 
     expect(ContentCluster::count())->toBe(1);
     $cluster = ContentCluster::first();
+    expect($cluster->locale)->toBe('nl');
     expect($cluster->keywords()->count())->toBe(2);
 });
