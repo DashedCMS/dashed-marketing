@@ -2,9 +2,7 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Jobs\GenerateBulkSocialIdeasJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -51,60 +49,14 @@ class GenerateBulkIdeasAction extends Action
                     ->nullable(),
             ])
             ->action(function (array $data): void {
-                $contextBuilder = new SocialContextBuilder;
-                $context = $contextBuilder->build();
-
-                $period = $data['period'];
-                $count = $data['count'];
-                $focus = $data['focus'] ?? null;
-                $focusLine = $focus ? "Focus voor deze periode: {$focus}\n" : '';
-
-                $prompt = <<<PROMPT
-                {$context}
-
-                {$focusLine}
-                Genereer {$count} concrete social media ideeën voor de komende {$period} week(en).
-                Varieer in platform, content pijler, en type (tips, behind-the-scenes, product, inspiratie, humor).
-
-                Retourneer UITSLUITEND geldig JSON in dit formaat:
-                {
-                    "ideas": [
-                        {
-                            "title": "Korte beschrijvende titel",
-                            "platform": "instagram_feed",
-                            "notes": "Korte toelichting op het idee en aanpak",
-                            "tags": ["tag1", "tag2"]
-                        }
-                    ]
-                }
-                PROMPT;
-
-                $result = Ai::json($prompt);
-
-                if (! $result || empty($result['ideas'])) {
-                    Notification::make()
-                        ->title('Genereren mislukt')
-                        ->body('De AI provider gaf geen bruikbaar antwoord. Controleer de AI instellingen.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                $created = 0;
-                foreach ($result['ideas'] as $idea) {
-                    SocialIdea::create([
-                        'title' => $idea['title'] ?? 'Onbekend idee',
-                        'platform' => $idea['platform'] ?? null,
-                        'notes' => $idea['notes'] ?? null,
-                        'tags' => $idea['tags'] ?? [],
-                        'status' => 'idea',
-                    ]);
-                    $created++;
-                }
+                GenerateBulkSocialIdeasJob::dispatch(
+                    (int) $data['period'],
+                    (int) $data['count'],
+                    $data['focus'] ?? null,
+                )->onQueue('ai');
 
                 Notification::make()
-                    ->title("{$created} ideeën aangemaakt")
+                    ->title('Genereren gestart — ideeën verschijnen zodra de job klaar is')
                     ->success()
                     ->send();
             });
