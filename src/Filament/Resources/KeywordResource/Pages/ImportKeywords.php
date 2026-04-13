@@ -7,13 +7,18 @@ use Dashed\DashedMarketing\Jobs\ImportKeywordsJob;
 use Dashed\DashedMarketing\Models\KeywordImport;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ImportKeywords extends Page
+class ImportKeywords extends Page implements HasForms
 {
+    use InteractsWithForms;
+
     protected static string $resource = KeywordResource::class;
 
     protected string $view = 'dashed-marketing::filament.pages.import-keywords';
@@ -32,21 +37,51 @@ class ImportKeywords extends Page
 
     public int $step = 1;
 
-    public array $data = [];
+    public ?array $data = [];
 
     public function mount(): void
     {
         $this->locale = config('app.locale', 'nl');
+        $this->form->fill([
+            'locale' => config('app.locale', 'nl'),
+        ]);
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Select::make('locale')
+                    ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                    ->default(config('app.locale', 'nl'))
+                    ->required(),
+                FileUpload::make('filePath')
+                    ->label('Bestand (.csv, .xlsx, .xls)')
+                    ->disk('local')
+                    ->directory('keyword-imports')
+                    ->acceptedFileTypes([
+                        'text/csv',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    ])
+                    ->required(),
+            ])
+            ->statePath('data');
     }
 
     public function parseHeaders(): void
     {
-        if (empty($this->data['filePath'] ?? null)) {
+        $state = $this->form->getState();
+        $file = $state['filePath'] ?? null;
+        $this->locale = $state['locale'] ?? config('app.locale', 'nl');
+
+        if (empty($file)) {
             Notification::make()->title('Selecteer eerst een bestand')->danger()->send();
 
             return;
         }
-        $this->filePath = is_array($this->data['filePath']) ? reset($this->data['filePath']) : $this->data['filePath'];
+
+        $this->filePath = is_array($file) ? reset($file) : $file;
 
         $full = Storage::disk('local')->path($this->filePath);
         $rows = Excel::toArray([], $full)[0] ?? [];
@@ -119,26 +154,6 @@ class ImportKeywords extends Page
             'cpc' => 'CPC',
             'cluster_hint' => 'Cluster hint',
             'notes' => 'Notes',
-        ];
-    }
-
-    protected function getFormSchema(): array
-    {
-        return [
-            Select::make('locale')
-                ->options(['nl' => 'Nederlands', 'en' => 'English'])
-                ->default(config('app.locale', 'nl'))
-                ->required(),
-            FileUpload::make('filePath')
-                ->label('Bestand (.csv, .xlsx, .xls)')
-                ->disk('local')
-                ->directory('keyword-imports')
-                ->acceptedFileTypes([
-                    'text/csv',
-                    'application/vnd.ms-excel',
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                ])
-                ->required(),
         ];
     }
 }
