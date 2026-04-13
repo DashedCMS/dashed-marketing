@@ -78,12 +78,21 @@ class GenerateSocialImageJob implements ShouldQueue
      */
     private function buildKontextRequest(): array
     {
-        $prompt = 'Preserve the subject, composition, pose, colors and framing from the reference image exactly. '
-            .'Do not change the subject, background or layout. '
-            .$this->post->image_prompt;
+        $userPrompt = trim((string) $this->post->image_prompt);
+
+        $prompt = 'CRITICAL PRESERVATION RULES — THE PRODUCT IN THE REFERENCE IMAGE MUST STAY 100% IDENTICAL: '
+            .'keep the exact same shape, silhouette, proportions, dimensions, colors, color gradients, '
+            .'materials, textures, logos, labels, typography, stitching, packaging and every fine detail. '
+            .'Do not redraw, restyle, reinterpret, recolor, reshape, retexture or "improve" the product. '
+            .'Treat the product pixels as fixed and non-negotiable. Copy the product pixel-for-pixel. '
+            .'Only change the surrounding scene (background, environment, lighting, props, models, '
+            .'camera angle on the scene) and only as explicitly described below. '
+            .'If the instruction below would change any aspect of the product itself, ignore that part '
+            .'of the instruction and keep the product unchanged. '
+            ."\n\nScene instruction: ".$userPrompt;
 
         return [
-            'https://fal.run/fal-ai/flux-pro/kontext',
+            'https://fal.run/fal-ai/flux-pro/kontext/max',
             [
                 'prompt' => $prompt,
                 'image_url' => $this->referenceImageUrl,
