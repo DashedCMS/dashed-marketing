@@ -84,5 +84,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         $this->app->singleton(\Dashed\DashedMarketing\Managers\KeywordDataManager::class, function () {
             return new \Dashed\DashedMarketing\Managers\KeywordDataManager();
         });
+
+        $this->app->singleton(\Dashed\DashedMarketing\Managers\ContentTemplateRegistry::class);
     }
 }
