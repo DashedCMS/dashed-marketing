@@ -53,6 +53,7 @@ class GenerateBulkIdeasAction extends Action
                     (int) $data['period'],
                     (int) $data['count'],
                     $data['focus'] ?? null,
+                    auth()->id(),
                 )->onQueue('ai');
 
                 Notification::make()
