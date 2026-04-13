@@ -53,6 +53,19 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
             'view_seo_improvement' => 'SEO verbeteringen bekijken',
             'edit_seo_improvement' => 'SEO verbeteringen bewerken',
         ]);
+
+        if (class_exists(\Dashed\DashedMarketing\Templates\BlogArticleTemplate::TARGET)) {
+            \Dashed\DashedMarketing\Facades\ContentTemplates::register('blog', \Dashed\DashedMarketing\Templates\BlogArticleTemplate::class);
+        }
+        if (class_exists(\Dashed\DashedMarketing\Templates\LandingPageTemplate::TARGET)) {
+            \Dashed\DashedMarketing\Facades\ContentTemplates::register('landing_page', \Dashed\DashedMarketing\Templates\LandingPageTemplate::class);
+        }
+        if (class_exists(\Dashed\DashedMarketing\Templates\ProductCategoryTemplate::TARGET)) {
+            \Dashed\DashedMarketing\Facades\ContentTemplates::register('category', \Dashed\DashedMarketing\Templates\ProductCategoryTemplate::class);
+        }
+        if (class_exists(\Dashed\DashedMarketing\Templates\ProductTemplate::TARGET)) {
+            \Dashed\DashedMarketing\Facades\ContentTemplates::register('product', \Dashed\DashedMarketing\Templates\ProductTemplate::class);
+        }
     }
 
     public function configurePackage(Package $package): void
