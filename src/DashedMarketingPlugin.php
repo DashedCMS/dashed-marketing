@@ -6,7 +6,6 @@ use Filament\Panel;
 use Filament\Contracts\Plugin;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
-use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
@@ -15,7 +14,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource;
 
 class DashedMarketingPlugin implements Plugin
 {
@@ -33,7 +33,7 @@ class DashedMarketingPlugin implements Plugin
                 SocialPillarResource::class,
                 SocialHolidayResource::class,
                 SocialCampaignResource::class,
-                KeywordResearchResource::class,
+                KeywordWorkspaceResource::class,
                 ContentDraftResource::class,
                 ContentClusterResource::class,
                 SeoImprovementResource::class,

@@ -2,24 +2,27 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\Pages\CreateKeywordWorkspace;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\Pages\EditKeywordWorkspace;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\Pages\GenerateDrafts;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\Pages\ImportKeywords;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\Pages\ListKeywordWorkspaces;
+use Dashed\DashedMarketing\Filament\Resources\KeywordWorkspaceResource\RelationManagers\KeywordsRelationManager;
 use Dashed\DashedMarketing\Models\KeywordResearch;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\EditKeywordResearch;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\CreateKeywordResearch;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\ListKeywordResearches;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
-class KeywordResearchResource extends Resource
+class KeywordWorkspaceResource extends Resource
 {
     protected static ?string $model = KeywordResearch::class;
 
@@ -27,11 +30,11 @@ class KeywordResearchResource extends Resource
 
     protected static string | UnitEnum | null $navigationGroup = 'Marketing';
 
-    protected static ?string $navigationLabel = 'Zoekwoord onderzoek';
+    protected static ?string $navigationLabel = 'Keyword werkruimtes';
 
-    protected static ?string $label = 'Zoekwoord onderzoek';
+    protected static ?string $label = 'Keyword werkruimte';
 
-    protected static ?string $pluralLabel = 'Zoekwoord onderzoeken';
+    protected static ?string $pluralLabel = 'Keyword werkruimtes';
 
     protected static ?int $navigationSort = 20;
 
@@ -39,7 +42,7 @@ class KeywordResearchResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Zoekwoord onderzoek')
+                Section::make('Werkruimte')
                     ->schema([
                         TextInput::make('seed_keyword')
                             ->label('Seed keyword')
@@ -60,6 +63,8 @@ class KeywordResearchResource extends Resource
                             ->options([
                                 'pending' => 'In wachtrij',
                                 'running' => 'Bezig...',
+                                'ready' => 'Klaar',
+                                'analyzing' => 'Analyseren...',
                                 'done' => 'Klaar',
                                 'failed' => 'Mislukt',
                             ])
@@ -108,6 +113,8 @@ class KeywordResearchResource extends Resource
                     ->options([
                         'pending' => 'In wachtrij',
                         'running' => 'Bezig...',
+                        'ready' => 'Klaar',
+                        'analyzing' => 'Analyseren...',
                         'done' => 'Klaar',
                         'failed' => 'Mislukt',
                     ]),
@@ -129,15 +136,19 @@ class KeywordResearchResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            KeywordsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListKeywordResearches::route('/'),
-            'create' => CreateKeywordResearch::route('/create'),
-            'edit' => EditKeywordResearch::route('/{record}/edit'),
+            'index' => ListKeywordWorkspaces::route('/'),
+            'create' => CreateKeywordWorkspace::route('/create'),
+            'edit' => EditKeywordWorkspace::route('/{record}/edit'),
+            'import' => ImportKeywords::route('/{record}/import'),
+            'generate' => GenerateDrafts::route('/{record}/generate'),
         ];
     }
 }
