@@ -13,33 +13,31 @@ use Illuminate\Support\HtmlString;
 
 class GenerateImageAction extends Action
 {
-    /** @var array<int, array<string, string>> */
-    private array $subjectImageCache = [];
-
     public static function getDefaultName(): ?string
     {
         return 'generateImage';
     }
 
+    private function resolveSubject($record, ?string $type, $id)
+    {
+        if ($record?->subject) {
+            return $record->subject;
+        }
+
+        if ($type && $id && class_exists($type)) {
+            return $type::find($id);
+        }
+
+        return null;
+    }
+
     /**
-     * Options keyed by image URL, value = rendered HTML with thumbnail.
-     *
      * @return array<string, string>
      */
-    private function subjectImageOptions($record): array
+    private function buildImageOptions($subject): array
     {
-        if (! $record) {
-            return [];
-        }
-
-        $key = (int) ($record->id ?? 0);
-        if (isset($this->subjectImageCache[$key])) {
-            return $this->subjectImageCache[$key];
-        }
-
-        $subject = $record->subject;
         if (! $subject) {
-            return $this->subjectImageCache[$key] = [];
+            return [];
         }
 
         $urls = array_keys(app(SubjectImageResolver::class)->collect($subject));
@@ -53,7 +51,23 @@ class GenerateImageAction extends Action
                 .'</div>';
         }
 
-        return $this->subjectImageCache[$key] = $options;
+        return $options;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function routeModelOptions(): array
+    {
+        $options = [];
+        foreach (cms()->builder('routeModels') ?? [] as $modelConfig) {
+            $class = $modelConfig['class'] ?? null;
+            if ($class && class_exists($class)) {
+                $options[$class] = $modelConfig['name'] ?? class_basename($class);
+            }
+        }
+
+        return $options;
     }
 
     protected function setUp(): void
@@ -82,10 +96,64 @@ class GenerateImageAction extends Action
                     ->default('lifestyle')
                     ->required(),
 
+                Select::make('subject_type')
+                    ->label('Onderwerp type')
+                    ->helperText('Geen onderwerp gekoppeld aan deze post — kies hier een type om zijn afbeeldingen te gebruiken.')
+                    ->options($this->routeModelOptions())
+                    ->nullable()
+                    ->live()
+                    ->afterStateUpdated(function (callable $set) {
+                        $set('subject_id', null);
+                        $set('subject_image', null);
+                    })
+                    ->visible(fn () => ! $record?->subject),
+
+                Select::make('subject_id')
+                    ->label('Specifiek onderwerp')
+                    ->nullable()
+                    ->searchable()
+                    ->live()
+                    ->getSearchResultsUsing(function (string $search, callable $get) {
+                        $class = $get('subject_type');
+                        if (! $class || ! class_exists($class)) {
+                            return [];
+                        }
+
+                        $model = new $class;
+
+                        return $class::query()
+                            ->where(function ($q) use ($search, $model) {
+                                foreach (['name', 'title'] as $col) {
+                                    if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $col)) {
+                                        $q->orWhere($col, 'like', "%{$search}%");
+                                    }
+                                }
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn ($m) => [$m->getKey() => $m->name ?? $m->title ?? "#{$m->getKey()}"])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(function ($value, callable $get) {
+                        $class = $get('subject_type');
+                        if (! $value || ! $class || ! class_exists($class)) {
+                            return null;
+                        }
+                        $item = $class::find($value);
+
+                        return $item ? ($item->name ?? $item->title ?? "#{$item->getKey()}") : null;
+                    })
+                    ->afterStateUpdated(fn (callable $set) => $set('subject_image', null))
+                    ->visible(fn (callable $get) => ! $record?->subject && (bool) $get('subject_type')),
+
                 Select::make('subject_image')
-                    ->label('Kies afbeelding uit gekoppeld onderwerp')
+                    ->label('Kies afbeelding uit onderwerp')
                     ->helperText('Geselecteerde afbeelding vult automatisch de referentieafbeelding URL hieronder.')
-                    ->options(fn () => $this->subjectImageOptions($record))
+                    ->options(function (callable $get) use ($record) {
+                        $subject = $this->resolveSubject($record, $get('subject_type'), $get('subject_id'));
+
+                        return $this->buildImageOptions($subject);
+                    })
                     ->allowHtml()
                     ->nullable()
                     ->native(false)
@@ -95,7 +163,11 @@ class GenerateImageAction extends Action
                             $set('reference_image', $state);
                         }
                     })
-                    ->visible(fn () => ! empty($this->subjectImageOptions($record))),
+                    ->visible(function (callable $get) use ($record) {
+                        $subject = $this->resolveSubject($record, $get('subject_type'), $get('subject_id'));
+
+                        return ! empty($this->buildImageOptions($subject));
+                    }),
 
                 Placeholder::make('subject_image_preview')
                     ->label('Voorbeeld')
@@ -106,7 +178,7 @@ class GenerateImageAction extends Action
 
                 TextInput::make('reference_image')
                     ->label('Referentieafbeelding URL (optioneel)')
-                    ->helperText('Met referentieafbeelding wordt Flux Kontext gebruikt — de input wordt 1-op-1 behouden en alleen de prompt wordt als edit-instructie toegepast.')
+                    ->helperText('Met referentieafbeelding wordt fal nano-banana/edit gebruikt — de input wordt 1-op-1 behouden.')
                     ->url()
                     ->nullable(),
             ])
@@ -128,6 +200,16 @@ class GenerateImageAction extends Action
                         ->send();
 
                     return;
+                }
+
+                if (! $record->subject && ! empty($data['subject_type']) && ! empty($data['subject_id'])) {
+                    $class = $data['subject_type'];
+                    if (class_exists($class) && $class::query()->whereKey($data['subject_id'])->exists()) {
+                        $record->update([
+                            'subject_type' => $class,
+                            'subject_id' => $data['subject_id'],
+                        ]);
+                    }
                 }
 
                 GenerateSocialImageJob::dispatch(
