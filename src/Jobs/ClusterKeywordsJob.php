@@ -2,16 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\KeywordResearch;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ClusterKeywordsJob implements ShouldQueue
 {
@@ -21,39 +20,36 @@ class ClusterKeywordsJob implements ShouldQueue
     use SerializesModels;
 
     public function __construct(
-        public int $workspaceId,
+        public string $locale,
         public string $mode = 'full',
     ) {
     }
 
     public function handle(): void
     {
-        $workspace = KeywordResearch::findOrFail($this->workspaceId);
-        $workspace->update(['status' => 'analyzing', 'progress_message' => 'Clustering…']);
-
         $keywords = Keyword::query()
-            ->where('keyword_research_id', $workspace->id)
+            ->where('locale', $this->locale)
             ->where('status', '!=', 'rejected')
             ->get();
 
         if ($keywords->isEmpty()) {
-            $workspace->update(['status' => 'ready', 'progress_message' => 'Geen keywords om te clusteren.']);
-
             return;
         }
 
         if ($this->mode === 'full') {
-            $workspace->contentClusters()->each(function (ContentCluster $cluster) {
-                $cluster->keywords()->detach();
-            });
-            $workspace->contentClusters()->delete();
+            ContentCluster::query()
+                ->where('locale', $this->locale)
+                ->each(function (ContentCluster $cluster) {
+                    $cluster->keywords()->detach();
+                    $cluster->delete();
+                });
         }
 
         $existingClusters = $this->mode === 'incremental'
-            ? $workspace->contentClusters()->with('keywords')->get()
+            ? ContentCluster::query()->where('locale', $this->locale)->with('keywords')->get()
             : collect();
 
-        $response = Ai::json($this->buildPrompt($keywords, $existingClusters, $workspace->locale ?? 'nl')) ?? [];
+        $response = Ai::json($this->buildPrompt($keywords, $existingClusters, $this->locale)) ?? [];
         $clusters = $response['clusters'] ?? [];
 
         $validKeywordsLower = $keywords->pluck('keyword')->map(fn ($k) => mb_strtolower((string) $k))->all();
@@ -70,7 +66,8 @@ class ClusterKeywordsJob implements ShouldQueue
                 continue;
             }
 
-            $cluster = $workspace->contentClusters()->create([
+            $cluster = ContentCluster::create([
+                'locale' => $this->locale,
                 'name' => $clusterData['name'] ?? 'Cluster',
                 'theme' => $clusterData['theme'] ?? null,
                 'content_type' => $clusterData['content_type'] ?? 'blog',
@@ -85,8 +82,6 @@ class ClusterKeywordsJob implements ShouldQueue
 
             $cluster->keywords()->sync($keywordIds);
         }
-
-        $workspace->update(['status' => 'ready', 'progress_message' => 'Clustering klaar.']);
     }
 
     protected function buildPrompt($keywords, $existingClusters, string $locale): string

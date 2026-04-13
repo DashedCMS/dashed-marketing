@@ -13,7 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Models\SeoImprovement;
-use Dashed\DashedMarketing\Models\KeywordResearch;
 use Dashed\DashedMarketing\Services\ContentMatcher;
 use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Services\ArticleSanitizer;
@@ -90,12 +89,10 @@ class GenerateContentDraftJob implements ShouldQueue
             return;
         }
 
-        $workspace = KeywordResearch::find($keyword->keyword_research_id);
-
         ContentDraft::create([
             'content_cluster_id' => $cluster->id,
             'keyword' => $keyword->keyword,
-            'locale' => $workspace?->locale ?? 'nl',
+            'locale' => $keyword->locale ?? 'nl',
             'status' => 'ready',
             'h2_sections' => $content['h2_sections'] ?? null,
             'article_content' => $content,

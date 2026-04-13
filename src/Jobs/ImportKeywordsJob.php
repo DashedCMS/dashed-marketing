@@ -2,15 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\KeywordImport;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\KeywordImport;
-use Dashed\DashedMarketing\Models\KeywordResearch;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ImportKeywordsJob implements ShouldQueue
 {
@@ -23,7 +22,7 @@ class ImportKeywordsJob implements ShouldQueue
      * @param  array<int, array<string, mixed>>  $rows
      */
     public function __construct(
-        public int $workspaceId,
+        public string $locale,
         public int $importId,
         public array $rows,
         public string $duplicateStrategy = 'skip',
@@ -32,11 +31,10 @@ class ImportKeywordsJob implements ShouldQueue
 
     public function handle(): void
     {
-        $workspace = KeywordResearch::findOrFail($this->workspaceId);
         $import = KeywordImport::findOrFail($this->importId);
 
         $written = 0;
-        DB::transaction(function () use ($workspace, &$written) {
+        DB::transaction(function () use (&$written) {
             foreach ($this->rows as $row) {
                 $keyword = trim((string) ($row['keyword'] ?? ''));
                 if ($keyword === '') {
@@ -44,7 +42,7 @@ class ImportKeywordsJob implements ShouldQueue
                 }
 
                 $existing = Keyword::query()
-                    ->where('keyword_research_id', $workspace->id)
+                    ->where('locale', $this->locale)
                     ->where('keyword', $keyword)
                     ->first();
 
@@ -53,7 +51,7 @@ class ImportKeywordsJob implements ShouldQueue
                 }
 
                 $attributes = [
-                    'keyword_research_id' => $workspace->id,
+                    'locale' => $this->locale,
                     'keyword' => $keyword,
                     'type' => $row['type'] ?? 'secondary',
                     'search_intent' => $row['search_intent'] ?? 'informational',
@@ -77,9 +75,5 @@ class ImportKeywordsJob implements ShouldQueue
         });
 
         $import->update(['row_count' => $written]);
-        $workspace->update([
-            'status' => 'ready',
-            'progress_message' => "Imported {$written} keywords.",
-        ]);
     }
 }
