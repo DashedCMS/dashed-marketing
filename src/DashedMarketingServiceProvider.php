@@ -66,6 +66,17 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         if (class_exists(\Dashed\DashedMarketing\Templates\ProductTemplate::TARGET)) {
             \Dashed\DashedMarketing\Facades\ContentTemplates::register('product', \Dashed\DashedMarketing\Templates\ProductTemplate::class);
         }
+
+        try {
+            foreach ((array) cms()->builder('routeModels') as $entry) {
+                $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+                if ($class && class_exists($class)) {
+                    $class::observe(\Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver::class);
+                }
+            }
+        } catch (\Throwable) {
+            // cms() helper or routeModels builder unavailable during early boot — skip.
+        }
     }
 
     public function configurePackage(Package $package): void
