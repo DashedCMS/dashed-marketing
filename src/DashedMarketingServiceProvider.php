@@ -80,5 +80,9 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         $this->app->bind(PublishingAdapter::class, function () {
             return new (config('dashed-marketing.adapters.publishing'));
         });
+
+        $this->app->singleton(\Dashed\DashedMarketing\Managers\KeywordDataManager::class, function () {
+            return new \Dashed\DashedMarketing\Managers\KeywordDataManager();
+        });
     }
 }
