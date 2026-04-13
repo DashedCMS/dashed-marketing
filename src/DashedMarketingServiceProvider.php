@@ -71,7 +71,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package
-            ->hasConfigFile(['dashed-marketing'])
+            ->hasConfigFile(['dashed-marketing', 'dashed-marketing-content'])
             ->hasViews('dashed-marketing')
             ->hasCommands([
                 SocialNotifyDueCommand::class,
