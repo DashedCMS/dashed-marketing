@@ -2,31 +2,33 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\ListContentClusters;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class ContentClusterResource extends Resource
 {
     protected static ?string $model = ContentCluster::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-square-3-stack-3d';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-square-3-stack-3d';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
 
     protected static ?string $navigationLabel = 'Content clusters';
 
@@ -125,6 +127,11 @@ class ContentClusterResource extends Resource
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

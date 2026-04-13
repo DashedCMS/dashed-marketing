@@ -2,22 +2,23 @@
 
 namespace Dashed\DashedMarketing\Filament\Pages\Settings;
 
-use Filament\Pages\Page;
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Classes\Sites;
-use Filament\Forms\Components\Toggle;
+use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedCore\Traits\HasSettingsPermission;
+use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
+use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Contracts\HasSchemas;
-use Dashed\DashedCore\Models\Customsetting;
-use Filament\Forms\Components\CheckboxList;
-use Dashed\DashedCore\Traits\HasSettingsPermission;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 
 class SocialSettingsPage extends Page implements HasSchemas
 {
@@ -49,35 +50,33 @@ class SocialSettingsPage extends Page implements HasSchemas
         ]);
     }
 
-    protected function getHeaderActions(): array
+    public function generateSocialContextAction(): Action
     {
         $hasProvider = Ai::hasProvider();
 
-        return [
-            Action::make('generateSocialContext')
-                ->label('AI context genereren')
-                ->icon('heroicon-o-sparkles')
-                ->color('primary')
-                ->disabled(! $hasProvider)
-                ->tooltip($hasProvider ? null : 'Configureer eerst een AI provider in AI Settings.')
-                ->requiresConfirmation()
-                ->modalHeading('AI context genereren?')
-                ->modalDescription('Dit dispatcht een job per site. Lege velden worden automatisch ingevuld op basis van je website content. Bestaande waarden blijven staan.')
-                ->modalSubmitActionLabel('Genereer')
-                ->action(function () {
-                    $sites = Sites::getSites();
+        return Action::make('generateSocialContext')
+            ->label('AI context genereren')
+            ->icon('heroicon-o-sparkles')
+            ->color('primary')
+            ->disabled(! $hasProvider)
+            ->tooltip($hasProvider ? null : 'Configureer eerst een AI provider in AI Settings.')
+            ->requiresConfirmation()
+            ->modalHeading('AI context genereren?')
+            ->modalDescription('Dit dispatcht een job per site. Lege velden worden automatisch ingevuld op basis van je website content. Bestaande waarden blijven staan.')
+            ->modalSubmitActionLabel('Genereer')
+            ->action(function () {
+                $sites = Sites::getSites();
 
-                    foreach ($sites as $site) {
-                        GenerateSocialContextJob::dispatch($site['id'], auth()->id());
-                    }
+                foreach ($sites as $site) {
+                    GenerateSocialContextJob::dispatch($site['id'], auth()->id());
+                }
 
-                    Notification::make()
-                        ->title('AI context generatie gestart')
-                        ->body('Job gestart voor '.count($sites).' site(s). Je krijgt een melding zodra elke site klaar is.')
-                        ->success()
-                        ->send();
-                }),
-        ];
+                Notification::make()
+                    ->title('AI context generatie gestart')
+                    ->body('Job gestart voor '.count($sites).' site(s). Je krijgt een melding zodra elke site klaar is.')
+                    ->success()
+                    ->send();
+            });
     }
 
     public function form(Schema $schema): Schema
@@ -98,6 +97,9 @@ class SocialSettingsPage extends Page implements HasSchemas
 
             Section::make('AI context')
                 ->schema([
+                    Actions::make([
+                        $this->generateSocialContextAction(),
+                    ]),
                     Textarea::make('social_target_audience')
                         ->label('Doelgroep')
                         ->helperText('Beschrijf je doelgroep voor social media posts.')

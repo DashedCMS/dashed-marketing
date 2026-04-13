@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 
 class GenerateSocialImageJob implements ShouldQueue
 {
@@ -24,8 +24,7 @@ class GenerateSocialImageJob implements ShouldQueue
         public string $stylePreset = 'lifestyle',
         public ?string $referenceImageUrl = null,
         public float $referenceStrength = 0.7,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {
@@ -62,8 +61,8 @@ class GenerateSocialImageJob implements ShouldQueue
     private function downloadAndStore(string $url): void
     {
         $contents = file_get_contents($url);
-        $filename = 'social-generated/' . $this->post->id . '-' . time() . '.png';
-        $path = storage_path('app/public/' . $filename);
+        $filename = 'social-generated/'.$this->post->id.'-'.time().'.png';
+        $path = storage_path('app/public/'.$filename);
 
         if (! is_dir(dirname($path))) {
             mkdir(dirname($path), 0755, true);
@@ -72,7 +71,7 @@ class GenerateSocialImageJob implements ShouldQueue
         file_put_contents($path, $contents);
 
         $this->post->update([
-            'image_path' => 'storage/' . $filename,
+            'image_path' => 'storage/'.$filename,
         ]);
     }
 

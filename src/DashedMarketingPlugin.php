@@ -2,20 +2,20 @@
 
 namespace Dashed\DashedMarketing;
 
-use Filament\Panel;
-use Filament\Contracts\Plugin;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
-use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Filament\Contracts\Plugin;
+use Filament\Panel;
 
 class DashedMarketingPlugin implements Plugin
 {
@@ -45,7 +45,5 @@ class DashedMarketingPlugin implements Plugin
             ]);
     }
 
-    public function boot(Panel $panel): void
-    {
-    }
+    public function boot(Panel $panel): void {}
 }

@@ -1,9 +1,11 @@
 <?php
 
+use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
+
 return [
     'adapters' => [
         'keyword_research' => null,
-        'publishing' => \Dashed\DashedMarketing\Adapters\ManualPublishAdapter::class,
+        'publishing' => ManualPublishAdapter::class,
     ],
     'platforms' => [
         'instagram_feed' => ['label' => 'Instagram Feed', 'caption_min' => 125, 'caption_max' => 300, 'hashtags_min' => 10, 'hashtags_max' => 15, 'ratios' => ['4:5', '1:1'], 'tips' => 'Hook in eerste zin'],

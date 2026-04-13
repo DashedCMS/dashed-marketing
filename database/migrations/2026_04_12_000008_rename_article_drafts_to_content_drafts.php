@@ -1,9 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Schema;
 
-return new class () extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         if (Schema::hasTable('dashed__article_drafts') && ! Schema::hasTable('dashed__content_drafts')) {

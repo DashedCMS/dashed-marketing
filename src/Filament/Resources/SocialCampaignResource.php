@@ -2,33 +2,35 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Filters\TernaryFilter;
-use Dashed\DashedMarketing\Models\SocialCampaign;
+use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages\CreateSocialCampaign;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages\EditSocialCampaign;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages\ListSocialCampaigns;
-use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages\CreateSocialCampaign;
+use Dashed\DashedMarketing\Models\SocialCampaign;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class SocialCampaignResource extends Resource
 {
     protected static ?string $model = SocialCampaign::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-megaphone';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
 
     protected static ?string $navigationLabel = 'Campagnes';
 
@@ -99,6 +101,11 @@ class SocialCampaignResource extends Resource
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

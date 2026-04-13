@@ -121,7 +121,7 @@ class EditContentDraft extends Page
                     $template = ContentTemplates::make($cluster->content_type);
                     $targetClass = $data['target_class'];
 
-                    $new = new $targetClass();
+                    $new = new $targetClass;
                     $new->name = $this->record->keyword;
                     $new->slug = Str::slug($this->record->keyword);
                     $new->save();

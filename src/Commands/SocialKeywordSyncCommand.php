@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
-use Illuminate\Console\Command;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
+use Illuminate\Console\Command;
 
 class SocialKeywordSyncCommand extends Command
 {
@@ -24,9 +24,9 @@ class SocialKeywordSyncCommand extends Command
         // External adapters (e.g. SEMrush, Ahrefs) can implement sync logic here.
         if (method_exists($adapter, 'sync')) {
             $adapter->sync();
-            $this->info('Keyword sync completed via ' . get_class($adapter) . '.');
+            $this->info('Keyword sync completed via '.get_class($adapter).'.');
         } else {
-            $this->warn('Adapter ' . get_class($adapter) . ' does not implement sync().');
+            $this->warn('Adapter '.get_class($adapter).' does not implement sync().');
         }
     }
 }

@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Filament\Actions\Action;
 use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\SocialIdea;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class GenerateBulkIdeasAction extends Action
 {
@@ -51,7 +51,7 @@ class GenerateBulkIdeasAction extends Action
                     ->nullable(),
             ])
             ->action(function (array $data): void {
-                $contextBuilder = new SocialContextBuilder();
+                $contextBuilder = new SocialContextBuilder;
                 $context = $contextBuilder->build();
 
                 $period = $data['period'];

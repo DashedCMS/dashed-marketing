@@ -3,6 +3,8 @@
 namespace Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
 use Dashed\DashedMarketing\Facades\KeywordData;
+use Dashed\DashedMarketing\Filament\Actions\XlsxImportAction;
+use Dashed\DashedMarketing\Filament\Imports\KeywordImporter;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 use Dashed\DashedMarketing\Jobs\ClusterKeywordsJob;
 use Dashed\DashedMarketing\Managers\KeywordDataManager;
@@ -22,10 +24,10 @@ class ListKeywords extends ListRecords
             Actions\CreateAction::make()
                 ->label('Voeg keyword toe'),
 
-            Actions\Action::make('import_csv')
+            XlsxImportAction::make('import_keywords')
                 ->label('Importeer CSV/Excel')
                 ->icon('heroicon-o-arrow-up-tray')
-                ->url(fn () => KeywordResource::getUrl('import')),
+                ->importer(KeywordImporter::class),
 
             Actions\Action::make('enrich')
                 ->label('Verrijk via API')

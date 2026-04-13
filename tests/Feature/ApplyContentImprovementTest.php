@@ -6,8 +6,9 @@ use Dashed\DashedMarketing\Models\SeoImprovement;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class);
+uses(TestCase::class);
 
 class TestProduct extends Model
 {

@@ -20,7 +20,7 @@ return new class extends Migration
 
         // Backfill locale from the about-to-be-dropped workspace
         if (Schema::hasTable('dashed__keyword_researches')) {
-            \DB::statement(<<<'SQL'
+            DB::statement(<<<'SQL'
                 UPDATE dashed__keywords
                 SET locale = COALESCE(
                     (SELECT locale FROM dashed__keyword_researches WHERE dashed__keyword_researches.id = dashed__keywords.keyword_research_id),
@@ -28,7 +28,7 @@ return new class extends Migration
                 )
             SQL);
 
-            \DB::statement(<<<'SQL'
+            DB::statement(<<<'SQL'
                 UPDATE dashed__content_clusters
                 SET locale = COALESCE(
                     (SELECT locale FROM dashed__keyword_researches WHERE dashed__keyword_researches.id = dashed__content_clusters.keyword_research_id),
@@ -41,7 +41,7 @@ return new class extends Migration
             if (Schema::hasColumn('dashed__keywords', 'keyword_research_id')) {
                 try {
                     $table->dropForeign(['keyword_research_id']);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
                 $table->dropColumn('keyword_research_id');
             }
@@ -51,7 +51,7 @@ return new class extends Migration
             if (Schema::hasColumn('dashed__content_clusters', 'keyword_research_id')) {
                 try {
                     $table->dropForeign(['keyword_research_id']);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
                 $table->dropColumn('keyword_research_id');
             }
@@ -61,7 +61,7 @@ return new class extends Migration
             if (Schema::hasColumn('dashed__keyword_imports', 'keyword_research_id')) {
                 try {
                     $table->dropForeign(['keyword_research_id']);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
                 $table->dropColumn('keyword_research_id');
             }

@@ -2,15 +2,16 @@
 
 namespace Dashed\DashedMarketing\Filament\Widgets;
 
+use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
-use Dashed\DashedMarketing\Models\SocialPost;
 
 class SocialCalendarWidget extends Widget
 {
-    protected static string $view = 'dashed-marketing::widgets.social-calendar';
+    protected string $view = 'dashed-marketing::widgets.social-calendar';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public int $currentYear;
 
@@ -46,10 +47,10 @@ class SocialCalendarWidget extends Widget
 
         $existingTime = $post->scheduled_at ? $post->scheduled_at->format('H:i:s') : '09:00:00';
         $post->update([
-            'scheduled_at' => Carbon::parse($newDate . ' ' . $existingTime),
+            'scheduled_at' => Carbon::parse($newDate.' '.$existingTime),
         ]);
 
-        \Filament\Notifications\Notification::make()
+        Notification::make()
             ->title('Post herscheduled')
             ->success()
             ->send();

@@ -2,34 +2,37 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\EditSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\ListSocialIdeas;
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
+use Dashed\DashedMarketing\Models\SocialIdea;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class SocialIdeaResource extends Resource
 {
     protected static ?string $model = SocialIdea::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-light-bulb';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-light-bulb';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
 
     protected static ?string $navigationLabel = 'Ideeën';
 
@@ -124,7 +127,7 @@ class SocialIdeaResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 EditAction::make(),
-                \Filament\Actions\Action::make('maakPost')
+                Action::make('maakPost')
                     ->label('Maak post')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('primary')
@@ -132,7 +135,7 @@ class SocialIdeaResource extends Resource
                         SocialPost::create([
                             'platform' => $record->platform,
                             'status' => 'concept',
-                            'caption' => $record->title . "\n\n" . ($record->notes ?? ''),
+                            'caption' => $record->title."\n\n".($record->notes ?? ''),
                             'pillar_id' => $record->pillar_id,
                             'hashtags' => $record->tags,
                         ]);
@@ -145,6 +148,11 @@ class SocialIdeaResource extends Resource
                             ->send();
                     }),
                 DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

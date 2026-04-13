@@ -22,8 +22,7 @@ class ClusterKeywordsJob implements ShouldQueue
     public function __construct(
         public string $locale,
         public string $mode = 'full',
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

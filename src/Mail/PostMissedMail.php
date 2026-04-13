@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Mail;
 
+use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Queue\SerializesModels;
 
 class PostMissedMail extends Mailable
 {
@@ -17,8 +17,7 @@ class PostMissedMail extends Mailable
     public function __construct(
         public SocialPost $post,
         public string $siteName,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

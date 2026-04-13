@@ -2,11 +2,11 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
+use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 
 class GenerateImageAction extends Action
 {

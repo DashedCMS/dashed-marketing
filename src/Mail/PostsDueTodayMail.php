@@ -4,10 +4,10 @@ namespace Dashed\DashedMarketing\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Support\Collection;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class PostsDueTodayMail extends Mailable
 {
@@ -17,8 +17,7 @@ class PostsDueTodayMail extends Mailable
     public function __construct(
         public Collection $posts,
         public string $siteName,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

@@ -6,8 +6,9 @@ use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class);
+uses(TestCase::class);
 
 beforeEach(function () {
     Schema::dropIfExists('dashed__content_cluster_keyword');

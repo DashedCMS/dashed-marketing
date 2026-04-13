@@ -62,11 +62,11 @@ class KeywordResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('keyword')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('locale')->badge(),
+                Tables\Columns\TextColumn::make('locale')->badge()->sortable(),
                 Tables\Columns\TextColumn::make('volume_exact')->label('Volume')->sortable(),
-                Tables\Columns\TextColumn::make('search_intent')->badge()->label('Intent'),
-                Tables\Columns\TextColumn::make('difficulty')->badge(),
-                Tables\Columns\TextColumn::make('cpc')->money('eur'),
+                Tables\Columns\TextColumn::make('search_intent')->badge()->label('Intent')->sortable(),
+                Tables\Columns\TextColumn::make('difficulty')->badge()->sortable(),
+                Tables\Columns\TextColumn::make('cpc')->money('eur')->sortable(),
                 Tables\Columns\TextColumn::make('contentClusters.name')->label('Cluster')->badge(),
                 Tables\Columns\TextColumn::make('matched_subject_type')->label('Match')->formatStateUsing(
                     fn ($state, $record) => $state ? class_basename($state).' #'.$record->matched_subject_id : '—',
@@ -81,12 +81,46 @@ class KeywordResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(['new' => 'Nieuw', 'approved' => 'Goedgekeurd', 'rejected' => 'Afgewezen']),
                 Tables\Filters\SelectFilter::make('search_intent')
+                    ->label('Intent')
                     ->options([
                         'informational' => 'Informational',
                         'commercial' => 'Commercial',
                         'transactional' => 'Transactional',
                         'navigational' => 'Navigational',
                     ]),
+                Tables\Filters\SelectFilter::make('difficulty')
+                    ->options([
+                        'easy' => 'Easy',
+                        'medium' => 'Medium',
+                        'hard' => 'Hard',
+                    ]),
+                Tables\Filters\Filter::make('cpc')
+                    ->schema([
+                        TextInput::make('cpc_min')->label('CPC vanaf')->numeric()->step(0.01),
+                        TextInput::make('cpc_max')->label('CPC tot')->numeric()->step(0.01),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when(
+                                filled($data['cpc_min'] ?? null),
+                                fn ($q) => $q->where('cpc', '>=', (float) $data['cpc_min']),
+                            )
+                            ->when(
+                                filled($data['cpc_max'] ?? null),
+                                fn ($q) => $q->where('cpc', '<=', (float) $data['cpc_max']),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if (filled($data['cpc_min'] ?? null)) {
+                            $indicators[] = 'CPC vanaf €'.number_format((float) $data['cpc_min'], 2);
+                        }
+                        if (filled($data['cpc_max'] ?? null)) {
+                            $indicators[] = 'CPC tot €'.number_format((float) $data['cpc_max'], 2);
+                        }
+
+                        return $indicators;
+                    }),
             ])
             ->recordActions([
                 Actions\EditAction::make(),
@@ -109,7 +143,6 @@ class KeywordResource extends Resource
     {
         return [
             'index' => Pages\ListKeywords::route('/'),
-            'import' => Pages\ImportKeywords::route('/import'),
             'generate' => Pages\GenerateDrafts::route('/generate'),
         ];
     }

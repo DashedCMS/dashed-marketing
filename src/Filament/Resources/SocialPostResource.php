@@ -2,34 +2,37 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Filament\Forms\Components\DateTimePicker;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class SocialPostResource extends Resource
 {
     protected static ?string $model = SocialPost::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-share';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-share';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
 
     protected static ?string $navigationLabel = 'Social posts';
 
@@ -161,7 +164,7 @@ class SocialPostResource extends Resource
             ->defaultSort('scheduled_at', 'desc')
             ->recordActions([
                 EditAction::make(),
-                \Filament\Actions\Action::make('markPosted')
+                Action::make('markPosted')
                     ->label('Markeer als gepost')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -176,6 +179,11 @@ class SocialPostResource extends Resource
                         $record->markAsPosted($data['post_url'] ?? null);
                     }),
                 DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

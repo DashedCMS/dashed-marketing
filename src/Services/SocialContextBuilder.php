@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Illuminate\Database\Eloquent\Model;
-use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Models\SocialPillar;
-use Dashed\DashedMarketing\Models\SocialHoliday;
+use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SocialCampaign;
+use Dashed\DashedMarketing\Models\SocialHoliday;
+use Dashed\DashedMarketing\Models\SocialPillar;
+use Illuminate\Database\Eloquent\Model;
 
 class SocialContextBuilder
 {
@@ -60,7 +60,7 @@ class SocialContextBuilder
         }
 
         if ($parts) {
-            $sections[] = "## Merk\n" . implode("\n", $parts);
+            $sections[] = "## Merk\n".implode("\n", $parts);
         }
     }
 
@@ -74,7 +74,7 @@ class SocialContextBuilder
                     fn ($p) => config("dashed-marketing.platforms.{$p}.label", $p),
                     $platformList
                 );
-                $sections[] = "## Actieve platforms\n" . implode(', ', $labels);
+                $sections[] = "## Actieve platforms\n".implode(', ', $labels);
             }
         }
     }
@@ -87,7 +87,7 @@ class SocialContextBuilder
         }
 
         $lines = $pillars->map(fn ($p) => "- {$p->name} ({$p->target_percentage}%): {$p->description}");
-        $sections[] = "## Content pijlers\n" . $lines->implode("\n");
+        $sections[] = "## Content pijlers\n".$lines->implode("\n");
     }
 
     private function addCampaigns(array &$sections): void
@@ -98,7 +98,7 @@ class SocialContextBuilder
         }
 
         $lines = $campaigns->map(fn ($c) => "- {$c->name} ({$c->start_date->format('d/m')} t/m {$c->end_date->format('d/m')}): {$c->focus}");
-        $sections[] = "## Actieve campagnes\n" . $lines->implode("\n");
+        $sections[] = "## Actieve campagnes\n".$lines->implode("\n");
     }
 
     private function addKeywords(array &$sections, ?Model $subject): void
@@ -108,7 +108,7 @@ class SocialContextBuilder
             return;
         }
 
-        $sections[] = "## Goedgekeurde keywords\n" . $keywords->implode(', ');
+        $sections[] = "## Goedgekeurde keywords\n".$keywords->implode(', ');
     }
 
     private function addHolidays(array &$sections): void
@@ -119,13 +119,13 @@ class SocialContextBuilder
         }
 
         $lines = $holidays->map(fn ($h) => "- {$h->date->format('d/m')}: {$h->name}");
-        $sections[] = "## Komende feestdagen\n" . $lines->implode("\n");
+        $sections[] = "## Komende feestdagen\n".$lines->implode("\n");
     }
 
     private function addVisitableModels(array &$sections, ?Model $subject): void
     {
         if ($subject) {
-            $sections[] = "## Onderwerp\n" . $this->serializeModel($subject);
+            $sections[] = "## Onderwerp\n".$this->serializeModel($subject);
 
             return;
         }
@@ -152,7 +152,7 @@ class SocialContextBuilder
         }
 
         if ($items) {
-            $sections[] = "## Beschikbare content\n" . implode("\n", $items);
+            $sections[] = "## Beschikbare content\n".implode("\n", $items);
         }
     }
 
@@ -167,11 +167,11 @@ class SocialContextBuilder
             "Platform: {$rules['label']}",
             "Caption lengte: {$rules['caption_min']}-{$rules['caption_max']} tekens",
             "Hashtags: {$rules['hashtags_min']}-{$rules['hashtags_max']}",
-            "Beeldverhouding: " . implode(' of ', $rules['ratios']),
+            'Beeldverhouding: '.implode(' of ', $rules['ratios']),
             "Tips: {$rules['tips']}",
         ];
 
-        $sections[] = "## Platform regels\n" . implode("\n", $parts);
+        $sections[] = "## Platform regels\n".implode("\n", $parts);
     }
 
     private function serializeModel(Model $model): string
@@ -189,9 +189,9 @@ class SocialContextBuilder
             return true;
         }, ARRAY_FILTER_USE_BOTH);
 
-        $rawName = $filtered['name'] ?? $filtered['title'] ?? class_basename($model) . " #{$model->id}";
-        $name = is_array($rawName) ? (reset($rawName) ?: class_basename($model) . " #{$model->id}") : $rawName;
+        $rawName = $filtered['name'] ?? $filtered['title'] ?? class_basename($model)." #{$model->id}";
+        $name = is_array($rawName) ? (reset($rawName) ?: class_basename($model)." #{$model->id}") : $rawName;
 
-        return "- {$name}: " . json_encode($filtered, JSON_UNESCAPED_UNICODE);
+        return "- {$name}: ".json_encode($filtered, JSON_UNESCAPED_UNICODE);
     }
 }

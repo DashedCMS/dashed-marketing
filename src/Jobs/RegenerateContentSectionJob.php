@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Services\ArticleSanitizer;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class RegenerateContentSectionJob implements ShouldQueue
 {
@@ -21,8 +21,7 @@ class RegenerateContentSectionJob implements ShouldQueue
     public function __construct(
         public int $draftId,
         public string $sectionId,
-    ) {
-    }
+    ) {}
 
     public function handle(ArticleSanitizer $sanitizer): void
     {

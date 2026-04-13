@@ -2,16 +2,25 @@
 
 namespace Dashed\DashedMarketing;
 
-use Spatie\LaravelPackageTools\Package;
-use Illuminate\Console\Scheduling\Schedule;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
+use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
 use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
+use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
 use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
-use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
-use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
-use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Facades\ContentTemplates;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
+use Dashed\DashedMarketing\Managers\KeywordDataManager;
+use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
+use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
+use Dashed\DashedMarketing\Templates\LandingPageTemplate;
+use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
+use Dashed\DashedMarketing\Templates\ProductTemplate;
+use Illuminate\Console\Scheduling\Schedule;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class DashedMarketingServiceProvider extends PackageServiceProvider
 {
@@ -19,7 +28,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
     public function bootingPackage()
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('social:notify-due')->dailyAt('08:00');
@@ -30,11 +39,11 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         });
 
         cms()->builder('plugins', [
-            new DashedMarketingPlugin(),
+            new DashedMarketingPlugin,
         ]);
 
         cms()->registerSettingsPage(
-            \Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage::class,
+            SocialSettingsPage::class,
             'Social media',
             'share',
             'Social media platforms, AI context en notificaties'
@@ -54,24 +63,24 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
             'edit_seo_improvement' => 'SEO verbeteringen bewerken',
         ]);
 
-        if (class_exists(\Dashed\DashedMarketing\Templates\BlogArticleTemplate::TARGET)) {
-            \Dashed\DashedMarketing\Facades\ContentTemplates::register('blog', \Dashed\DashedMarketing\Templates\BlogArticleTemplate::class);
+        if (class_exists(BlogArticleTemplate::TARGET)) {
+            ContentTemplates::register('blog', BlogArticleTemplate::class);
         }
-        if (class_exists(\Dashed\DashedMarketing\Templates\LandingPageTemplate::TARGET)) {
-            \Dashed\DashedMarketing\Facades\ContentTemplates::register('landing_page', \Dashed\DashedMarketing\Templates\LandingPageTemplate::class);
+        if (class_exists(LandingPageTemplate::TARGET)) {
+            ContentTemplates::register('landing_page', LandingPageTemplate::class);
         }
-        if (class_exists(\Dashed\DashedMarketing\Templates\ProductCategoryTemplate::TARGET)) {
-            \Dashed\DashedMarketing\Facades\ContentTemplates::register('category', \Dashed\DashedMarketing\Templates\ProductCategoryTemplate::class);
+        if (class_exists(ProductCategoryTemplate::TARGET)) {
+            ContentTemplates::register('category', ProductCategoryTemplate::class);
         }
-        if (class_exists(\Dashed\DashedMarketing\Templates\ProductTemplate::TARGET)) {
-            \Dashed\DashedMarketing\Facades\ContentTemplates::register('product', \Dashed\DashedMarketing\Templates\ProductTemplate::class);
+        if (class_exists(ProductTemplate::TARGET)) {
+            ContentTemplates::register('product', ProductTemplate::class);
         }
 
         try {
             foreach ((array) cms()->builder('routeModels') as $entry) {
                 $class = is_array($entry) ? ($entry['class'] ?? null) : null;
                 if ($class && class_exists($class)) {
-                    $class::observe(\Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver::class);
+                    $class::observe(VisitableModelEmbeddingObserver::class);
                 }
             }
         } catch (\Throwable) {
@@ -98,17 +107,17 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
     {
         $keywordResearchAdapter = config('dashed-marketing.adapters.keyword_research');
         if ($keywordResearchAdapter) {
-            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter());
+            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter);
         }
 
         $this->app->bind(PublishingAdapter::class, function () {
             return new (config('dashed-marketing.adapters.publishing'));
         });
 
-        $this->app->singleton(\Dashed\DashedMarketing\Managers\KeywordDataManager::class, function () {
-            return new \Dashed\DashedMarketing\Managers\KeywordDataManager();
+        $this->app->singleton(KeywordDataManager::class, function () {
+            return new KeywordDataManager;
         });
 
-        $this->app->singleton(\Dashed\DashedMarketing\Managers\ContentTemplateRegistry::class);
+        $this->app->singleton(ContentTemplateRegistry::class);
     }
 }

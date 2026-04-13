@@ -3,10 +3,10 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 // TODO: Fully implement — migrated from dashed-articles AutoKeywordDiscoveryJob.
 // Update namespace and model references to Dashed\DashedMarketing\*.
@@ -20,8 +20,7 @@ class AutoKeywordDiscoveryJob implements ShouldQueue
     public function __construct(
         public string $siteId,
         public string $locale,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Mail;
 
+use Dashed\DashedMarketing\Models\SocialHoliday;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Dashed\DashedMarketing\Models\SocialHoliday;
+use Illuminate\Queue\SerializesModels;
 
 class HolidayReminderMail extends Mailable
 {
@@ -17,13 +17,12 @@ class HolidayReminderMail extends Mailable
     public function __construct(
         public SocialHoliday $holiday,
         public string $siteName,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
         $daysUntil = now()->startOfDay()->diffInDays($this->holiday->date->startOfDay());
-        $when = $daysUntil === 0 ? 'vandaag' : "over {$daysUntil} " . ($daysUntil === 1 ? 'dag' : 'dagen');
+        $when = $daysUntil === 0 ? 'vandaag' : "over {$daysUntil} ".($daysUntil === 1 ? 'dag' : 'dagen');
 
         return new Envelope(
             subject: "[{$this->siteName}] Herinnering: {$this->holiday->name} is {$when}",
