@@ -54,10 +54,10 @@ class GenerateBulkIdeasAction extends Action
                     (int) $data['count'],
                     $data['focus'] ?? null,
                     auth()->id(),
-                )->onQueue('ai');
+                );
 
                 Notification::make()
-                    ->title('Genereren gestart — ideeën verschijnen zodra de job klaar is')
+                    ->title('Genereren gestart - ideeën verschijnen zodra de AI assistent klaar is')
                     ->success()
                     ->send();
             });

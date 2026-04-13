@@ -6,9 +6,10 @@ use BackedEnum;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\EditSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\ListSocialIdeas;
+use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedMarketing\Jobs\GenerateBulkPostsFromIdeasJob;
+use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
 use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Models\SocialPost;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -134,21 +135,45 @@ class SocialIdeaResource extends Resource
                 EditAction::make(),
                 Action::make('maakPost')
                     ->label('Maak post')
-                    ->icon('heroicon-o-arrow-right-circle')
+                    ->icon('heroicon-o-sparkles')
                     ->color('primary')
                     ->action(function (SocialIdea $record): void {
-                        SocialPost::create([
-                            'platform' => $record->platform,
-                            'status' => 'concept',
-                            'caption' => $record->title."\n\n".($record->notes ?? ''),
-                            'pillar_id' => $record->pillar_id,
-                            'hashtags' => $record->tags,
-                        ]);
+                        $platform = $record->platform ?: array_key_first(config('dashed-marketing.platforms', []) ?? []);
+
+                        if (! $platform) {
+                            Notification::make()
+                                ->title('Geen platform geconfigureerd')
+                                ->body('Stel eerst een platform in op het idee of in de marketing config.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $extraInstructions = trim(
+                            'Gebruik dit idee als basis:'
+                            ."\nTitel: ".($record->title ?? '')
+                            .($record->notes ? "\nNotities: ".$record->notes : '')
+                            .(! empty($record->tags) ? "\nTags: ".implode(', ', (array) $record->tags) : '')
+                        );
+
+                        GenerateSocialPostJob::dispatch(
+                            platform: $platform,
+                            subject: $record,
+                            pillarId: $record->pillar_id,
+                            campaignId: null,
+                            toneOverride: null,
+                            extraInstructions: $extraInstructions,
+                            includeKeywords: false,
+                            scheduledAt: null,
+                            siteId: $record->site_id ?: Sites::getActive(),
+                        );
 
                         $record->update(['status' => 'in_production']);
 
                         Notification::make()
-                            ->title('Post aangemaakt als concept')
+                            ->title('Post generatie gestart')
+                            ->body('De AI maakt de post op de achtergrond aan.')
                             ->success()
                             ->send();
                     }),
@@ -164,7 +189,7 @@ class SocialIdeaResource extends Resource
                         ->modalDescription('Voor elk geselecteerd idee wordt een post gegenereerd via AI. Dit draait in de achtergrond.')
                         ->action(function (\Illuminate\Support\Collection $records): void {
                             $ids = $records->pluck('id')->all();
-                            GenerateBulkPostsFromIdeasJob::dispatch($ids, auth()->id())->onQueue('ai');
+                            GenerateBulkPostsFromIdeasJob::dispatch($ids, auth()->id());
 
                             Notification::make()
                                 ->title(count($ids).' posts gepland')

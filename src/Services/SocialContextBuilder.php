@@ -27,7 +27,41 @@ class SocialContextBuilder
             $this->addPlatformRules($sections, $platform);
         }
 
+        $this->addStyleGuide($sections);
+
         return implode("\n\n", array_filter($sections));
+    }
+
+    private function addStyleGuide(array &$sections): void
+    {
+        $lines = [
+            'Schrijf alsof een ervaren Nederlandse marketeer het typt, niet een AI.',
+            '',
+            'NIET gebruiken:',
+            '- Em-dashes (—). Gebruik een komma, punt, of haakjes.',
+            '- En-dashes (–) als koppelteken. Gebruik een gewoon streepje (-).',
+            '- "Niet alleen X, maar ook Y" constructies.',
+            '- Openers als "In de wereld van...", "Stel je voor...", "Ontdek...", "Wist je dat...".',
+            '- Zinnen die beginnen met "Bovendien", "Daarnaast", "Verder", "Kortom", "Al met al".',
+            '- Hol jargon: "naadloos", "krachtig", "ongekend", "ultieme", "revolutionair", "next level", "unlock", "ontketenen", "benutten", "tillen naar een hoger niveau", "game-changer", "boost".',
+            '- Drie-in-een-rijtjes met parallelle structuur ("sneller, slimmer, sterker").',
+            '- Rhetorische vragen als opener.',
+            '- Uitroeptekens tenzij de context het echt vraagt (max 1 per post).',
+            '- Emoji-spam. Max 1-2 emoji per post, alleen als ze iets toevoegen.',
+            '- Geforceerd enthousiasme of "salesy" toon.',
+            '- Holle afsluiters als "Klaar om te beginnen?", "Wat wacht je nog op?".',
+            '- Woorden die AI verraden: "dive in", "delve", "explore", "embark", "navigate the landscape", "in het huidige digitale landschap".',
+            '',
+            'WEL doen:',
+            '- Kort, concreet, direct. Spreektaal boven schrijftaal.',
+            '- Gewone leestekens: komma, punt, dubbele punt, haakjes.',
+            '- Laat één idee per zin landen. Varieer zinslengte.',
+            '- Specifieke details (getallen, namen, plekken) boven vage claims.',
+            '- Actieve vorm. Schrijf "wij doen X", niet "X wordt gedaan".',
+            '- Als een zin met een AI-woord uit bovenstaande lijst begint, herschrijf hem.',
+        ];
+
+        $sections[] = "## Stijlregels (menselijke toon)\n".implode("\n", $lines);
     }
 
     private function addBrandInfo(array &$sections): void
@@ -39,14 +73,14 @@ class SocialContextBuilder
             $parts[] = "Merk: {$siteName}";
         }
 
-        $description = Customsetting::get('claude_brand_description');
-        if ($description) {
-            $parts[] = "Merkbeschrijving: {$description}";
+        $brandStory = Customsetting::get('ai_brand_story');
+        if ($brandStory) {
+            $parts[] = "Merkverhaal: {$brandStory}";
         }
 
-        $toneOfVoice = Customsetting::get('claude_tone_voice');
-        if ($toneOfVoice) {
-            $parts[] = "Toon en schrijfstijl: {$toneOfVoice}";
+        $writingStyle = Customsetting::get('ai_writing_style');
+        if ($writingStyle) {
+            $parts[] = "Schrijfstijl: {$writingStyle}";
         }
 
         $targetAudience = Customsetting::get('social_target_audience');

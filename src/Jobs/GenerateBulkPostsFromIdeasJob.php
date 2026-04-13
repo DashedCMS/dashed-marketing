@@ -57,7 +57,7 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
                 includeKeywords: false,
                 scheduledAt: null,
                 siteId: $idea->site_id ?: Sites::getActive(),
-            )->onQueue('ai');
+            );
 
             $idea->update(['status' => 'in_production']);
 

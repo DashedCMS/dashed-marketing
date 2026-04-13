@@ -14,6 +14,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -21,9 +22,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class SocialPostResource extends Resource
@@ -80,6 +83,24 @@ class SocialPostResource extends Resource
                         TextInput::make('image_prompt')
                             ->label('Afbeelding prompt (AI)')
                             ->columnSpanFull(),
+                        Placeholder::make('generated_image')
+                            ->label('Gegenereerde afbeelding')
+                            ->content(function (?SocialPost $record): HtmlString|string {
+                                if (! $record || ! $record->image_path) {
+                                    return '—';
+                                }
+
+                                $url = str_starts_with($record->image_path, 'http')
+                                    ? $record->image_path
+                                    : asset($record->image_path);
+
+                                return new HtmlString(
+                                    '<img src="'.e($url).'" alt="Gegenereerde afbeelding" '
+                                    .'style="max-width:320px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);" />'
+                                );
+                            })
+                            ->visible(fn (?SocialPost $record) => $record && (bool) $record->image_path)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
@@ -129,6 +150,13 @@ class SocialPostResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('image_path')
+                    ->label('')
+                    ->height(48)
+                    ->square()
+                    ->getStateUsing(fn (SocialPost $record) => $record->image_path
+                        ? (str_starts_with($record->image_path, 'http') ? $record->image_path : asset($record->image_path))
+                        : null),
                 TextColumn::make('platform')
                     ->label('Platform')
                     ->formatStateUsing(fn ($state) => config("dashed-marketing.platforms.{$state}.label", $state))
