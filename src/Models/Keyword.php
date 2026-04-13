@@ -19,6 +19,21 @@ class Keyword extends Model
         'volume_indication',
         'status',
         'notes',
+        'volume_exact',
+        'cpc',
+        'source',
+        'enriched_at',
+        'matched_subject_type',
+        'matched_subject_id',
+        'match_score',
+        'match_strategy',
+    ];
+
+    protected $casts = [
+        'volume_exact' => 'integer',
+        'cpc' => 'decimal:2',
+        'match_score' => 'decimal:3',
+        'enriched_at' => 'datetime',
     ];
 
     public function keywordResearch(): BelongsTo
@@ -98,5 +113,10 @@ class Keyword extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    public function matchedSubject()
+    {
+        return $this->morphTo('matched_subject', 'matched_subject_type', 'matched_subject_id');
     }
 }
