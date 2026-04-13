@@ -15,7 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Filters\SelectFilter;
 use Dashed\DashedMarketing\Models\SeoImprovement;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\EditSeoImprovement;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ReviewSeoImprovement;
 use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ListSeoImprovements;
 use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\CreateSeoImprovement;
 
@@ -112,7 +112,7 @@ class SeoImprovementResource extends Resource
         return [
             'index' => ListSeoImprovements::route('/'),
             'create' => CreateSeoImprovement::route('/create'),
-            'edit' => EditSeoImprovement::route('/{record}/edit'),
+            'edit' => ReviewSeoImprovement::route('/{record}/review'),
         ];
     }
 }
