@@ -10,7 +10,19 @@ class SeoImprovement extends Model
     protected $table = 'dashed__seo_improvements';
 
     protected $fillable = [
+        'subject_type',
+        'subject_id',
+        'status',
+        'keyword_research',
+        'analysis_summary',
+        'field_proposals',
+        'block_proposals',
         'block_proposals_status',
+        'error_message',
+        'progress_message',
+        'created_by',
+        'applied_by',
+        'applied_at',
     ];
 
     protected $casts = [
