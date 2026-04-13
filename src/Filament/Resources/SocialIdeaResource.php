@@ -6,9 +6,11 @@ use BackedEnum;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\EditSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\ListSocialIdeas;
+use Dashed\DashedMarketing\Jobs\GenerateBulkPostsFromIdeasJob;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -151,6 +153,23 @@ class SocialIdeaResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('generate_posts')
+                        ->label('Genereer posts van selectie')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->modalDescription('Voor elk geselecteerd idee wordt een post gegenereerd via AI. Dit draait in de achtergrond.')
+                        ->action(function (\Illuminate\Support\Collection $records): void {
+                            $ids = $records->pluck('id')->all();
+                            GenerateBulkPostsFromIdeasJob::dispatch($ids, auth()->id())->onQueue('ai');
+
+                            Notification::make()
+                                ->title(count($ids).' posts gepland')
+                                ->body('Je krijgt een notificatie zodra ze klaar zijn.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
