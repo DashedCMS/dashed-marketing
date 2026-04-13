@@ -209,11 +209,9 @@ class SocialIdeaResource extends Resource
                             .(! empty($record->tags) ? "\nTags: ".implode(', ', (array) $record->tags) : '')
                         );
 
-                        $subject = $record->subject ?? $record;
-
                         GenerateSocialPostJob::dispatch(
                             platform: $platform,
-                            subject: $subject,
+                            subject: $record->subject,
                             pillarId: $record->pillar_id,
                             campaignId: null,
                             toneOverride: null,

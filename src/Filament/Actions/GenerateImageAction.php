@@ -20,15 +20,11 @@ class GenerateImageAction extends Action
 
     private function resolveSubject($record, ?string $type, $id)
     {
-        if ($record?->subject) {
-            return $record->subject;
-        }
-
         if ($type && $id && class_exists($type)) {
             return $type::find($id);
         }
 
-        return null;
+        return $record?->subject;
     }
 
     /**
@@ -98,21 +94,22 @@ class GenerateImageAction extends Action
 
                 Select::make('subject_type')
                     ->label('Onderwerp type')
-                    ->helperText('Geen onderwerp gekoppeld aan deze post — kies hier een type om zijn afbeeldingen te gebruiken.')
+                    ->helperText('Kies het type om een gekoppeld item en zijn afbeeldingen te gebruiken.')
                     ->options($this->routeModelOptions())
+                    ->default(fn () => $record?->subject_type)
                     ->nullable()
                     ->live()
                     ->afterStateUpdated(function (callable $set) {
                         $set('subject_id', null);
                         $set('subject_image', null);
-                    })
-                    ->visible(fn () => ! $record?->subject),
+                    }),
 
                 Select::make('subject_id')
                     ->label('Specifiek onderwerp')
                     ->nullable()
                     ->searchable()
                     ->live()
+                    ->default(fn () => $record?->subject_id)
                     ->getSearchResultsUsing(function (string $search, callable $get) {
                         $class = $get('subject_type');
                         if (! $class || ! class_exists($class)) {
@@ -144,7 +141,7 @@ class GenerateImageAction extends Action
                         return $item ? ($item->name ?? $item->title ?? "#{$item->getKey()}") : null;
                     })
                     ->afterStateUpdated(fn (callable $set) => $set('subject_image', null))
-                    ->visible(fn (callable $get) => ! $record?->subject && (bool) $get('subject_type')),
+                    ->visible(fn (callable $get) => (bool) $get('subject_type')),
 
                 Select::make('subject_image')
                     ->label('Kies afbeelding uit onderwerp')
@@ -202,13 +199,15 @@ class GenerateImageAction extends Action
                     return;
                 }
 
-                if (! $record->subject && ! empty($data['subject_type']) && ! empty($data['subject_id'])) {
+                if (! empty($data['subject_type']) && ! empty($data['subject_id'])) {
                     $class = $data['subject_type'];
                     if (class_exists($class) && $class::query()->whereKey($data['subject_id'])->exists()) {
-                        $record->update([
-                            'subject_type' => $class,
-                            'subject_id' => $data['subject_id'],
-                        ]);
+                        if ((string) $record->subject_type !== (string) $class || (int) $record->subject_id !== (int) $data['subject_id']) {
+                            $record->update([
+                                'subject_type' => $class,
+                                'subject_id' => $data['subject_id'],
+                            ]);
+                        }
                     }
                 }
 
