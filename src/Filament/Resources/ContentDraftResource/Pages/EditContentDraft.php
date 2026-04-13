@@ -2,9 +2,12 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
+use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Jobs\RegenerateContentSectionJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Filament\Actions;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Str;
@@ -70,6 +73,84 @@ class EditContentDraft extends Page
         }
         [$this->sections[$index], $this->sections[$swapWith]] = [$this->sections[$swapWith], $this->sections[$index]];
         $this->autosave();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('apply_as_new')
+                ->label('Apply als nieuwe entity')
+                ->icon('heroicon-o-check')
+                ->visible(fn () => $this->record->subject === null)
+                ->schema([
+                    Select::make('target_class')
+                        ->label('Target')
+                        ->options(function () {
+                            try {
+                                $routeModels = (array) cms()->builder('routeModels');
+                            } catch (\Throwable) {
+                                return [];
+                            }
+                            $options = [];
+                            foreach ($routeModels as $entry) {
+                                $class = is_array($entry) ? ($entry['class'] ?? null) : (is_string($entry) ? $entry : null);
+                                $name = is_array($entry) ? ($entry['name'] ?? $class) : $class;
+                                if ($class && class_exists($class)) {
+                                    $options[$class] = $name;
+                                }
+                            }
+
+                            return $options;
+                        })
+                        ->required(),
+                ])
+                ->action(function (array $data) {
+                    $cluster = $this->record->contentCluster ?? null;
+                    if ($cluster === null) {
+                        Notification::make()->title('Draft heeft geen cluster')->danger()->send();
+
+                        return;
+                    }
+
+                    if (! ContentTemplates::has($cluster->content_type)) {
+                        Notification::make()->title('Geen template geregistreerd voor dit content type')->danger()->send();
+
+                        return;
+                    }
+
+                    $template = ContentTemplates::make($cluster->content_type);
+                    $targetClass = $data['target_class'];
+
+                    $new = new $targetClass();
+                    $new->name = $this->record->keyword;
+                    $new->slug = Str::slug($this->record->keyword);
+                    $new->save();
+
+                    $template->applyTo($new, ['h2_sections' => $this->sections]);
+
+                    $this->record->update([
+                        'subject_type' => $targetClass,
+                        'subject_id' => $new->getKey(),
+                        'status' => 'applied',
+                        'applied_at' => now(),
+                        'applied_by' => auth()->id(),
+                    ]);
+
+                    Notification::make()
+                        ->title('Nieuwe entity aangemaakt en content toegepast')
+                        ->success()
+                        ->send();
+                }),
+
+            Actions\Action::make('reject')
+                ->label('Reject draft')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['status' => 'failed']);
+                    $this->redirect(ContentDraftResource::getUrl('index'));
+                }),
+        ];
     }
 
     protected function buildLinkCandidates(): array
