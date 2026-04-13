@@ -72,9 +72,10 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
     public function registeringPackage()
     {
-        $this->app->bind(KeywordResearchAdapter::class, function () {
-            return new (config('dashed-marketing.adapters.keyword_research'));
-        });
+        $keywordResearchAdapter = config('dashed-marketing.adapters.keyword_research');
+        if ($keywordResearchAdapter) {
+            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter());
+        }
 
         $this->app->bind(PublishingAdapter::class, function () {
             return new (config('dashed-marketing.adapters.publishing'));

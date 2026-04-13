@@ -6,6 +6,7 @@ use Filament\Panel;
 use Filament\Contracts\Plugin;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
@@ -40,6 +41,7 @@ class DashedMarketingPlugin implements Plugin
             ->pages([
                 SocialDashboardPage::class,
                 SocialCalendarPage::class,
+                SocialSettingsPage::class,
             ]);
     }
 

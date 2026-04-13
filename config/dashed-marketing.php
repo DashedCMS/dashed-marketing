@@ -2,7 +2,7 @@
 
 return [
     'adapters' => [
-        'keyword_research' => \Dashed\DashedMarketing\Adapters\ClaudeKeywordAdapter::class,
+        'keyword_research' => null,
         'publishing' => \Dashed\DashedMarketing\Adapters\ManualPublishAdapter::class,
     ],
     'platforms' => [
