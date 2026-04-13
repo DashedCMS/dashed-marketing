@@ -3,18 +3,21 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedAi\Facades\Ai;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Database\Eloquent\Model;
-use Dashed\DashedCore\Classes\ClaudeHelper;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class GenerateSocialPostJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public function __construct(
         public string $platform,
@@ -26,7 +29,8 @@ class GenerateSocialPostJob implements ShouldQueue
         public bool $includeKeywords,
         public ?string $scheduledAt,
         public string $siteId,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {
@@ -34,7 +38,7 @@ class GenerateSocialPostJob implements ShouldQueue
         $context = $contextBuilder->build($this->platform, $this->subject);
 
         $prompt = $this->buildPrompt($context);
-        $result = ClaudeHelper::runJsonPrompt($prompt);
+        $result = Ai::json($prompt);
 
         if (! $result || ! isset($result['captions'])) {
             return;

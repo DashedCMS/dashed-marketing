@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Adapters;
 
+use Dashed\DashedAi\Facades\Ai;
 use Illuminate\Support\Collection;
-use Dashed\DashedCore\Classes\ClaudeHelper;
 use Dashed\DashedMarketing\DTOs\KeywordResearchResult;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
 
@@ -12,7 +12,7 @@ class ClaudeKeywordAdapter implements KeywordResearchAdapter
     public function research(string $seedKeyword, string $locale): KeywordResearchResult
     {
         $prompt = $this->buildResearchPrompt($seedKeyword, $locale);
-        $result = ClaudeHelper::runJsonPrompt($prompt);
+        $result = Ai::json($prompt);
 
         if (! $result || ! isset($result['keywords'])) {
             return new KeywordResearchResult(keywords: [], clusters: [], error: 'Claude gaf geen bruikbaar antwoord.');
@@ -31,7 +31,7 @@ class ClaudeKeywordAdapter implements KeywordResearchAdapter
         {"suggestions": ["keyword1", "keyword2", ...]}
         PROMPT;
 
-        $result = ClaudeHelper::runJsonPrompt($prompt);
+        $result = Ai::json($prompt);
 
         return collect($result['suggestions'] ?? []);
     }
@@ -48,7 +48,7 @@ class ClaudeKeywordAdapter implements KeywordResearchAdapter
         {"volumes": {"keyword": "low|medium|high", ...}}
         PROMPT;
 
-        $result = ClaudeHelper::runJsonPrompt($prompt);
+        $result = Ai::json($prompt);
 
         return $result['volumes'] ?? [];
     }

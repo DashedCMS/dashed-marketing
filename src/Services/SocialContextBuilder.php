@@ -3,12 +3,11 @@
 namespace Dashed\DashedMarketing\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use Dashed\DashedCore\Classes\Sites;
-use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Models\SocialPillar;
-use Dashed\DashedMarketing\Models\SocialCampaign;
 use Dashed\DashedMarketing\Models\SocialHoliday;
+use Dashed\DashedMarketing\Models\SocialCampaign;
 
 class SocialContextBuilder
 {
@@ -127,6 +126,7 @@ class SocialContextBuilder
     {
         if ($subject) {
             $sections[] = "## Onderwerp\n" . $this->serializeModel($subject);
+
             return;
         }
 
@@ -185,10 +185,12 @@ class SocialContextBuilder
             if (in_array($key, ['id', 'created_at', 'updated_at', 'deleted_at', 'site_id'])) {
                 return false;
             }
+
             return true;
         }, ARRAY_FILTER_USE_BOTH);
 
-        $name = $filtered['name'] ?? $filtered['title'] ?? class_basename($model) . " #{$model->id}";
+        $rawName = $filtered['name'] ?? $filtered['title'] ?? class_basename($model) . " #{$model->id}";
+        $name = is_array($rawName) ? (reset($rawName) ?: class_basename($model) . " #{$model->id}") : $rawName;
 
         return "- {$name}: " . json_encode($filtered, JSON_UNESCAPED_UNICODE);
     }

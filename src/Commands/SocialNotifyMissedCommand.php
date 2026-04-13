@@ -5,9 +5,9 @@ namespace Dashed\DashedMarketing\Commands;
 use Illuminate\Console\Command;
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Jobs\SendSocialNotificationJob;
-use Dashed\DashedMarketing\Mail\PostMissedMail;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Mail\PostMissedMail;
+use Dashed\DashedMarketing\Jobs\SendSocialNotificationJob;
 
 class SocialNotifyMissedCommand extends Command
 {

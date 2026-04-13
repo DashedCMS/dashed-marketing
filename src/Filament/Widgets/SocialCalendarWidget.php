@@ -4,7 +4,6 @@ namespace Dashed\DashedMarketing\Filament\Widgets;
 
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
-use Illuminate\Notifications\Notification;
 use Dashed\DashedMarketing\Models\SocialPost;
 
 class SocialCalendarWidget extends Widget

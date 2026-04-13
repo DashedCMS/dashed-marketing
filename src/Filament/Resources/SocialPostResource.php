@@ -10,22 +10,18 @@ use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Tables\Columns\BadgeColumn;
 use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Models\SocialPillar;
-use Dashed\DashedMarketing\Models\SocialCampaign;
+use Filament\Forms\Components\DateTimePicker;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 
 class SocialPostResource extends Resource
 {

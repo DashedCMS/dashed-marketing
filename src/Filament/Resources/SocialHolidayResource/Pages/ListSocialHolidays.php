@@ -3,12 +3,12 @@
 namespace Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource\Pages;
 
 use Filament\Actions\Action;
+use Dashed\DashedAi\Facades\Ai;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Dashed\DashedCore\Classes\ClaudeHelper;
 use Dashed\DashedMarketing\Models\SocialHoliday;
 use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 
@@ -64,14 +64,15 @@ class ListSocialHolidays extends ListRecords
                     }
                     PROMPT;
 
-                    $result = ClaudeHelper::runJsonPrompt($prompt);
+                    $result = Ai::json($prompt);
 
                     if (! $result || empty($result['holidays'])) {
                         Notification::make()
                             ->title('Importeren mislukt')
-                            ->body('Claude gaf geen bruikbaar antwoord.')
+                            ->body('De AI provider gaf geen bruikbaar antwoord.')
                             ->danger()
                             ->send();
+
                         return;
                     }
 
@@ -86,6 +87,7 @@ class ListSocialHolidays extends ListRecords
 
                         if ($exists) {
                             $skipped++;
+
                             continue;
                         }
 

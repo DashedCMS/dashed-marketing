@@ -15,9 +15,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\ColorPicker;
 use Dashed\DashedMarketing\Models\SocialPillar;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\EditSocialPillar;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\ListSocialPillars;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\CreateSocialPillar;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\EditSocialPillar;
 
 class SocialPillarResource extends Resource
 {

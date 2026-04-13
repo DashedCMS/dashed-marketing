@@ -16,9 +16,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Filters\SelectFilter;
 use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\ListContentClusters;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
 
 class ContentClusterResource extends Resource
 {

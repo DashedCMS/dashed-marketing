@@ -7,6 +7,7 @@
     "authors": [{"name": "Robin van Maasakker", "email": "robin@dashed.nl", "role": "Developer"}],
     "require": {
         "php": "^8.4",
+        "dashed/dashed-ai": "*",
         "dashed/dashed-core": "*",
         "spatie/laravel-package-tools": "^1.16"
     },

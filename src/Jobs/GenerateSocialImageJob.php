@@ -3,17 +3,20 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
-use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Models\SocialPost;
 
 class GenerateSocialImageJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public function __construct(
         public SocialPost $post,
@@ -21,7 +24,8 @@ class GenerateSocialImageJob implements ShouldQueue
         public string $stylePreset = 'lifestyle',
         public ?string $referenceImageUrl = null,
         public float $referenceStrength = 0.7,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

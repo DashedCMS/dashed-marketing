@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Spatie\LaravelPackageTools\Package;
+use Illuminate\Console\Scheduling\Schedule;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
-use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
-use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
-use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
-use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
+use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
+use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
+use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
+use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
 
 class DashedMarketingServiceProvider extends PackageServiceProvider
 {

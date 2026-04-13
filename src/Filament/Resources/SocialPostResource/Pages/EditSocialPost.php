@@ -5,8 +5,8 @@ namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Dashed\DashedMarketing\Models\SocialPostVersion;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Actions\GenerateImageAction;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class EditSocialPost extends EditRecord
 {

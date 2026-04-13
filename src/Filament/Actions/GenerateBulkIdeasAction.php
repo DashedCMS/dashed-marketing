@@ -3,11 +3,11 @@
 namespace Dashed\DashedMarketing\Filament\Actions;
 
 use Filament\Actions\Action;
+use Dashed\DashedAi\Facades\Ai;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Dashed\DashedCore\Classes\ClaudeHelper;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
@@ -79,12 +79,12 @@ class GenerateBulkIdeasAction extends Action
                 }
                 PROMPT;
 
-                $result = ClaudeHelper::runJsonPrompt($prompt);
+                $result = Ai::json($prompt);
 
                 if (! $result || empty($result['ideas'])) {
                     Notification::make()
                         ->title('Genereren mislukt')
-                        ->body('Claude gaf geen bruikbaar antwoord. Controleer de Claude API instellingen.')
+                        ->body('De AI provider gaf geen bruikbaar antwoord. Controleer de AI instellingen.')
                         ->danger()
                         ->send();
 

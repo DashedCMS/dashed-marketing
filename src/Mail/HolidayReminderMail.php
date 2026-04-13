@@ -5,18 +5,20 @@ namespace Dashed\DashedMarketing\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
 use Dashed\DashedMarketing\Models\SocialHoliday;
 
 class HolidayReminderMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public function __construct(
         public SocialHoliday $holiday,
         public string $siteName,
-    ) {}
+    ) {
+    }
 
     public function envelope(): Envelope
     {

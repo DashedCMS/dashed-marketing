@@ -15,9 +15,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Filters\SelectFilter;
 use Dashed\DashedMarketing\Models\KeywordResearch;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\ListKeywordResearches;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\CreateKeywordResearch;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\EditKeywordResearch;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\CreateKeywordResearch;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResearchResource\Pages\ListKeywordResearches;
 
 class KeywordResearchResource extends Resource
 {

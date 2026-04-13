@@ -3,23 +3,27 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 // TODO: Fully implement — migrated from dashed-articles GenerateArticleJob.
 // Update model references to use Dashed\DashedMarketing\Models\ContentDraft.
 class GenerateContentDraftJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public function __construct(
         public int $contentDraftId,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {
-        // TODO: Implement content draft generation using ContentDraft model and ClaudeHelper.
+        // TODO: Implement content draft generation using ContentDraft model and Ai::text() / Ai::json().
     }
 }
