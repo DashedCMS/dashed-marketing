@@ -14,7 +14,6 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -135,68 +134,63 @@ class SocialPostResource extends Resource
                             ->label('Afbeelding prompt (AI)')
                             ->helperText('Wordt gebruikt door "Genereer afbeelding met AI" als basisprompt. Pas aan om volgende generaties te sturen.')
                             ->columnSpanFull(),
-                        FileUpload::make('images')
-                            ->label('Afbeeldingen')
-                            ->helperText('Upload één of meer afbeeldingen, sleep om volgorde te wijzigen. Carousel ontstaat automatisch zodra er meer dan één staat. AI-generatie via "Genereer afbeelding met AI" voegt extra afbeeldingen toe.')
-                            ->multiple()
-                            ->reorderable()
-                            ->image()
-                            ->disk('public')
-                            ->directory('social-uploaded')
-                            ->visibility('public')
-                            ->fetchFileInformation(false)
-                            ->formatStateUsing(function ($state): array {
-                                if (! is_array($state)) {
-                                    $state = $state ? [$state] : [];
-                                }
-
-                                return array_values(array_filter(array_map(
-                                    function ($p) {
-                                        if (! is_string($p) || $p === '') {
-                                            return null;
-                                        }
-
-                                        return str_starts_with($p, 'storage/') ? substr($p, 8) : $p;
-                                    },
-                                    $state,
-                                )));
-                            })
-                            ->columnSpanFull(),
                         Placeholder::make('generated_images_preview')
-                            ->label('Gegenereerde afbeeldingen')
+                            ->label('Afbeeldingen')
+                            ->helperText('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund — gebruik de knoppen om volgorde te veranderen.')
                             ->content(function (?SocialPost $record): HtmlString|string {
                                 if (! $record) {
-                                    return '—';
+                                    return new HtmlString('<em>Sla de post eerst op om afbeeldingen toe te voegen.</em>');
                                 }
 
                                 $images = is_array($record->images) ? $record->images : [];
                                 if (empty($images) && $record->image_path) {
                                     $images = [$record->image_path];
                                 }
+
                                 if (empty($images)) {
-                                    return '—';
+                                    return new HtmlString('<em>Nog geen afbeeldingen. Klik op "Upload afbeelding" of "Genereer afbeelding met AI" hierboven.</em>');
                                 }
 
-                                $html = '<div style="display:flex;flex-wrap:wrap;gap:.75rem;">';
-                                foreach ($images as $img) {
+                                $count = count($images);
+                                $html = '<div style="display:flex;flex-wrap:wrap;gap:1rem;">';
+
+                                foreach ($images as $i => $img) {
                                     if (! is_string($img) || ! $img) {
                                         continue;
                                     }
                                     $url = static::imageUrl($img);
-                                    $html .= '<img src="'.e($url).'" alt="" '
-                                        .'style="max-width:200px;max-height:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);" />';
+                                    $safe = e($url);
+
+                                    $html .= '<div style="display:flex;flex-direction:column;gap:.4rem;align-items:stretch;width:200px;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:.6rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);">';
+                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" style="display:block;">';
+                                    $html .= '<img src="'.$safe.'" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:6px;" />';
+                                    $html .= '</a>';
+
+                                    $html .= '<div style="display:flex;gap:.3rem;flex-wrap:wrap;font-size:.75rem;">';
+                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:.35rem;border-radius:5px;background:#f3f4f6;text-decoration:none;color:#111;">Open ↗</a>';
+                                    $html .= '<a href="'.$safe.'" download style="flex:1;text-align:center;padding:.35rem;border-radius:5px;background:#f3f4f6;text-decoration:none;color:#111;">Download ⬇</a>';
+                                    $html .= '</div>';
+
+                                    $html .= '<div style="display:flex;gap:.3rem;flex-wrap:wrap;font-size:.75rem;">';
+                                    if ($i > 0) {
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i - 1).')" style="flex:1;padding:.35rem;border-radius:5px;background:#e5e7eb;border:0;cursor:pointer;">↑</button>';
+                                    } else {
+                                        $html .= '<span style="flex:1;padding:.35rem;border-radius:5px;background:#f9fafb;color:#9ca3af;text-align:center;">↑</span>';
+                                    }
+                                    if ($i < $count - 1) {
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i + 1).')" style="flex:1;padding:.35rem;border-radius:5px;background:#e5e7eb;border:0;cursor:pointer;">↓</button>';
+                                    } else {
+                                        $html .= '<span style="flex:1;padding:.35rem;border-radius:5px;background:#f9fafb;color:#9ca3af;text-align:center;">↓</span>';
+                                    }
+                                    $html .= '<button type="button" wire:click="deleteImage('.$i.')" wire:confirm="Weet je zeker dat je deze afbeelding wilt verwijderen?" style="flex:1;padding:.35rem;border-radius:5px;background:#fee2e2;color:#991b1b;border:0;cursor:pointer;">×</button>';
+                                    $html .= '</div>';
+
+                                    $html .= '</div>';
                                 }
+
                                 $html .= '</div>';
 
                                 return new HtmlString($html);
-                            })
-                            ->visible(function (?SocialPost $record): bool {
-                                if (! $record) {
-                                    return false;
-                                }
-                                $images = is_array($record->images) ? $record->images : [];
-
-                                return ! empty($images) || (bool) $record->image_path;
                             })
                             ->columnSpanFull(),
                     ])
