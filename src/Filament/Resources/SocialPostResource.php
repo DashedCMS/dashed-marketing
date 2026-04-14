@@ -144,17 +144,22 @@ class SocialPostResource extends Resource
                             ->disk('public')
                             ->directory('social-uploaded')
                             ->visibility('public')
-                            ->afterStateHydrated(function (FileUpload $component, $state): void {
+                            ->fetchFileInformation(false)
+                            ->formatStateUsing(function ($state): array {
                                 if (! is_array($state)) {
-                                    return;
+                                    $state = $state ? [$state] : [];
                                 }
-                                $normalized = array_map(
-                                    fn ($p) => is_string($p) && str_starts_with($p, 'storage/')
-                                        ? substr($p, 8)
-                                        : $p,
+
+                                return array_values(array_filter(array_map(
+                                    function ($p) {
+                                        if (! is_string($p) || $p === '') {
+                                            return null;
+                                        }
+
+                                        return str_starts_with($p, 'storage/') ? substr($p, 8) : $p;
+                                    },
                                     $state,
-                                );
-                                $component->state(array_values(array_filter($normalized)));
+                                )));
                             })
                             ->columnSpanFull(),
                         Placeholder::make('generated_images_preview')
