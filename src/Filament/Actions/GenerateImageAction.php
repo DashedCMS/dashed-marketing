@@ -6,8 +6,6 @@ use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
 use Dashed\DashedAi\Facades\Ai;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Actions as FormActions;
-use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -221,7 +219,7 @@ class GenerateImageAction extends Action
                     ->reorderable(false)
                     ->visible(fn (callable $get) => ! (bool) $get('same_prompt'))
                     ->headerActions([
-                        FormAction::make('aiFillPrompts')
+                        Action::make('aiFillPrompts')
                             ->label('Vul met AI')
                             ->icon('heroicon-o-sparkles')
                             ->color('info')
