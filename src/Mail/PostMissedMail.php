@@ -48,4 +48,18 @@ class PostMissedMail extends Mailable implements SendsToTelegram
             emoji: '😴',
         );
     }
+
+    public static function makeForTest(): ?self
+    {
+        $post = SocialPost::withoutGlobalScopes()->latest()->first()
+            ?? new SocialPost([
+                'caption' => 'Test post die gemist is',
+                'scheduled_at' => now()->subHours(2),
+            ]);
+
+        return new self(
+            post: $post,
+            siteName: (string) (\Dashed\DashedCore\Models\Customsetting::get('site_name') ?: config('app.name')),
+        );
+    }
 }

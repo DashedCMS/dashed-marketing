@@ -49,4 +49,18 @@ class HolidayReminderMail extends Mailable implements SendsToTelegram
             emoji: '🎉',
         );
     }
+
+    public static function makeForTest(): ?self
+    {
+        $holiday = SocialHoliday::query()->orderBy('date')->first()
+            ?? new SocialHoliday([
+                'name' => 'Test feestdag',
+                'date' => now()->addDays(7),
+            ]);
+
+        return new self(
+            holiday: $holiday,
+            siteName: (string) (\Dashed\DashedCore\Models\Customsetting::get('site_name') ?: config('app.name')),
+        );
+    }
 }

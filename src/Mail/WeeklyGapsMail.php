@@ -45,4 +45,18 @@ class WeeklyGapsMail extends Mailable implements SendsToTelegram
             emoji: '📅',
         );
     }
+
+    public static function makeForTest(): ?self
+    {
+        $emptyDates = collect([
+            now()->addDays(2)->startOfDay(),
+            now()->addDays(5)->startOfDay(),
+            now()->addDays(9)->startOfDay(),
+        ]);
+
+        return new self(
+            emptyDates: $emptyDates,
+            siteName: (string) (\Dashed\DashedCore\Models\Customsetting::get('site_name') ?: config('app.name')),
+        );
+    }
 }
