@@ -35,10 +35,11 @@ class SocialSettingsPage extends Page implements HasSchemas
 
     public function mount(): void
     {
-        $platforms = Customsetting::get('social_platforms');
+        $channels = Customsetting::get('social_channels')
+            ?: Customsetting::get('social_platforms');
 
         $this->form->fill([
-            'social_platforms' => $platforms ? (is_array($platforms) ? $platforms : json_decode($platforms, true)) : [],
+            'social_channels' => $channels ? (is_array($channels) ? $channels : json_decode($channels, true)) : [],
             'social_target_audience' => Customsetting::get('social_target_audience'),
             'social_usps' => Customsetting::get('social_usps'),
             'social_fal_api_key' => Customsetting::get('social_fal_api_key'),
@@ -86,13 +87,20 @@ class SocialSettingsPage extends Page implements HasSchemas
             config('dashed-marketing.platforms', [])
         );
 
+        $channelOptions = [];
+        foreach (config('dashed-marketing.channels', []) as $key => $channel) {
+            $accepted = $channel['accepted_types'] ?? [];
+            $channelOptions[$key] = $channel['label'].' ('.implode(', ', $accepted).')';
+        }
+
         return $schema->schema([
-            Section::make('Platforms')
+            Section::make('Actieve kanalen')
+                ->description('Vink aan welke kanalen je daadwerkelijk gebruikt. Alleen aangevinkte kanalen worden meegegeven aan de AI als context en verschijnen als selectie-optie bij nieuwe posts.')
                 ->schema([
-                    CheckboxList::make('social_platforms')
-                        ->label('Actieve platforms')
-                        ->options($platformOptions)
-                        ->columns(3),
+                    CheckboxList::make('social_channels')
+                        ->label('Kanalen')
+                        ->options($channelOptions)
+                        ->columns(2),
                 ]),
 
             Section::make('AI context')
@@ -143,7 +151,7 @@ class SocialSettingsPage extends Page implements HasSchemas
         $formData = $this->form->getState();
 
         foreach (Sites::getSites() as $site) {
-            Customsetting::set('social_platforms', json_encode($formData['social_platforms'] ?? []), $site['id']);
+            Customsetting::set('social_channels', json_encode($formData['social_channels'] ?? []), $site['id']);
             Customsetting::set('social_target_audience', $formData['social_target_audience'] ?? null, $site['id']);
             Customsetting::set('social_usps', $formData['social_usps'] ?? null, $site['id']);
             Customsetting::set('social_fal_api_key', $formData['social_fal_api_key'] ?? null, $site['id']);

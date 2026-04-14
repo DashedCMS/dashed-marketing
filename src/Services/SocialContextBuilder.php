@@ -162,17 +162,24 @@ class SocialContextBuilder
 
     private function addPlatforms(array &$sections): void
     {
-        $platforms = Customsetting::get('social_platforms');
-        if ($platforms) {
-            $platformList = is_array($platforms) ? $platforms : json_decode($platforms, true);
-            if ($platformList) {
-                $labels = array_map(
-                    fn ($p) => config("dashed-marketing.platforms.{$p}.label", $p),
-                    $platformList
-                );
-                $sections[] = "## Actieve platforms\n".implode(', ', $labels);
-            }
+        $raw = Customsetting::get('social_channels')
+            ?: Customsetting::get('social_platforms');
+        if (! $raw) {
+            return;
         }
+
+        $list = is_array($raw) ? $raw : json_decode($raw, true);
+        if (! $list) {
+            return;
+        }
+
+        $labels = array_map(
+            fn ($key) => config("dashed-marketing.channels.{$key}.label")
+                ?? config("dashed-marketing.platforms.{$key}.label", $key),
+            $list
+        );
+
+        $sections[] = "## Actieve kanalen\n".implode(', ', $labels);
     }
 
     private function addPillars(array &$sections): void
