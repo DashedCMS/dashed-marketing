@@ -153,15 +153,16 @@ class SocialPostResource extends Resource
 
                                 $count = count($images);
 
-                                $cardCls = 'flex w-52 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800';
+                                $gridCls = 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5';
+                                $cardCls = 'flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800';
                                 $thumbCls = 'block overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-gray-700';
-                                $imgCls = 'h-44 w-full object-cover transition-transform duration-200 hover:scale-105';
+                                $imgCls = 'aspect-square w-full object-cover transition-transform duration-200 hover:scale-105';
                                 $btnRowCls = 'flex gap-1 text-xs';
                                 $btnNeutralCls = 'flex-1 rounded-md bg-gray-100 px-2 py-1 text-center text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600';
                                 $btnDisabledCls = 'flex-1 select-none rounded-md bg-gray-50 px-2 py-1 text-center text-gray-300 dark:bg-gray-900/50 dark:text-gray-600';
                                 $btnDangerCls = 'flex-1 rounded-md bg-red-100 px-2 py-1 text-center text-red-800 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50';
 
-                                $html = '<div class="flex flex-wrap gap-4">';
+                                $html = '<div class="'.$gridCls.'">';
 
                                 foreach ($images as $i => $img) {
                                     if (! is_string($img) || ! $img) {
@@ -183,14 +184,14 @@ class SocialPostResource extends Resource
 
                                     $html .= '<div class="'.$btnRowCls.'">';
                                     if ($i > 0) {
-                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i - 1).')" class="'.$btnNeutralCls.'" title="Omhoog">↑</button>';
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i - 1).')" class="'.$btnNeutralCls.'" title="Naar links">←</button>';
                                     } else {
-                                        $html .= '<span class="'.$btnDisabledCls.'">↑</span>';
+                                        $html .= '<span class="'.$btnDisabledCls.'">←</span>';
                                     }
                                     if ($i < $count - 1) {
-                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i + 1).')" class="'.$btnNeutralCls.'" title="Omlaag">↓</button>';
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i + 1).')" class="'.$btnNeutralCls.'" title="Naar rechts">→</button>';
                                     } else {
-                                        $html .= '<span class="'.$btnDisabledCls.'">↓</span>';
+                                        $html .= '<span class="'.$btnDisabledCls.'">→</span>';
                                     }
                                     $html .= '<button type="button" wire:click="deleteImage('.$i.')" wire:confirm="Weet je zeker dat je deze afbeelding wilt verwijderen?" class="'.$btnDangerCls.'" title="Verwijderen">×</button>';
                                     $html .= '</div>';
