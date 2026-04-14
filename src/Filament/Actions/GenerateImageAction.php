@@ -13,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions as SchemaActions;
 use Illuminate\Support\HtmlString;
 
 class GenerateImageAction extends Action
@@ -205,9 +206,38 @@ class GenerateImageAction extends Action
                     ->required(fn (callable $get) => (bool) $get('same_prompt'))
                     ->visible(fn (callable $get) => (bool) $get('same_prompt')),
 
+                SchemaActions::make([
+                    Action::make('aiFillPrompts')
+                        ->label('Vul prompts met AI')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('info')
+                        ->visible(fn () => Ai::hasProvider())
+                        ->action(function (callable $get, callable $set) use ($record): void {
+                            $count = (int) ($get('image_count') ?: 1);
+                            $prompts = $this->generateDistinctImagePrompts($record, $count);
+
+                            if (empty($prompts)) {
+                                Notification::make()
+                                    ->title('AI gaf geen geldige prompts terug')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
+
+                            Notification::make()
+                                ->title('Prompts ingevuld')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
+
                 Repeater::make('prompts')
                     ->label('Prompts per afbeelding')
-                    ->helperText('Eén prompt per afbeelding. Klik "Vul met AI" om de lege prompts in één keer door AI te laten suggereren op basis van de caption en context.')
+                    ->helperText('Eén prompt per afbeelding. Gebruik de knop "Vul prompts met AI" hierboven om alle velden in één keer door AI te laten suggereren op basis van de caption en context.')
                     ->schema([
                         Textarea::make('text')
                             ->label('Prompt')
@@ -217,34 +247,7 @@ class GenerateImageAction extends Action
                     ->addable(false)
                     ->deletable(false)
                     ->reorderable(false)
-                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt'))
-                    ->headerActions([
-                        Action::make('aiFillPrompts')
-                            ->label('Vul met AI')
-                            ->icon('heroicon-o-sparkles')
-                            ->color('info')
-                            ->visible(fn () => Ai::hasProvider())
-                            ->action(function (callable $get, callable $set) use ($record): void {
-                                $count = (int) ($get('image_count') ?: 1);
-                                $prompts = $this->generateDistinctImagePrompts($record, $count);
-
-                                if (empty($prompts)) {
-                                    Notification::make()
-                                        ->title('AI gaf geen geldige prompts terug')
-                                        ->warning()
-                                        ->send();
-
-                                    return;
-                                }
-
-                                $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
-
-                                Notification::make()
-                                    ->title('Prompts ingevuld')
-                                    ->success()
-                                    ->send();
-                            }),
-                    ]),
+                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
 
                 Select::make('subject_type')
                     ->label('Onderwerp type')
