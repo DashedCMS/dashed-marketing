@@ -176,8 +176,12 @@ class SocialIdeaResource extends Resource
                     ->sortable(),
                 TextColumn::make('channels')
                     ->label('Kanalen')
-                    ->formatStateUsing(function ($state): string {
-                        $channels = is_array($state) ? $state : (json_decode((string) $state, true) ?: []);
+                    ->getStateUsing(function (SocialIdea $record): string {
+                        $raw = $record->channels;
+                        $channels = is_array($raw)
+                            ? $raw
+                            : (is_string($raw) ? (json_decode($raw, true) ?: []) : []);
+
                         if (empty($channels)) {
                             return '-';
                         }
