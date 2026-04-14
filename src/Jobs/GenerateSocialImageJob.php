@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class GenerateSocialImageJob implements ShouldQueue
@@ -121,15 +122,30 @@ class GenerateSocialImageJob implements ShouldQueue
 
         file_put_contents($path, $contents);
 
-        $existing = is_array($this->post->images) ? $this->post->images : [];
-        $existing[] = $filename;
+        // Wrap the append in a row lock so concurrent jobs don't overwrite
+        // each other's images array. Without this, two parallel workers each
+        // read images=[a], append their own filename, and the last write wins,
+        // losing one image.
+        DB::transaction(function () use ($filename): void {
+            $post = SocialPost::withoutGlobalScopes()
+                ->whereKey($this->post->id)
+                ->lockForUpdate()
+                ->first();
 
-        $this->post->update([
-            'images' => array_values(array_unique($existing)),
-            // Keep legacy single image_path in sync with the first image so older
-            // display code that still reads image_path keeps working.
-            'image_path' => $this->post->image_path ?: $filename,
-        ]);
+            if (! $post) {
+                return;
+            }
+
+            $existing = is_array($post->images) ? $post->images : [];
+            $existing[] = $filename;
+
+            $post->update([
+                'images' => array_values(array_unique($existing)),
+                // Keep legacy single image_path in sync with the first image so older
+                // display code that still reads image_path keeps working.
+                'image_path' => $post->image_path ?: $filename,
+            ]);
+        });
     }
 
     private function mapRatio(string $ratio): string

@@ -152,7 +152,16 @@ class SocialPostResource extends Resource
                                 }
 
                                 $count = count($images);
-                                $html = '<div style="display:flex;flex-wrap:wrap;gap:1rem;">';
+
+                                $cardCls = 'flex w-52 flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800';
+                                $thumbCls = 'block overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-gray-700';
+                                $imgCls = 'h-44 w-full object-cover transition-transform duration-200 hover:scale-105';
+                                $btnRowCls = 'flex gap-1 text-xs';
+                                $btnNeutralCls = 'flex-1 rounded-md bg-gray-100 px-2 py-1 text-center text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600';
+                                $btnDisabledCls = 'flex-1 select-none rounded-md bg-gray-50 px-2 py-1 text-center text-gray-300 dark:bg-gray-900/50 dark:text-gray-600';
+                                $btnDangerCls = 'flex-1 rounded-md bg-red-100 px-2 py-1 text-center text-red-800 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50';
+
+                                $html = '<div class="flex flex-wrap gap-4">';
 
                                 foreach ($images as $i => $img) {
                                     if (! is_string($img) || ! $img) {
@@ -161,28 +170,29 @@ class SocialPostResource extends Resource
                                     $url = static::imageUrl($img);
                                     $safe = e($url);
 
-                                    $html .= '<div style="display:flex;flex-direction:column;gap:.4rem;align-items:stretch;width:200px;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:.6rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);">';
-                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" style="display:block;">';
-                                    $html .= '<img src="'.$safe.'" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:6px;" />';
+                                    $html .= '<div class="'.$cardCls.'">';
+
+                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" class="'.$thumbCls.'">';
+                                    $html .= '<img src="'.$safe.'" alt="" class="'.$imgCls.'" />';
                                     $html .= '</a>';
 
-                                    $html .= '<div style="display:flex;gap:.3rem;flex-wrap:wrap;font-size:.75rem;">';
-                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:.35rem;border-radius:5px;background:#f3f4f6;text-decoration:none;color:#111;">Open ↗</a>';
-                                    $html .= '<a href="'.$safe.'" download style="flex:1;text-align:center;padding:.35rem;border-radius:5px;background:#f3f4f6;text-decoration:none;color:#111;">Download ⬇</a>';
+                                    $html .= '<div class="'.$btnRowCls.'">';
+                                    $html .= '<a href="'.$safe.'" target="_blank" rel="noopener" class="'.$btnNeutralCls.'">Open ↗</a>';
+                                    $html .= '<a href="'.$safe.'" download class="'.$btnNeutralCls.'">Download ⬇</a>';
                                     $html .= '</div>';
 
-                                    $html .= '<div style="display:flex;gap:.3rem;flex-wrap:wrap;font-size:.75rem;">';
+                                    $html .= '<div class="'.$btnRowCls.'">';
                                     if ($i > 0) {
-                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i - 1).')" style="flex:1;padding:.35rem;border-radius:5px;background:#e5e7eb;border:0;cursor:pointer;">↑</button>';
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i - 1).')" class="'.$btnNeutralCls.'" title="Omhoog">↑</button>';
                                     } else {
-                                        $html .= '<span style="flex:1;padding:.35rem;border-radius:5px;background:#f9fafb;color:#9ca3af;text-align:center;">↑</span>';
+                                        $html .= '<span class="'.$btnDisabledCls.'">↑</span>';
                                     }
                                     if ($i < $count - 1) {
-                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i + 1).')" style="flex:1;padding:.35rem;border-radius:5px;background:#e5e7eb;border:0;cursor:pointer;">↓</button>';
+                                        $html .= '<button type="button" wire:click="moveImage('.$i.', '.($i + 1).')" class="'.$btnNeutralCls.'" title="Omlaag">↓</button>';
                                     } else {
-                                        $html .= '<span style="flex:1;padding:.35rem;border-radius:5px;background:#f9fafb;color:#9ca3af;text-align:center;">↓</span>';
+                                        $html .= '<span class="'.$btnDisabledCls.'">↓</span>';
                                     }
-                                    $html .= '<button type="button" wire:click="deleteImage('.$i.')" wire:confirm="Weet je zeker dat je deze afbeelding wilt verwijderen?" style="flex:1;padding:.35rem;border-radius:5px;background:#fee2e2;color:#991b1b;border:0;cursor:pointer;">×</button>';
+                                    $html .= '<button type="button" wire:click="deleteImage('.$i.')" wire:confirm="Weet je zeker dat je deze afbeelding wilt verwijderen?" class="'.$btnDangerCls.'" title="Verwijderen">×</button>';
                                     $html .= '</div>';
 
                                     $html .= '</div>';
