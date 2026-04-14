@@ -24,6 +24,7 @@ class GenerateSocialImageJob implements ShouldQueue
         public string $stylePreset = 'lifestyle',
         public ?string $referenceImageUrl = null,
         public float $referenceStrength = 0.7,
+        public ?string $promptOverride = null,
     ) {}
 
     public function handle(): void
@@ -31,13 +32,15 @@ class GenerateSocialImageJob implements ShouldQueue
         $apiKey = Customsetting::get('fal_api_key', $this->post->site_id)
             ?: Customsetting::get('social_fal_api_key', $this->post->site_id);
 
-        if (! $apiKey || ! $this->post->image_prompt) {
+        $prompt = $this->promptOverride ?: $this->post->image_prompt;
+
+        if (! $apiKey || ! $prompt) {
             return;
         }
 
         [$endpoint, $payload] = $this->referenceImageUrl
-            ? $this->buildKontextRequest()
-            : $this->buildFluxDevRequest();
+            ? $this->buildKontextRequest($prompt)
+            : $this->buildFluxDevRequest($prompt);
 
         $response = Http::withHeaders([
             'Authorization' => "Key {$apiKey}",
@@ -57,12 +60,12 @@ class GenerateSocialImageJob implements ShouldQueue
      *
      * @return array{0: string, 1: array}
      */
-    private function buildFluxDevRequest(): array
+    private function buildFluxDevRequest(string $prompt): array
     {
         return [
             'https://fal.run/fal-ai/flux/dev',
             [
-                'prompt' => $this->post->image_prompt,
+                'prompt' => $prompt,
                 'image_size' => $this->mapRatio($this->ratio),
                 'num_images' => 1,
             ],
@@ -84,9 +87,9 @@ class GenerateSocialImageJob implements ShouldQueue
      *
      * @return array{0: string, 1: array}
      */
-    private function buildKontextRequest(): array
+    private function buildKontextRequest(string $userPrompt): array
     {
-        $userPrompt = trim((string) $this->post->image_prompt);
+        $userPrompt = trim($userPrompt);
 
         $prompt = 'Keep the product in the input image 100% identical: same exact shape, silhouette, '
             .'proportions, colors, materials, textures, logos, labels and every fine detail. '

@@ -4,10 +4,16 @@ namespace Dashed\DashedMarketing\Filament\Actions;
 
 use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
+use Dashed\DashedAi\Facades\Ai;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Actions as FormActions;
+use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 
@@ -66,6 +72,67 @@ class GenerateImageAction extends Action
         return $options;
     }
 
+    /**
+     * Ask the AI provider for N distinct image prompts based on the post's caption
+     * and the post's image_prompt as the seed.
+     *
+     * @return array<int, string>
+     */
+    private function generateDistinctImagePrompts($record, int $count): array
+    {
+        if (! $record || $count < 1) {
+            return [];
+        }
+
+        $caption = trim((string) ($record->caption ?? ''));
+        $seed = trim((string) ($record->image_prompt ?? ''));
+        $altText = trim((string) ($record->alt_text ?? ''));
+
+        $count = max(1, min(6, $count));
+
+        $prompt = <<<PROMPT
+        Genereer {$count} sterk verschillende image prompts in het Engels voor één social media post.
+        Elke prompt moet visueel een ander invalshoek pakken (compositie, perspectief, lighting, setting, sfeer)
+        maar visueel passen bij hetzelfde merk en dezelfde post-boodschap. Beschrijf subject, compositie, lighting,
+        color palette, mood en stijl. Geen tekst in het beeld tenzij expliciet gevraagd.
+
+        Caption van de post:
+        "{$caption}"
+
+        Alt-tekst:
+        "{$altText}"
+
+        Basis prompt (gebruik als startpunt, varieer eromheen):
+        "{$seed}"
+
+        Retourneer UITSLUITEND geldig JSON in dit formaat:
+        {
+            "prompts": [
+                "English image prompt 1",
+                "English image prompt 2"
+            ]
+        }
+        PROMPT;
+
+        try {
+            $result = Ai::json($prompt);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $prompts = $result['prompts'] ?? null;
+        if (! is_array($prompts)) {
+            return [];
+        }
+
+        $prompts = array_values(array_filter(array_map(
+            fn ($p) => is_string($p) ? trim($p) : null,
+            $prompts,
+        )));
+
+        return array_slice($prompts, 0, $count);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -79,6 +146,7 @@ class GenerateImageAction extends Action
         $this->label('Genereer afbeelding met AI')
             ->icon('heroicon-o-photo')
             ->color('info')
+            ->modalWidth('3xl')
             ->form(fn ($record): array => [
                 Select::make('ratio')
                     ->label('Beeldverhouding')
@@ -91,6 +159,94 @@ class GenerateImageAction extends Action
                     ->options($styleOptions)
                     ->default('lifestyle')
                     ->required(),
+
+                Select::make('image_count')
+                    ->label('Aantal afbeeldingen')
+                    ->options(array_combine(range(1, 6), range(1, 6)))
+                    ->default(1)
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $get, callable $set): void {
+                        if ((bool) $get('same_prompt')) {
+                            return;
+                        }
+
+                        $existing = (array) ($get('prompts') ?? []);
+                        $count = (int) $state;
+                        $existing = array_values($existing);
+
+                        if (count($existing) > $count) {
+                            $existing = array_slice($existing, 0, $count);
+                        } else {
+                            while (count($existing) < $count) {
+                                $existing[] = ['text' => ''];
+                            }
+                        }
+
+                        $set('prompts', $existing);
+                    }),
+
+                Toggle::make('same_prompt')
+                    ->label('Zelfde prompt voor alle afbeeldingen')
+                    ->default(true)
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $get, callable $set) use ($record): void {
+                        if ($state) {
+                            return;
+                        }
+                        $count = (int) ($get('image_count') ?: 1);
+                        $base = (string) ($record?->image_prompt ?? '');
+                        $set('prompts', array_fill(0, max(1, $count), ['text' => $base]));
+                    }),
+
+                Textarea::make('same_prompt_text')
+                    ->label('Image prompt')
+                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding.')
+                    ->default(fn () => (string) ($record?->image_prompt ?? ''))
+                    ->rows(3)
+                    ->required(fn (callable $get) => (bool) $get('same_prompt'))
+                    ->visible(fn (callable $get) => (bool) $get('same_prompt')),
+
+                Repeater::make('prompts')
+                    ->label('Prompts per afbeelding')
+                    ->helperText('Eén prompt per afbeelding. Klik "Vul met AI" om de lege prompts in één keer door AI te laten suggereren op basis van de caption en context.')
+                    ->schema([
+                        Textarea::make('text')
+                            ->label('Prompt')
+                            ->rows(3)
+                            ->required(),
+                    ])
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt'))
+                    ->headerActions([
+                        FormAction::make('aiFillPrompts')
+                            ->label('Vul met AI')
+                            ->icon('heroicon-o-sparkles')
+                            ->color('info')
+                            ->visible(fn () => Ai::hasProvider())
+                            ->action(function (callable $get, callable $set) use ($record): void {
+                                $count = (int) ($get('image_count') ?: 1);
+                                $prompts = $this->generateDistinctImagePrompts($record, $count);
+
+                                if (empty($prompts)) {
+                                    Notification::make()
+                                        ->title('AI gaf geen geldige prompts terug')
+                                        ->warning()
+                                        ->send();
+
+                                    return;
+                                }
+
+                                $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
+
+                                Notification::make()
+                                    ->title('Prompts ingevuld')
+                                    ->success()
+                                    ->send();
+                            }),
+                    ]),
 
                 Select::make('subject_type')
                     ->label('Onderwerp type')
@@ -211,16 +367,46 @@ class GenerateImageAction extends Action
                     }
                 }
 
-                GenerateSocialImageJob::dispatch(
-                    post: $record,
-                    ratio: $data['ratio'],
-                    stylePreset: $data['style_preset'],
-                    referenceImageUrl: $data['reference_image'] ?? null,
-                );
+                $count = max(1, (int) ($data['image_count'] ?? 1));
+                $samePrompt = (bool) ($data['same_prompt'] ?? true);
+
+                if ($samePrompt) {
+                    $promptText = trim((string) ($data['same_prompt_text'] ?? ''));
+                    if (! $promptText) {
+                        $promptText = (string) $record->image_prompt;
+                    }
+                    $promptList = array_fill(0, $count, $promptText);
+                } else {
+                    $promptList = collect($data['prompts'] ?? [])
+                        ->map(fn ($row) => trim((string) ($row['text'] ?? '')))
+                        ->filter()
+                        ->values()
+                        ->all();
+                }
+
+                if (empty(array_filter($promptList))) {
+                    Notification::make()
+                        ->title('Geen prompts')
+                        ->body('Er zijn geen prompts om te genereren — vul ze in of zet "Zelfde prompt" aan.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                foreach ($promptList as $singlePrompt) {
+                    GenerateSocialImageJob::dispatch(
+                        post: $record,
+                        ratio: $data['ratio'],
+                        stylePreset: $data['style_preset'],
+                        referenceImageUrl: $data['reference_image'] ?? null,
+                        promptOverride: $singlePrompt,
+                    );
+                }
 
                 Notification::make()
-                    ->title('Afbeelding generatie gestart')
-                    ->body('De afbeelding wordt op de achtergrond gegenereerd.')
+                    ->title(count($promptList).' afbeelding(en) in de wachtrij')
+                    ->body('De afbeeldingen worden op de achtergrond gegenereerd en aan deze post toegevoegd.')
                     ->success()
                     ->send();
             });
