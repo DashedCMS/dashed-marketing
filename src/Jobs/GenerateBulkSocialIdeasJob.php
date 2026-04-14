@@ -40,21 +40,30 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
             $focus = $this->focus;
             $focusLine = $focus ? "Focus voor deze periode: {$focus}\n" : '';
 
+            $availableTypes = array_keys(config('dashed-marketing.types', []));
+            $availableChannels = array_keys(config('dashed-marketing.channels', []));
+            $typesList = implode(', ', $availableTypes);
+            $channelsList = implode(', ', $availableChannels);
+
             $prompt = <<<PROMPT
             {$context}
 
             {$focusLine}
             Genereer {$count} concrete social media ideeën voor de komende {$period} week(en).
-            Varieer in platform, content pijler, en type (tips, behind-the-scenes, product, inspiratie, humor).
+            Varieer in type post, kanalen, content pijler, en invalshoek (tips, behind-the-scenes, product, inspiratie, humor).
 
-            Als een idee over een specifiek item uit "Beschikbare content" gaat, neem dan de [ref:type:id] tag van dat item over in "subject_ref" (bv. "product:42"). Laat "subject_ref" null als het idee niet aan een specifiek item hangt.
+            Voor elk idee:
+            - "type" is één van: {$typesList}
+            - "channels" is een array van kanaal-keys uit deze lijst: {$channelsList}. Kies alleen kanalen die het type accepteren (zie de config).
+            - Als een idee over een specifiek item uit "Beschikbare content" gaat, zet het [ref:type:id] in "subject_ref" (bv. "product:42"). Laat null als het idee niet aan een item hangt.
 
             Retourneer UITSLUITEND geldig JSON in dit formaat:
             {
                 "ideas": [
                     {
                         "title": "Korte beschrijvende titel",
-                        "platform": "instagram_feed",
+                        "type": "post",
+                        "channels": ["instagram_feed", "facebook_page"],
                         "notes": "Korte toelichting op het idee en aanpak",
                         "tags": ["tag1", "tag2"],
                         "subject_ref": "product:42"
@@ -87,6 +96,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
             }
 
             $routeModels = cms()->builder('routeModels') ?? [];
+            $validTypes = array_keys(config('dashed-marketing.types', []));
+            $channelConfig = config('dashed-marketing.channels', []);
 
             $created = 0;
             foreach ($result['ideas'] as $idea) {
@@ -95,9 +106,22 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                     $routeModels,
                 );
 
+                $type = is_string($idea['type'] ?? null) && in_array($idea['type'], $validTypes, true)
+                    ? $idea['type']
+                    : 'post';
+
+                $rawChannels = is_array($idea['channels'] ?? null) ? $idea['channels'] : [];
+                $channels = array_values(array_filter(
+                    $rawChannels,
+                    fn ($c) => is_string($c)
+                        && isset($channelConfig[$c])
+                        && in_array($type, $channelConfig[$c]['accepted_types'] ?? [], true),
+                ));
+
                 SocialIdea::create([
                     'title' => $idea['title'] ?? 'Onbekend idee',
-                    'platform' => $idea['platform'] ?? null,
+                    'type' => $type,
+                    'channels' => $channels,
                     'notes' => $idea['notes'] ?? null,
                     'tags' => $idea['tags'] ?? [],
                     'status' => 'idea',

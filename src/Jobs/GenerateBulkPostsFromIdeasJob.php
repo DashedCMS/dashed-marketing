@@ -34,9 +34,15 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
 
         $dispatched = 0;
         foreach ($ideas as $idea) {
-            $platform = $idea->platform ?: array_key_first(config('dashed-marketing.platforms', []) ?? []);
+            $type = $idea->type ?: 'post';
+            $channels = is_array($idea->channels) && ! empty($idea->channels)
+                ? $idea->channels
+                : array_keys(array_filter(
+                    config('dashed-marketing.channels', []),
+                    fn ($c) => in_array($type, $c['accepted_types'] ?? [], true),
+                ));
 
-            if (! $platform) {
+            if (empty($channels)) {
                 continue;
             }
 
@@ -48,7 +54,8 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             );
 
             GenerateSocialPostJob::dispatch(
-                platform: $platform,
+                type: $type,
+                channels: $channels,
                 subject: $idea->subject,
                 pillarId: $idea->pillar_id,
                 campaignId: null,

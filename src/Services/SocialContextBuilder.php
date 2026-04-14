@@ -11,8 +11,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class SocialContextBuilder
 {
-    public function build(?string $platform = null, ?Model $subject = null): string
+    /**
+     * @param  string|array<int, string>|null  $typeOrPlatform  legacy: a platform key. New: a type key (post/reel/story).
+     * @param  array<int, string>|Model|null  $channelsOrSubject  new: the channel keys. Legacy: the subject model.
+     */
+    public function build($typeOrPlatform = null, $channelsOrSubject = null, ?Model $subject = null): string
     {
+        // Backwards-compatible signature: build($platform, $subject) is still accepted.
+        $type = null;
+        $channels = [];
+        if (is_array($channelsOrSubject)) {
+            $type = is_string($typeOrPlatform) ? $typeOrPlatform : null;
+            $channels = $channelsOrSubject;
+        } elseif ($channelsOrSubject instanceof Model) {
+            $subject = $channelsOrSubject;
+        }
+
         $sections = [];
 
         $this->addBrandInfo($sections);
@@ -23,13 +37,61 @@ class SocialContextBuilder
         $this->addHolidays($sections);
         $this->addVisitableModels($sections, $subject);
 
-        if ($platform) {
-            $this->addPlatformRules($sections, $platform);
+        if ($type) {
+            $this->addTypeRules($sections, $type);
+        }
+        if ($channels) {
+            $this->addChannelRules($sections, $channels);
+        }
+        if (! $type && ! $channels && is_string($typeOrPlatform)) {
+            // Legacy single-platform path
+            $this->addPlatformRules($sections, $typeOrPlatform);
         }
 
         $this->addStyleGuide($sections);
 
         return implode("\n\n", array_filter($sections));
+    }
+
+    private function addTypeRules(array &$sections, string $type): void
+    {
+        $rules = config("dashed-marketing.types.{$type}");
+        if (! $rules) {
+            return;
+        }
+
+        $parts = [
+            "Type: {$rules['label']}",
+            "Format: {$rules['description']}",
+            'Beeldverhouding(en): '.implode(' of ', $rules['ratios']),
+            "Tips: {$rules['tips']}",
+        ];
+
+        $sections[] = "## Type post\n".implode("\n", $parts);
+    }
+
+    /**
+     * @param  array<int, string>  $channels
+     */
+    private function addChannelRules(array &$sections, array $channels): void
+    {
+        $blocks = [];
+        foreach ($channels as $key) {
+            $rules = config("dashed-marketing.channels.{$key}");
+            if (! $rules) {
+                continue;
+            }
+
+            $blocks[] = "### {$rules['label']}\n"
+                ."- Caption lengte: {$rules['caption_min']}-{$rules['caption_max']} tekens\n"
+                ."- Hashtags: {$rules['hashtags_min']}-{$rules['hashtags_max']}\n"
+                ."- Tips: {$rules['tips']}";
+        }
+
+        if ($blocks) {
+            $sections[] = "## Kanalen waarop deze post komt\n".implode("\n\n", $blocks)
+                ."\n\nSchrijf één caption die op alle bovenstaande kanalen werkt. Houd je aan de strengste limieten (kortste max, hoogste min).";
+        }
     }
 
     private function addStyleGuide(array &$sections): void

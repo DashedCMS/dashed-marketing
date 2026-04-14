@@ -15,6 +15,8 @@ class SocialIdea extends Model
         'site_id',
         'title',
         'platform',
+        'type',
+        'channels',
         'pillar_id',
         'subject_type',
         'subject_id',
@@ -25,6 +27,7 @@ class SocialIdea extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'channels' => 'array',
     ];
 
     public const STATUSES = [

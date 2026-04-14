@@ -19,8 +19,12 @@ class GenerateSocialPostJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    /**
+     * @param  array<int, string>  $channels  channel keys from config('dashed-marketing.channels')
+     */
     public function __construct(
-        public string $platform,
+        public string $type,
+        public array $channels,
         public ?Model $subject,
         public ?int $pillarId,
         public ?int $campaignId,
@@ -34,7 +38,7 @@ class GenerateSocialPostJob implements ShouldQueue
     public function handle(): void
     {
         $contextBuilder = new SocialContextBuilder;
-        $context = $contextBuilder->build($this->platform, $this->subject);
+        $context = $contextBuilder->build($this->type, $this->channels, $this->subject);
 
         $prompt = $this->buildPrompt($context);
         $result = Ai::json($prompt);
@@ -46,7 +50,9 @@ class GenerateSocialPostJob implements ShouldQueue
         foreach ($result['captions'] as $index => $caption) {
             SocialPost::withoutGlobalScopes()->create([
                 'site_id' => $this->siteId,
-                'platform' => $this->platform,
+                'type' => $this->type,
+                'channels' => $this->channels,
+                'platform' => $this->channels[0] ?? null,
                 'status' => 'concept',
                 'caption' => $caption,
                 'hashtags' => $result['hashtags'] ?? null,

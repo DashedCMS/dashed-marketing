@@ -63,10 +63,28 @@ class SocialIdeaResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
-                        Select::make('platform')
-                            ->label('Platform')
-                            ->options(static::getPlatformOptions())
-                            ->nullable(),
+                        Select::make('type')
+                            ->label('Type post')
+                            ->options(array_map(fn ($t) => $t['label'], config('dashed-marketing.types', [])))
+                            ->default('post')
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(fn (callable $set) => $set('channels', [])),
+                        \Filament\Forms\Components\CheckboxList::make('channels')
+                            ->label('Kanalen')
+                            ->options(function (callable $get): array {
+                                $type = $get('type') ?: 'post';
+                                $options = [];
+                                foreach (config('dashed-marketing.channels', []) as $key => $channel) {
+                                    if (in_array($type, $channel['accepted_types'] ?? [], true)) {
+                                        $options[$key] = $channel['label'];
+                                    }
+                                }
+
+                                return $options;
+                            })
+                            ->columns(2)
+                            ->columnSpanFull(),
                         Select::make('status')
                             ->label('Status')
                             ->options(SocialIdea::STATUSES)
@@ -151,10 +169,24 @@ class SocialIdeaResource extends Resource
                     ->label('Titel')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('platform')
-                    ->label('Platform')
-                    ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.platforms.{$state}.label", $state) : '-')
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.types.{$state}.label", $state) : '-')
+                    ->badge()
                     ->sortable(),
+                TextColumn::make('channels')
+                    ->label('Kanalen')
+                    ->formatStateUsing(function ($state): string {
+                        $channels = is_array($state) ? $state : (json_decode((string) $state, true) ?: []);
+                        if (empty($channels)) {
+                            return '-';
+                        }
+
+                        return collect($channels)
+                            ->map(fn ($c) => config("dashed-marketing.channels.{$c}.label", $c))
+                            ->implode(', ');
+                    })
+                    ->wrap(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -172,9 +204,9 @@ class SocialIdeaResource extends Resource
                     ->sortable(['pillar_id']),
             ])
             ->filters([
-                SelectFilter::make('platform')
-                    ->label('Platform')
-                    ->options(static::getPlatformOptions()),
+                SelectFilter::make('type')
+                    ->label('Type')
+                    ->options(array_map(fn ($t) => $t['label'], config('dashed-marketing.types', []))),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(SocialIdea::STATUSES),
@@ -190,12 +222,18 @@ class SocialIdeaResource extends Resource
                     ->icon('heroicon-o-sparkles')
                     ->color('primary')
                     ->action(function (SocialIdea $record): void {
-                        $platform = $record->platform ?: array_key_first(config('dashed-marketing.platforms', []) ?? []);
+                        $type = $record->type ?: 'post';
+                        $channels = is_array($record->channels) && ! empty($record->channels)
+                            ? $record->channels
+                            : array_keys(array_filter(
+                                config('dashed-marketing.channels', []),
+                                fn ($c) => in_array($type, $c['accepted_types'] ?? [], true),
+                            ));
 
-                        if (! $platform) {
+                        if (empty($channels)) {
                             Notification::make()
-                                ->title('Geen platform geconfigureerd')
-                                ->body('Stel eerst een platform in op het idee of in de marketing config.')
+                                ->title('Geen kanalen beschikbaar')
+                                ->body('Stel kanalen in op het idee of voeg kanalen toe in de marketing config.')
                                 ->danger()
                                 ->send();
 
@@ -210,7 +248,8 @@ class SocialIdeaResource extends Resource
                         );
 
                         GenerateSocialPostJob::dispatch(
-                            platform: $platform,
+                            type: $type,
+                            channels: $channels,
                             subject: $record->subject,
                             pillarId: $record->pillar_id,
                             campaignId: null,

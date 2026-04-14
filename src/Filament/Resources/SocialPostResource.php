@@ -12,6 +12,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
@@ -52,15 +53,45 @@ class SocialPostResource extends Resource
         return array_map(fn ($p) => $p['label'], $platforms);
     }
 
+    public static function getTypeOptions(): array
+    {
+        return array_map(
+            fn ($t) => $t['label'],
+            config('dashed-marketing.types', [])
+        );
+    }
+
+    public static function getChannelOptions(?string $forType = null): array
+    {
+        $options = [];
+        foreach (config('dashed-marketing.channels', []) as $key => $channel) {
+            if ($forType && ! in_array($forType, $channel['accepted_types'] ?? [], true)) {
+                continue;
+            }
+            $options[$key] = $channel['label'];
+        }
+
+        return $options;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
                 Section::make('Post inhoud')
                     ->schema([
-                        Select::make('platform')
-                            ->label('Platform')
-                            ->options(static::getPlatformOptions())
+                        Select::make('type')
+                            ->label('Type post')
+                            ->options(static::getTypeOptions())
+                            ->default('post')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(fn (callable $set) => $set('channels', [])),
+                        CheckboxList::make('channels')
+                            ->label('Kanalen')
+                            ->options(fn (callable $get) => static::getChannelOptions($get('type')))
+                            ->columns(2)
+                            ->columnSpanFull()
                             ->required(),
                         Select::make('status')
                             ->label('Status')
@@ -157,10 +188,24 @@ class SocialPostResource extends Resource
                     ->getStateUsing(fn (SocialPost $record) => $record->image_path
                         ? (str_starts_with($record->image_path, 'http') ? $record->image_path : asset($record->image_path))
                         : null),
-                TextColumn::make('platform')
-                    ->label('Platform')
-                    ->formatStateUsing(fn ($state) => config("dashed-marketing.platforms.{$state}.label", $state))
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.types.{$state}.label", $state) : '-')
+                    ->badge()
                     ->sortable(),
+                TextColumn::make('channels')
+                    ->label('Kanalen')
+                    ->formatStateUsing(function ($state): string {
+                        $channels = is_array($state) ? $state : (json_decode((string) $state, true) ?: []);
+                        if (empty($channels)) {
+                            return '-';
+                        }
+
+                        return collect($channels)
+                            ->map(fn ($c) => config("dashed-marketing.channels.{$c}.label", $c))
+                            ->implode(', ');
+                    })
+                    ->wrap(),
                 TextColumn::make('caption')
                     ->label('Caption')
                     ->limit(60)
@@ -179,9 +224,9 @@ class SocialPostResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('platform')
-                    ->label('Platform')
-                    ->options(static::getPlatformOptions()),
+                SelectFilter::make('type')
+                    ->label('Type')
+                    ->options(static::getTypeOptions()),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(SocialPost::STATUSES),

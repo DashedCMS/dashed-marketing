@@ -15,6 +15,8 @@ class SocialPost extends Model
     protected $fillable = [
         'site_id',
         'platform',
+        'type',
+        'channels',
         'status',
         'caption',
         'image_path',
@@ -37,6 +39,7 @@ class SocialPost extends Model
         'posted_at' => 'datetime',
         'performance_data' => 'array',
         'hashtags' => 'array',
+        'channels' => 'array',
     ];
 
     public const STATUSES = [
