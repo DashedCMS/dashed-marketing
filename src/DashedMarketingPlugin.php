@@ -14,6 +14,7 @@ use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Filament\Widgets\SocialCalendarWidget;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
@@ -42,6 +43,9 @@ class DashedMarketingPlugin implements Plugin
                 SocialDashboardPage::class,
                 SocialCalendarPage::class,
                 SocialSettingsPage::class,
+            ])
+            ->widgets([
+                SocialCalendarWidget::class,
             ]);
     }
 
