@@ -75,6 +75,25 @@ class SocialPostResource extends Resource
         return $options;
     }
 
+    /**
+     * Resolve an image path to a public URL, handling both legacy 'storage/...'
+     * paths and new disk-relative paths (e.g. 'social-generated/foo.png').
+     */
+    public static function imageUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+
+        return asset('storage/'.$path);
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -158,7 +177,7 @@ class SocialPostResource extends Resource
                                     if (! is_string($img) || ! $img) {
                                         continue;
                                     }
-                                    $url = str_starts_with($img, 'http') ? $img : asset($img);
+                                    $url = static::imageUrl($img);
                                     $html .= '<img src="'.e($url).'" alt="" '
                                         .'style="max-width:200px;max-height:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);" />';
                                 }
@@ -228,9 +247,13 @@ class SocialPostResource extends Resource
                     ->label('')
                     ->height(48)
                     ->square()
-                    ->getStateUsing(fn (SocialPost $record) => $record->image_path
-                        ? (str_starts_with($record->image_path, 'http') ? $record->image_path : asset($record->image_path))
-                        : null),
+                    ->getStateUsing(function (SocialPost $record): ?string {
+                        $first = (is_array($record->images) && ! empty($record->images))
+                            ? $record->images[0]
+                            : $record->image_path;
+
+                        return static::imageUrl($first);
+                    }),
                 TextColumn::make('type')
                     ->label('Type')
                     ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.types.{$state}.label", $state) : '-')
