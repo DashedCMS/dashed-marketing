@@ -14,6 +14,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -113,24 +114,66 @@ class SocialPostResource extends Resource
                             ->columnSpanFull(),
                         TextInput::make('image_prompt')
                             ->label('Afbeelding prompt (AI)')
+                            ->helperText('Wordt gebruikt door "Genereer afbeelding met AI" als basisprompt. Pas aan om volgende generaties te sturen.')
                             ->columnSpanFull(),
-                        Placeholder::make('generated_image')
-                            ->label('Gegenereerde afbeelding')
+                        FileUpload::make('images')
+                            ->label('Afbeeldingen')
+                            ->helperText('Upload één of meer afbeeldingen, sleep om volgorde te wijzigen. Carousel ontstaat automatisch zodra er meer dan één staat. AI-generatie via "Genereer afbeelding met AI" voegt extra afbeeldingen toe.')
+                            ->multiple()
+                            ->reorderable()
+                            ->image()
+                            ->disk('public')
+                            ->directory('social-uploaded')
+                            ->visibility('public')
+                            ->afterStateHydrated(function (FileUpload $component, $state): void {
+                                if (! is_array($state)) {
+                                    return;
+                                }
+                                $normalized = array_map(
+                                    fn ($p) => is_string($p) && str_starts_with($p, 'storage/')
+                                        ? substr($p, 8)
+                                        : $p,
+                                    $state,
+                                );
+                                $component->state(array_values(array_filter($normalized)));
+                            })
+                            ->columnSpanFull(),
+                        Placeholder::make('generated_images_preview')
+                            ->label('Gegenereerde afbeeldingen')
                             ->content(function (?SocialPost $record): HtmlString|string {
-                                if (! $record || ! $record->image_path) {
+                                if (! $record) {
                                     return '—';
                                 }
 
-                                $url = str_starts_with($record->image_path, 'http')
-                                    ? $record->image_path
-                                    : asset($record->image_path);
+                                $images = is_array($record->images) ? $record->images : [];
+                                if (empty($images) && $record->image_path) {
+                                    $images = [$record->image_path];
+                                }
+                                if (empty($images)) {
+                                    return '—';
+                                }
 
-                                return new HtmlString(
-                                    '<img src="'.e($url).'" alt="Gegenereerde afbeelding" '
-                                    .'style="max-width:320px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);" />'
-                                );
+                                $html = '<div style="display:flex;flex-wrap:wrap;gap:.75rem;">';
+                                foreach ($images as $img) {
+                                    if (! is_string($img) || ! $img) {
+                                        continue;
+                                    }
+                                    $url = str_starts_with($img, 'http') ? $img : asset($img);
+                                    $html .= '<img src="'.e($url).'" alt="" '
+                                        .'style="max-width:200px;max-height:200px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);" />';
+                                }
+                                $html .= '</div>';
+
+                                return new HtmlString($html);
                             })
-                            ->visible(fn (?SocialPost $record) => $record && (bool) $record->image_path)
+                            ->visible(function (?SocialPost $record): bool {
+                                if (! $record) {
+                                    return false;
+                                }
+                                $images = is_array($record->images) ? $record->images : [];
+
+                                return ! empty($images) || (bool) $record->image_path;
+                            })
                             ->columnSpanFull(),
                     ])
                     ->columns(2)

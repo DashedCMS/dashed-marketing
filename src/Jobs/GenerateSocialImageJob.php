@@ -108,7 +108,8 @@ class GenerateSocialImageJob implements ShouldQueue
     private function downloadAndStore(string $url): void
     {
         $contents = file_get_contents($url);
-        $filename = 'social-generated/'.$this->post->id.'-'.time().'.png';
+        // Disk-relative path (compatible with FileUpload->disk('public')) — no leading 'storage/'.
+        $filename = 'social-generated/'.$this->post->id.'-'.time().'-'.uniqid().'.png';
         $path = storage_path('app/public/'.$filename);
 
         if (! is_dir(dirname($path))) {
@@ -117,8 +118,14 @@ class GenerateSocialImageJob implements ShouldQueue
 
         file_put_contents($path, $contents);
 
+        $existing = is_array($this->post->images) ? $this->post->images : [];
+        $existing[] = $filename;
+
         $this->post->update([
-            'image_path' => 'storage/'.$filename,
+            'images' => array_values(array_unique($existing)),
+            // Keep legacy single image_path in sync with the first image so older
+            // display code that still reads image_path keeps working.
+            'image_path' => $this->post->image_path ?: $filename,
         ]);
     }
 

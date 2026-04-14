@@ -20,6 +20,7 @@ class SocialPost extends Model
         'status',
         'caption',
         'image_path',
+        'images',
         'scheduled_at',
         'posted_at',
         'post_url',
@@ -40,6 +41,7 @@ class SocialPost extends Model
         'performance_data' => 'array',
         'hashtags' => 'array',
         'channels' => 'array',
+        'images' => 'array',
     ];
 
     public const STATUSES = [
