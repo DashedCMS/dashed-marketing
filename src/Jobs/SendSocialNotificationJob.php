@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Dashed\DashedCore\Notifications\AdminNotifier;
 
 class SendSocialNotificationJob implements ShouldQueue
 {
@@ -27,7 +28,7 @@ class SendSocialNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        Mail::to($this->recipient)->send($this->mailable);
+        AdminNotifier::send($this->mailable, $this->recipient);
 
         SocialNotificationLog::create([
             'type' => $this->type,

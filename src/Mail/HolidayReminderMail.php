@@ -8,8 +8,10 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
+use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
 
-class HolidayReminderMail extends Mailable
+class HolidayReminderMail extends Mailable implements SendsToTelegram
 {
     use Queueable;
     use SerializesModels;
@@ -33,6 +35,18 @@ class HolidayReminderMail extends Mailable
     {
         return new Content(
             markdown: 'dashed-marketing::mail.holiday-reminder',
+        );
+    }
+
+    public function telegramSummary(): TelegramSummary
+    {
+        return new TelegramSummary(
+            title: 'Feestdag herinnering',
+            fields: [
+                'Feestdag' => $this->holiday->name ?? '—',
+                'Datum' => $this->holiday->date?->format('d-m-Y') ?? '—',
+            ],
+            emoji: '🎉',
         );
     }
 }

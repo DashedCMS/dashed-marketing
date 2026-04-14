@@ -8,8 +8,10 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
+use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
 
-class PostMissedMail extends Mailable
+class PostMissedMail extends Mailable implements SendsToTelegram
 {
     use Queueable;
     use SerializesModels;
@@ -32,6 +34,18 @@ class PostMissedMail extends Mailable
     {
         return new Content(
             markdown: 'dashed-marketing::mail.post-missed',
+        );
+    }
+
+    public function telegramSummary(): TelegramSummary
+    {
+        return new TelegramSummary(
+            title: 'Post gemist',
+            fields: [
+                'Post' => str($this->post->caption ?? '')->limit(60)->toString() ?: '—',
+                'Gepland op' => $this->post->scheduled_at?->format('d-m-Y H:i') ?? '—',
+            ],
+            emoji: '😴',
         );
     }
 }
