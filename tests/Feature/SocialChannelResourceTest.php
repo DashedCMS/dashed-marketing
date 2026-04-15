@@ -2,6 +2,7 @@
 
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Filament\Facades\Filament;
 use Tests\TestCase;
 
 uses(TestCase::class);
@@ -17,4 +18,11 @@ it('exposes index, create and edit pages', function () {
     expect($pages)->toHaveKey('index');
     expect($pages)->toHaveKey('create');
     expect($pages)->toHaveKey('edit');
+});
+
+it('registers SocialChannelResource in the admin panel', function () {
+    $panel = Filament::getPanel('dashed');
+    $resources = $panel->getResources();
+
+    expect(in_array(SocialChannelResource::class, $resources, true))->toBeTrue();
 });

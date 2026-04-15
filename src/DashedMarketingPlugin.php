@@ -13,6 +13,7 @@ use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Widgets\SocialCalendarWidget;
 use Filament\Contracts\Plugin;
@@ -30,6 +31,7 @@ class DashedMarketingPlugin implements Plugin
         $panel
             ->resources([
                 SocialPostResource::class,
+                SocialChannelResource::class,
                 SocialIdeaResource::class,
                 SocialPillarResource::class,
                 SocialHolidayResource::class,
