@@ -20,7 +20,7 @@ class GenerateSocialPostJob implements ShouldQueue
     use SerializesModels;
 
     /**
-     * @param  array<int, string>  $channels  channel keys from config('dashed-marketing.channels')
+     * @param  array<int, string>  $channels  slugs of SocialChannel records to generate content for
      */
     public function __construct(
         public string $type,

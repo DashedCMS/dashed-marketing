@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedCore\Models\User;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
@@ -37,10 +38,13 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             $type = $idea->type ?: 'post';
             $channels = is_array($idea->channels) && ! empty($idea->channels)
                 ? $idea->channels
-                : array_keys(array_filter(
-                    config('dashed-marketing.channels', []),
-                    fn ($c) => in_array($type, $c['accepted_types'] ?? [], true),
-                ));
+                : SocialChannel::query()
+                    ->where('is_active', true)
+                    ->orderBy('order')
+                    ->get()
+                    ->filter(fn (SocialChannel $ch) => in_array($type, $ch->accepted_types ?? [], true))
+                    ->pluck('slug')
+                    ->all();
 
             if (empty($channels)) {
                 continue;

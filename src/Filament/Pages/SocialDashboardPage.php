@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Filament\Pages;
 
 use BackedEnum;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialHoliday;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Models\SocialPillar;
@@ -187,12 +188,14 @@ class SocialDashboardPage extends Page
             }
         }
 
-        $channels = config('dashed-marketing.channels', []);
+        $channelNames = SocialChannel::query()
+            ->pluck('name', 'slug')
+            ->toArray();
         $result = [];
         foreach ($counts as $key => $count) {
             $result[] = [
                 'key' => $key,
-                'label' => $channels[$key]['label'] ?? ucfirst($key),
+                'label' => $channelNames[$key] ?? ucfirst($key),
                 'count' => $count,
             ];
         }

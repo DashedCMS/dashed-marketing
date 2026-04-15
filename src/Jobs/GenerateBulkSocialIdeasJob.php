@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Models\User;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Filament\Notifications\Notification;
@@ -41,7 +42,11 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
             $focusLine = $focus ? "Focus voor deze periode: {$focus}\n" : '';
 
             $availableTypes = array_keys(config('dashed-marketing.types', []));
-            $availableChannels = array_keys(config('dashed-marketing.channels', []));
+            $availableChannels = SocialChannel::query()
+                ->where('is_active', true)
+                ->orderBy('order')
+                ->pluck('slug')
+                ->all();
             $typesList = implode(', ', $availableTypes);
             $channelsList = implode(', ', $availableChannels);
 
@@ -97,7 +102,10 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
 
             $routeModels = cms()->builder('routeModels') ?? [];
             $validTypes = array_keys(config('dashed-marketing.types', []));
-            $channelConfig = config('dashed-marketing.channels', []);
+            $channelModels = SocialChannel::query()
+                ->where('is_active', true)
+                ->get()
+                ->keyBy('slug');
 
             $created = 0;
             foreach ($result['ideas'] as $idea) {
@@ -114,8 +122,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                 $channels = array_values(array_filter(
                     $rawChannels,
                     fn ($c) => is_string($c)
-                        && isset($channelConfig[$c])
-                        && in_array($type, $channelConfig[$c]['accepted_types'] ?? [], true),
+                        && $channelModels->has($c)
+                        && in_array($type, $channelModels->get($c)->accepted_types ?? [], true),
                 ));
 
                 SocialIdea::create([

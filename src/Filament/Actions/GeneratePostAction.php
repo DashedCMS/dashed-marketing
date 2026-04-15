@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Filament\Actions;
 
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
@@ -87,14 +88,14 @@ class GeneratePostAction extends Action
                 ->helperText('Kies één of meer kanalen waar deze post op geplaatst kan worden. Alleen kanalen die het gekozen type accepteren worden getoond.')
                 ->options(function (callable $get): array {
                     $type = $get('type') ?: 'post';
-                    $options = [];
-                    foreach (config('dashed-marketing.channels', []) as $key => $channel) {
-                        if (in_array($type, $channel['accepted_types'] ?? [], true)) {
-                            $options[$key] = $channel['label'];
-                        }
-                    }
 
-                    return $options;
+                    return SocialChannel::query()
+                        ->where('is_active', true)
+                        ->orderBy('order')
+                        ->get()
+                        ->filter(fn (SocialChannel $ch) => in_array($type, $ch->accepted_types ?? [], true))
+                        ->pluck('name', 'slug')
+                        ->toArray();
                 })
                 ->columns(2)
                 ->required(),

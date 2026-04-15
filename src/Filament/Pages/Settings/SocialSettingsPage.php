@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Filament\Pages\Settings;
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedCore\Traits\HasSettingsPermission;
 use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
 use Filament\Actions\Action;
@@ -86,11 +87,15 @@ class SocialSettingsPage extends Page implements HasSchemas
             config('dashed-marketing.platforms', [])
         );
 
-        $channelOptions = [];
-        foreach (config('dashed-marketing.channels', []) as $key => $channel) {
-            $accepted = $channel['accepted_types'] ?? [];
-            $channelOptions[$key] = $channel['label'].' ('.implode(', ', $accepted).')';
-        }
+        $channelOptions = SocialChannel::query()
+            ->orderBy('order')
+            ->get()
+            ->mapWithKeys(function (SocialChannel $ch): array {
+                $accepted = $ch->accepted_types ?? [];
+
+                return [$ch->slug => $ch->name.' ('.implode(', ', $accepted).')'];
+            })
+            ->toArray();
 
         return $schema->schema([
             Section::make('Actieve kanalen')

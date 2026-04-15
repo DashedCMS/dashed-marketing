@@ -9,6 +9,7 @@ use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\ListSocia
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedMarketing\Jobs\GenerateBulkPostsFromIdeasJob;
 use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -52,6 +53,15 @@ class SocialIdeaResource extends Resource
         return array_map(fn ($p) => $p['label'], $platforms);
     }
 
+    public static function resolveChannelLabel(string $slug): string
+    {
+        static $cache = [];
+
+        return $cache[$slug] ??= SocialChannel::query()
+            ->where('slug', $slug)
+            ->value('name') ?? $slug;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -74,14 +84,14 @@ class SocialIdeaResource extends Resource
                             ->label('Kanalen')
                             ->options(function (callable $get): array {
                                 $type = $get('type') ?: 'post';
-                                $options = [];
-                                foreach (config('dashed-marketing.channels', []) as $key => $channel) {
-                                    if (in_array($type, $channel['accepted_types'] ?? [], true)) {
-                                        $options[$key] = $channel['label'];
-                                    }
-                                }
 
-                                return $options;
+                                return SocialChannel::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('order')
+                                    ->get()
+                                    ->filter(fn (SocialChannel $ch) => in_array($type, $ch->accepted_types ?? [], true))
+                                    ->pluck('name', 'slug')
+                                    ->toArray();
                             })
                             ->columns(2)
                             ->columnSpanFull(),
@@ -187,7 +197,7 @@ class SocialIdeaResource extends Resource
                         }
 
                         return collect($channels)
-                            ->map(fn ($c) => config("dashed-marketing.channels.{$c}.label", $c))
+                            ->map(fn ($c) => static::resolveChannelLabel($c))
                             ->implode(', ');
                     })
                     ->wrap(),
@@ -229,10 +239,13 @@ class SocialIdeaResource extends Resource
                         $type = $record->type ?: 'post';
                         $channels = is_array($record->channels) && ! empty($record->channels)
                             ? $record->channels
-                            : array_keys(array_filter(
-                                config('dashed-marketing.channels', []),
-                                fn ($c) => in_array($type, $c['accepted_types'] ?? [], true),
-                            ));
+                            : SocialChannel::query()
+                                ->where('is_active', true)
+                                ->orderBy('order')
+                                ->get()
+                                ->filter(fn (SocialChannel $ch) => in_array($type, $ch->accepted_types ?? [], true))
+                                ->pluck('slug')
+                                ->all();
 
                         if (empty($channels)) {
                             Notification::make()

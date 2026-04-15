@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Services;
 use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SocialCampaign;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialHoliday;
 use Dashed\DashedMarketing\Models\SocialPillar;
 use Illuminate\Database\Eloquent\Model;
@@ -75,17 +76,23 @@ class SocialContextBuilder
      */
     private function addChannelRules(array &$sections, array $channels): void
     {
+        $channelModels = SocialChannel::query()
+            ->whereIn('slug', $channels)
+            ->get()
+            ->keyBy('slug');
+
         $blocks = [];
         foreach ($channels as $key) {
-            $rules = config("dashed-marketing.channels.{$key}");
-            if (! $rules) {
+            $channel = $channelModels->get($key);
+            if (! $channel) {
                 continue;
             }
 
-            $blocks[] = "### {$rules['label']}\n"
-                ."- Caption lengte: {$rules['caption_min']}-{$rules['caption_max']} tekens\n"
-                ."- Hashtags: {$rules['hashtags_min']}-{$rules['hashtags_max']}\n"
-                ."- Tips: {$rules['tips']}";
+            $meta = $channel->meta ?? [];
+            $blocks[] = "### {$channel->name}\n"
+                ."- Caption lengte: ".($meta['caption_min'] ?? 0)."-".($meta['caption_max'] ?? 0)." tekens\n"
+                ."- Hashtags: ".($meta['hashtags_min'] ?? 0)."-".($meta['hashtags_max'] ?? 0)."\n"
+                ."- Tips: ".($meta['tips'] ?? '');
         }
 
         if ($blocks) {
@@ -173,8 +180,13 @@ class SocialContextBuilder
             return;
         }
 
+        $channelNames = SocialChannel::query()
+            ->whereIn('slug', $list)
+            ->pluck('name', 'slug')
+            ->toArray();
+
         $labels = array_map(
-            fn ($key) => config("dashed-marketing.channels.{$key}.label")
+            fn ($key) => $channelNames[$key]
                 ?? config("dashed-marketing.platforms.{$key}.label", $key),
             $list
         );
