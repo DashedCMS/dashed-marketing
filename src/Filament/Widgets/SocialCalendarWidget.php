@@ -13,6 +13,19 @@ class SocialCalendarWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        $routeName = (string) (request()->route()?->getName() ?? '');
+
+        if (str_contains($routeName, 'social-calendar')) {
+            return true;
+        }
+
+        return SocialPost::withoutGlobalScopes()
+            ->whereNotNull('scheduled_at')
+            ->exists();
+    }
+
     public int $currentYear;
 
     public int $currentMonth;
