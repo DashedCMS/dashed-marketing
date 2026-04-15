@@ -11,6 +11,8 @@ beforeEach(function () {
 
     $migration = require __DIR__ . '/../../database/migrations/2026_04_15_000002_create_social_channels_table.php';
     $migration->up();
+
+    SocialChannel::query()->withoutGlobalScopes()->delete();
 });
 
 afterEach(function () {
