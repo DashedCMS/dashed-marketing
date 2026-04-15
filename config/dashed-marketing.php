@@ -8,7 +8,7 @@ return [
         'publishing' => ManualPublishAdapter::class,
     ],
     /*
-     * @deprecated — use 'types' + 'channels' instead. Kept temporarily so legacy
+     * @deprecated - use 'types' + 'channels' instead. Kept temporarily so legacy
      * call sites keep working until they're migrated to the new model.
      */
     'platforms' => [
@@ -20,7 +20,7 @@ return [
     ],
 
     /*
-     * Post types — how the content is structured. Each type has a default ratio set
+     * Post types - how the content is structured. Each type has a default ratio set
      * and is independent of the channels it gets published on.
      */
     'types' => [
@@ -48,7 +48,7 @@ return [
     ],
 
     /*
-     * Channels — where a post can be published. Each channel declares which types
+     * Channels - where a post can be published. Each channel declares which types
      * it accepts plus per-channel caption/hashtag limits and tips.
      */
     'channels' => [

@@ -36,7 +36,7 @@ class RegenerateContentSectionJob implements ShouldQueue
         $outline = collect($sections)
             ->map(function ($section) {
                 if (($section['id'] ?? null) === $this->sectionId) {
-                    return "### TE HERSCHRIJVEN — {$section['heading']}\n{$section['body']}";
+                    return "### TE HERSCHRIJVEN - {$section['heading']}\n{$section['body']}";
                 }
 
                 return "### {$section['heading']}\n".mb_substr($section['body'] ?? '', 0, 400);

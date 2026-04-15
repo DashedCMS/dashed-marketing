@@ -14,7 +14,7 @@ class SocialKeywordSyncCommand extends Command
     public function handle(): void
     {
         if (! app()->bound(KeywordResearchAdapter::class)) {
-            $this->info('No keyword research adapter configured — skipping sync.');
+            $this->info('No keyword research adapter configured - skipping sync.');
 
             return;
         }

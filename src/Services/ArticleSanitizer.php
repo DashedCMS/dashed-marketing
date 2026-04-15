@@ -20,7 +20,7 @@ class ArticleSanitizer
     public function sanitize(string $text): string
     {
         if ($this->replaceEmDashes) {
-            $text = preg_replace('/\s*[—–]\s*/u', ', ', $text);
+            $text = preg_replace('/\s*[-–]\s*/u', ', ', $text);
         }
 
         $text = strtr($text, [

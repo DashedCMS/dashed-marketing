@@ -4,7 +4,7 @@ use Dashed\DashedMarketing\Services\ArticleSanitizer;
 
 it('replaces em dashes with commas', function () {
     $sanitizer = new ArticleSanitizer;
-    $out = $sanitizer->sanitize('Dit is een test — met een em dash.');
+    $out = $sanitizer->sanitize('Dit is een test - met een em dash.');
     expect($out)->toBe('Dit is een test, met een em dash.');
 });
 

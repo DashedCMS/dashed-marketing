@@ -100,7 +100,7 @@ class SocialContextBuilder
             'Schrijf alsof een ervaren Nederlandse marketeer het typt, niet een AI.',
             '',
             'NIET gebruiken:',
-            '- Em-dashes (—). Gebruik een komma, punt, of haakjes.',
+            '- Em-dashes (-). Gebruik een komma, punt, of haakjes.',
             '- En-dashes (–) als koppelteken. Gebruik een gewoon streepje (-).',
             '- "Niet alleen X, maar ook Y" constructies.',
             '- Openers als "In de wereld van...", "Stel je voor...", "Ontdek...", "Wist je dat...".',

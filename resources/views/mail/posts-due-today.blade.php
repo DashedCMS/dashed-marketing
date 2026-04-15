@@ -9,7 +9,7 @@ Je hebt vandaag **{{ $posts->count() }} {{ $posts->count() === 1 ? 'post' : 'pos
 | Platform | Caption | Geplande tijd |
 |----------|---------|---------------|
 @foreach ($posts as $post)
-| {{ $post->platform_label }} | {{ str($post->caption)->limit(60) }} | {{ $post->scheduled_at?->format('H:i') ?? '—' }} |
+| {{ $post->platform_label }} | {{ str($post->caption)->limit(60) }} | {{ $post->scheduled_at?->format('H:i') ?? '-' }} |
 @endforeach
 </x-mail::table>
 

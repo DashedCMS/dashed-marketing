@@ -26,8 +26,8 @@
                                 <span class="text-blue-700">Nieuw</span>
                             @endif
                         </td>
-                        <td class="py-2">{{ $row['match_title'] ?? '—' }}</td>
-                        <td class="py-2">{{ $row['match_score'] ? number_format($row['match_score'], 2) : '—' }}</td>
+                        <td class="py-2">{{ $row['match_title'] ?? '-' }}</td>
+                        <td class="py-2">{{ $row['match_score'] ? number_format($row['match_score'], 2) : '-' }}</td>
                         <td class="py-2">
                             <label><input type="checkbox" wire:model="overrides.{{ $row['id'] }}.force_create"> forceer nieuw</label><br>
                             <label><input type="checkbox" wire:model="overrides.{{ $row['id'] }}.skip"> skip</label>

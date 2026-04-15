@@ -122,6 +122,38 @@ class SocialPostResource extends Resource
                             ->rows(5)
                             ->required()
                             ->columnSpanFull(),
+                        Select::make('alternative_pick')
+                            ->label('AI-varianten')
+                            ->helperText('Kies een andere variant om de caption (en bijbehorende afbeelding-prompt) te vervangen.')
+                            ->options(function (?SocialPost $record): array {
+                                if (! $record || ! is_array($record->alternative_captions)) {
+                                    return [];
+                                }
+
+                                $opts = [];
+                                foreach ($record->alternative_captions as $i => $cap) {
+                                    $opts[$i] = 'Variant '.($i + 1).' - '.\Illuminate\Support\Str::limit((string) $cap, 90);
+                                }
+
+                                return $opts;
+                            })
+                            ->visible(fn (?SocialPost $record): bool => $record && is_array($record->alternative_captions) && count($record->alternative_captions) > 1)
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateUpdated(function ($state, callable $set, ?SocialPost $record): void {
+                                if (! $record || $state === null) {
+                                    return;
+                                }
+                                $captions = (array) $record->alternative_captions;
+                                $prompts = (array) $record->alternative_image_prompts;
+                                if (isset($captions[$state])) {
+                                    $set('caption', $captions[$state]);
+                                }
+                                if (isset($prompts[$state])) {
+                                    $set('image_prompt', $prompts[$state]);
+                                }
+                            })
+                            ->columnSpanFull(),
                         TagsInput::make('hashtags')
                             ->label('Hashtags')
                             ->placeholder('#hashtag')
@@ -136,7 +168,7 @@ class SocialPostResource extends Resource
                             ->columnSpanFull(),
                         Placeholder::make('generated_images_preview')
                             ->label('Afbeeldingen')
-                            ->helperText('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund — gebruik de knoppen om volgorde te veranderen.')
+                            ->helperText('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund - gebruik de knoppen om volgorde te veranderen.')
                             ->content(function (?SocialPost $record): HtmlString|string {
                                 if (! $record) {
                                     return new HtmlString('<em>Sla de post eerst op om afbeeldingen toe te voegen.</em>');

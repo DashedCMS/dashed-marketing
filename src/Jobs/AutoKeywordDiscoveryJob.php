@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-// TODO: Fully implement — migrated from dashed-articles AutoKeywordDiscoveryJob.
+// TODO: Fully implement - migrated from dashed-articles AutoKeywordDiscoveryJob.
 // Update namespace and model references to Dashed\DashedMarketing\*.
 class AutoKeywordDiscoveryJob implements ShouldQueue
 {

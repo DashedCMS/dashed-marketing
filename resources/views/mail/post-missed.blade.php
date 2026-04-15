@@ -10,7 +10,7 @@ De volgende post voor **{{ $siteName }}** stond gisteren gepland maar heeft nog 
 **Caption:**
 > {{ str($post->caption)->limit(200) }}
 
-**Gepland op:** {{ $post->scheduled_at?->format('d-m-Y H:i') ?? '—' }}
+**Gepland op:** {{ $post->scheduled_at?->format('d-m-Y H:i') ?? '-' }}
 
 Is de post toch geplaatst? Markeer hem dan als gepost in het dashboard.
 

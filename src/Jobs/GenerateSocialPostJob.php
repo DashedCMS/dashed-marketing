@@ -47,31 +47,38 @@ class GenerateSocialPostJob implements ShouldQueue
             return;
         }
 
-        foreach ($result['captions'] as $index => $caption) {
-            SocialPost::withoutGlobalScopes()->create([
-                'site_id' => $this->siteId,
-                'type' => $this->type,
-                'channels' => $this->channels,
-                'platform' => $this->channels[0] ?? null,
-                'status' => 'concept',
-                'caption' => $caption,
-                'hashtags' => $result['hashtags'] ?? null,
-                'alt_text' => $result['alt_text'] ?? null,
-                'image_prompt' => $result['image_prompts'][$index] ?? null,
-                'pillar_id' => $this->pillarId,
-                'subject_type' => $this->subject ? get_class($this->subject) : null,
-                'subject_id' => $this->subject?->id,
-                'campaign_id' => $this->campaignId,
-                'scheduled_at' => $this->scheduledAt,
-            ]);
+        $captions = array_values($result['captions']);
+        $imagePrompts = array_values($result['image_prompts'] ?? []);
+
+        if (empty($captions)) {
+            return;
         }
+
+        SocialPost::withoutGlobalScopes()->create([
+            'site_id' => $this->siteId,
+            'type' => $this->type,
+            'channels' => $this->channels,
+            'platform' => $this->channels[0] ?? null,
+            'status' => 'concept',
+            'caption' => $captions[0],
+            'alternative_captions' => $captions,
+            'hashtags' => $result['hashtags'] ?? null,
+            'alt_text' => $result['alt_text'] ?? null,
+            'image_prompt' => $imagePrompts[0] ?? null,
+            'alternative_image_prompts' => $imagePrompts,
+            'pillar_id' => $this->pillarId,
+            'subject_type' => $this->subject ? get_class($this->subject) : null,
+            'subject_id' => $this->subject?->id,
+            'campaign_id' => $this->campaignId,
+            'scheduled_at' => $this->scheduledAt,
+        ]);
     }
 
     private function buildPrompt(string $context): string
     {
         $toneSection = $this->toneOverride ? "\nToon override: {$this->toneOverride}" : '';
         $extraSection = $this->extraInstructions ? "\nExtra instructies: {$this->extraInstructions}" : '';
-        $keywordSection = $this->includeKeywords ? "\nVerwerk goedgekeurde keywords op natuurlijke wijze in captions en hashtags — nooit keyword stuffing." : '';
+        $keywordSection = $this->includeKeywords ? "\nVerwerk goedgekeurde keywords op natuurlijke wijze in captions en hashtags - nooit keyword stuffing." : '';
 
         return <<<PROMPT
         {$context}
@@ -81,18 +88,18 @@ class GenerateSocialPostJob implements ShouldQueue
         Je bent een senior social media marketeer met jaren ervaring in het schrijven van high-performing posts voor merken. Je weet precies wat de scroll stopt, wat waarde levert, en wat aanzet tot actie. Je denkt altijd vanuit de doelgroep, niet vanuit het merk. Je schrijft menselijk, scherp en nooit corporate of AI-achtig.
 
         ## Opdracht
-        Schrijf 3 sterk verschillende caption varianten voor een social media post over het onderwerp hierboven. Dit is GEEN nieuwsbericht of productbeschrijving — dit is een social post die moet werken op het aangegeven platform.
+        Schrijf 3 sterk verschillende caption varianten voor een social media post over het onderwerp hierboven. Dit is GEEN nieuwsbericht of productbeschrijving - dit is een social post die moet werken op het aangegeven platform.
 
         Elke variant moet voldoen aan:
 
-        1. **Hook (eerste regel)** — Stop de scroll direct. Gebruik nieuwsgierigheid, een herkenbaar probleem, een verrassende claim, een sterke observatie, of een pijnpunt. Vermijd generieke openers ("Wist je dat…", "In deze post…", "Vandaag willen we…"). Eerste regel = alles.
-        2. **Waarde of emotie** — Lever iets: inzicht, herkenning, een tip, een verhaal, of een mening. Schrijf alsof je 1-op-1 met één persoon uit de doelgroep praat.
-        3. **Stem & toon** — Houd je strikt aan de merkbeschrijving, tone of voice en doelgroep hierboven. Als er geen merkstem is: schrijf warm, menselijk en to-the-point.
-        4. **Structuur** — Korte zinnen. Witregels voor ritme en scanbaarheid. Emoji's alleen als ze waarde toevoegen, nooit als decoratie. Geen clichés, geen buzzwords, geen AI-taal ("in een wereld waar…", "ontdek hoe…", "in deze snel veranderende tijd…").
-        5. **Call-to-action** — Sluit af met een heldere, passende CTA (reageren, opslaan, delen, klikken, DM'en, volgen). De CTA past bij het platform en het doel van de post.
-        6. **Platformfit** — Respecteer de caption lengte, hashtag aantallen en tips uit de platform-regels hierboven. Schrijf niet alsof het voor een ander platform is. Voor Instagram/TikTok: visueler, persoonlijker. Voor LinkedIn: zakelijker maar nog steeds menselijk. Voor X: scherp en compact. Voor Facebook: verhalend.
+        1. **Hook (eerste regel)** - Stop de scroll direct. Gebruik nieuwsgierigheid, een herkenbaar probleem, een verrassende claim, een sterke observatie, of een pijnpunt. Vermijd generieke openers ("Wist je dat…", "In deze post…", "Vandaag willen we…"). Eerste regel = alles.
+        2. **Waarde of emotie** - Lever iets: inzicht, herkenning, een tip, een verhaal, of een mening. Schrijf alsof je 1-op-1 met één persoon uit de doelgroep praat.
+        3. **Stem & toon** - Houd je strikt aan de merkbeschrijving, tone of voice en doelgroep hierboven. Als er geen merkstem is: schrijf warm, menselijk en to-the-point.
+        4. **Structuur** - Korte zinnen. Witregels voor ritme en scanbaarheid. Emoji's alleen als ze waarde toevoegen, nooit als decoratie. Geen clichés, geen buzzwords, geen AI-taal ("in een wereld waar…", "ontdek hoe…", "in deze snel veranderende tijd…").
+        5. **Call-to-action** - Sluit af met een heldere, passende CTA (reageren, opslaan, delen, klikken, DM'en, volgen). De CTA past bij het platform en het doel van de post.
+        6. **Platformfit** - Respecteer de caption lengte, hashtag aantallen en tips uit de platform-regels hierboven. Schrijf niet alsof het voor een ander platform is. Voor Instagram/TikTok: visueler, persoonlijker. Voor LinkedIn: zakelijker maar nog steeds menselijk. Voor X: scherp en compact. Voor Facebook: verhalend.
 
-        Varieer de 3 captions duidelijk qua invalshoek — bijvoorbeeld: (1) educatief/tip-based, (2) story-driven of persoonlijk, (3) conversational of mening/stelling. Herhaal elkaar niet.
+        Varieer de 3 captions duidelijk qua invalshoek - bijvoorbeeld: (1) educatief/tip-based, (2) story-driven of persoonlijk, (3) conversational of mening/stelling. Herhaal elkaar niet.
 
         ## Hashtags
         Kies een mix van brede en niche hashtags die passen bij het onderwerp en de doelgroep. Respecteer het aantal uit de platform regels. Nooit irrelevante of spammy hashtags. Nederlandstalig waar dat past bij de doelgroep.

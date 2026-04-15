@@ -69,7 +69,7 @@ class KeywordResource extends Resource
                 Tables\Columns\TextColumn::make('cpc')->money('eur')->sortable(),
                 Tables\Columns\TextColumn::make('contentClusters.name')->label('Cluster')->badge(),
                 Tables\Columns\TextColumn::make('matched_subject_type')->label('Match')->formatStateUsing(
-                    fn ($state, $record) => $state ? class_basename($state).' #'.$record->matched_subject_id : '—',
+                    fn ($state, $record) => $state ? class_basename($state).' #'.$record->matched_subject_id : '-',
                 ),
                 Tables\Columns\TextColumn::make('source')->badge(),
                 Tables\Columns\TextColumn::make('status')->badge(),

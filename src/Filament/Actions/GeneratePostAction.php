@@ -61,7 +61,7 @@ class GeneratePostAction extends Action
     protected function buildForm(): array
     {
         $typeOptions = array_map(
-            fn ($t) => $t['label'].' — '.$t['description'],
+            fn ($t) => $t['label'].' - '.$t['description'],
             config('dashed-marketing.types', [])
         );
 

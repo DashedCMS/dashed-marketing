@@ -76,14 +76,14 @@ class GenerateSocialImageJob implements ShouldQueue
     /**
      * Reference-image mode: fal flux-pro/kontext.
      * Kontext preserves the input image's composition, subject and layout
-     * while applying the prompt — the right tool when the user wants the
+     * while applying the prompt - the right tool when the user wants the
      * reference to be copied faithfully.
      *
      * @return array{0: string, 1: array}
      */
     /**
      * Reference-image mode: fal nano-banana/edit (Google Gemini 2.5 Flash Image edit).
-     * Exceptionally faithful to the input subject — keeps products pixel-accurate
+     * Exceptionally faithful to the input subject - keeps products pixel-accurate
      * while applying the prompt as an edit instruction.
      *
      * @return array{0: string, 1: array}
@@ -112,7 +112,7 @@ class GenerateSocialImageJob implements ShouldQueue
     private function downloadAndStore(string $url): void
     {
         $contents = file_get_contents($url);
-        // Disk-relative path (compatible with FileUpload->disk('public')) — no leading 'storage/'.
+        // Disk-relative path (compatible with FileUpload->disk('public')) - no leading 'storage/'.
         $filename = 'social-generated/'.$this->post->id.'-'.time().'-'.uniqid().'.png';
         $path = storage_path('app/public/'.$filename);
 

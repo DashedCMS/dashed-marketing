@@ -42,8 +42,8 @@ class PostMissedMail extends Mailable implements SendsToTelegram
         return new TelegramSummary(
             title: 'Post gemist',
             fields: [
-                'Post' => str($this->post->caption ?? '')->limit(60)->toString() ?: '—',
-                'Gepland op' => $this->post->scheduled_at?->format('d-m-Y H:i') ?? '—',
+                'Post' => str($this->post->caption ?? '')->limit(60)->toString() ?: '-',
+                'Gepland op' => $this->post->scheduled_at?->format('d-m-Y H:i') ?? '-',
             ],
             emoji: '😴',
         );

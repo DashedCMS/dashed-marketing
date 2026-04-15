@@ -59,7 +59,7 @@ class GenerateSocialContextJob implements ShouldQueue
         }
 
         if (empty($updated)) {
-            $body = "Alle velden voor site '{$this->siteId}' waren al ingevuld — niets gewijzigd.";
+            $body = "Alle velden voor site '{$this->siteId}' waren al ingevuld - niets gewijzigd.";
         } else {
             $body = "Bijgewerkte velden voor site '{$this->siteId}': ".implode(', ', $updated).'.';
         }
@@ -116,9 +116,9 @@ Je bent een marketing strateeg. Op basis van de onderstaande website
 content moet je twee dingen genereren voor de social media context van
 deze website:
 
-1. "target_audience" — een korte beschrijving (max 3 zinnen) van de
+1. "target_audience" - een korte beschrijving (max 3 zinnen) van de
    primaire doelgroep van dit bedrijf.
-2. "usps" — een korte opsomming (max 5 bullet points, in tekstvorm) van
+2. "usps" - een korte opsomming (max 5 bullet points, in tekstvorm) van
    de belangrijkste unique selling points van dit bedrijf.
 
 Schrijf in het Nederlands. Antwoord uitsluitend met een geldig JSON

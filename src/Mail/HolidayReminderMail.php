@@ -43,8 +43,8 @@ class HolidayReminderMail extends Mailable implements SendsToTelegram
         return new TelegramSummary(
             title: 'Feestdag herinnering',
             fields: [
-                'Feestdag' => $this->holiday->name ?? '—',
-                'Datum' => $this->holiday->date?->format('d-m-Y') ?? '—',
+                'Feestdag' => $this->holiday->name ?? '-',
+                'Datum' => $this->holiday->date?->format('d-m-Y') ?? '-',
             ],
             emoji: '🎉',
         );

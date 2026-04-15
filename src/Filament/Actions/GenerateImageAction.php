@@ -327,12 +327,12 @@ class GenerateImageAction extends Action
                     ->label('Voorbeeld')
                     ->content(fn (callable $get) => $get('subject_image')
                         ? new HtmlString('<img src="'.e($get('subject_image')).'" style="max-height:180px;border-radius:8px;" />')
-                        : '—')
+                        : '-')
                     ->visible(fn (callable $get) => (bool) $get('subject_image')),
 
                 TextInput::make('reference_image')
                     ->label('Referentieafbeelding URL (optioneel)')
-                    ->helperText('Met referentieafbeelding wordt fal nano-banana/edit gebruikt — de input wordt 1-op-1 behouden.')
+                    ->helperText('Met referentieafbeelding wordt fal nano-banana/edit gebruikt - de input wordt 1-op-1 behouden.')
                     ->url()
                     ->nullable(),
             ])
@@ -388,7 +388,7 @@ class GenerateImageAction extends Action
                 if (empty(array_filter($promptList))) {
                     Notification::make()
                         ->title('Geen prompts')
-                        ->body('Er zijn geen prompts om te genereren — vul ze in of zet "Zelfde prompt" aan.')
+                        ->body('Er zijn geen prompts om te genereren - vul ze in of zet "Zelfde prompt" aan.')
                         ->warning()
                         ->send();
 

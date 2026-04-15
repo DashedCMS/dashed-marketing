@@ -1,6 +1,6 @@
 {
     "name": "dashed/dashed-marketing",
-    "description": "Marketing module for Dashed CMS — social media, keyword research, content drafts, SEO",
+    "description": "Marketing module for Dashed CMS - social media, keyword research, content drafts, SEO",
     "keywords": ["Dashed", "laravel", "dashed-marketing", "social-media"],
     "homepage": "https://github.com/Dashed-DEV/dashed-marketing",
     "license": "MIT",

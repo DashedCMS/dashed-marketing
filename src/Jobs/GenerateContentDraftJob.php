@@ -126,7 +126,7 @@ class GenerateContentDraftJob implements ShouldQueue
         $hygieneRules = <<<'RULES'
 
 Prompt-hygiëne (hard):
-- Geen em-dashes (–, —). Gebruik komma's.
+- Geen em-dashes (–, -). Gebruik komma's.
 - Vermijd AI-clichés ("in dit artikel gaan we", "duik in", "ontdek de geheimen van", "welnu").
 - Actieve vorm, korte zinnen, "je"-vorm.
 - Geen loze superlatieven.

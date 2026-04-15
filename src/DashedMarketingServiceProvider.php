@@ -400,7 +400,7 @@ MARKDOWN,
                 }
             }
         } catch (\Throwable) {
-            // cms() helper or routeModels builder unavailable during early boot — skip.
+            // cms() helper or routeModels builder unavailable during early boot - skip.
         }
     }
 

@@ -19,6 +19,7 @@ class SocialPost extends Model
         'channels',
         'status',
         'caption',
+        'alternative_captions',
         'image_path',
         'images',
         'scheduled_at',
@@ -32,6 +33,7 @@ class SocialPost extends Model
         'hashtags',
         'alt_text',
         'image_prompt',
+        'alternative_image_prompts',
         'created_by',
     ];
 
@@ -42,6 +44,8 @@ class SocialPost extends Model
         'hashtags' => 'array',
         'channels' => 'array',
         'images' => 'array',
+        'alternative_captions' => 'array',
+        'alternative_image_prompts' => 'array',
     ];
 
     public const STATUSES = [
