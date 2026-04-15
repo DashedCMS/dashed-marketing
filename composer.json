@@ -22,7 +22,8 @@
     "autoload": {
         "psr-4": {
             "Dashed\\DashedMarketing\\": "src",
-            "Dashed\\DashedMarketing\\Database\\Factories\\": "database/factories"
+            "Dashed\\DashedMarketing\\Database\\Factories\\": "database/factories",
+            "Dashed\\DashedMarketing\\Database\\Seeders\\": "database/seeders"
         }
     },
     "autoload-dev": {"psr-4": {"Dashed\\DashedMarketing\\Tests\\": "tests"}},
