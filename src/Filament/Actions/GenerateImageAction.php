@@ -56,6 +56,53 @@ class GenerateImageAction extends Action
     }
 
     /**
+     * Build a short textual context block describing the linked subject so the
+     * AI prompt generator can tailor prompts to the actual page/product content.
+     */
+    private function buildSubjectContext($record, ?string $subjectType, $subjectId): string
+    {
+        $subject = $this->resolveSubject($record, $subjectType, $subjectId);
+
+        if (! $subject) {
+            return '';
+        }
+
+        $skip = ['id', 'created_at', 'updated_at', 'deleted_at', 'site_id', 'password', 'remember_token', 'api_token'];
+        $attributes = $subject->attributesToArray();
+
+        $name = $attributes['name'] ?? $attributes['title'] ?? (class_basename($subject).' #'.$subject->getKey());
+        $name = is_array($name) ? (reset($name) ?: class_basename($subject)) : $name;
+
+        $lines = [
+            'Type: '.class_basename($subject),
+            'Naam: '.(string) $name,
+        ];
+
+        foreach ($attributes as $key => $value) {
+            if (in_array($key, $skip, true)) {
+                continue;
+            }
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+            }
+
+            $value = trim(strip_tags((string) $value));
+            if ($value === '') {
+                continue;
+            }
+
+            $value = \Illuminate\Support\Str::limit($value, 500);
+            $lines[] = "{$key}: {$value}";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * @return array<string, string>
      */
     private function routeModelOptions(): array
@@ -77,7 +124,7 @@ class GenerateImageAction extends Action
      *
      * @return array<int, string>
      */
-    private function generateDistinctImagePrompts($record, int $count): array
+    private function generateDistinctImagePrompts($record, int $count, ?string $subjectType = null, $subjectId = null): array
     {
         if (! $record || $count < 1) {
             return [];
@@ -88,6 +135,12 @@ class GenerateImageAction extends Action
         $altText = trim((string) ($record->alt_text ?? ''));
 
         $count = max(1, min(6, $count));
+
+        $subjectContext = $this->buildSubjectContext($record, $subjectType, $subjectId);
+
+        $subjectSection = $subjectContext !== ''
+            ? "\n\nGekoppeld onderwerp (de afbeelding moet passen bij de inhoud van dit item):\n{$subjectContext}"
+            : '';
 
         $prompt = <<<PROMPT
         Genereer {$count} sterk verschillende image prompts in het Engels voor één social media post.
@@ -102,7 +155,7 @@ class GenerateImageAction extends Action
         "{$altText}"
 
         Basis prompt (gebruik als startpunt, varieer eromheen):
-        "{$seed}"
+        "{$seed}"{$subjectSection}
 
         Retourneer UITSLUITEND geldig JSON in dit formaat:
         {
@@ -184,70 +237,6 @@ class GenerateImageAction extends Action
 
                         $set('prompts', $existing);
                     }),
-
-                Toggle::make('same_prompt')
-                    ->label('Zelfde prompt voor alle afbeeldingen')
-                    ->default(true)
-                    ->live()
-                    ->afterStateUpdated(function ($state, callable $get, callable $set) use ($record): void {
-                        if ($state) {
-                            return;
-                        }
-                        $count = (int) ($get('image_count') ?: 1);
-                        $base = (string) ($record?->image_prompt ?? '');
-                        $set('prompts', array_fill(0, max(1, $count), ['text' => $base]));
-                    }),
-
-                Textarea::make('same_prompt_text')
-                    ->label('Image prompt')
-                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding.')
-                    ->default(fn () => (string) ($record?->image_prompt ?? ''))
-                    ->rows(3)
-                    ->required(fn (callable $get) => (bool) $get('same_prompt'))
-                    ->visible(fn (callable $get) => (bool) $get('same_prompt')),
-
-                SchemaActions::make([
-                    Action::make('aiFillPrompts')
-                        ->label('Vul prompts met AI')
-                        ->icon('heroicon-o-sparkles')
-                        ->color('info')
-                        ->visible(fn () => Ai::hasProvider())
-                        ->action(function (callable $get, callable $set) use ($record): void {
-                            $count = (int) ($get('image_count') ?: 1);
-                            $prompts = $this->generateDistinctImagePrompts($record, $count);
-
-                            if (empty($prompts)) {
-                                Notification::make()
-                                    ->title('AI gaf geen geldige prompts terug')
-                                    ->warning()
-                                    ->send();
-
-                                return;
-                            }
-
-                            $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
-
-                            Notification::make()
-                                ->title('Prompts ingevuld')
-                                ->success()
-                                ->send();
-                        }),
-                ])
-                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
-
-                Repeater::make('prompts')
-                    ->label('Prompts per afbeelding')
-                    ->helperText('Eén prompt per afbeelding. Gebruik de knop "Vul prompts met AI" hierboven om alle velden in één keer door AI te laten suggereren op basis van de caption en context.')
-                    ->schema([
-                        Textarea::make('text')
-                            ->label('Prompt')
-                            ->rows(3)
-                            ->required(),
-                    ])
-                    ->addable(false)
-                    ->deletable(false)
-                    ->reorderable(false)
-                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
 
                 Select::make('subject_type')
                     ->label('Onderwerp type')
@@ -335,6 +324,75 @@ class GenerateImageAction extends Action
                     ->helperText('Met referentieafbeelding wordt fal nano-banana/edit gebruikt - de input wordt 1-op-1 behouden.')
                     ->url()
                     ->nullable(),
+
+                Toggle::make('same_prompt')
+                    ->label('Zelfde prompt voor alle afbeeldingen')
+                    ->default(true)
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $get, callable $set) use ($record): void {
+                        if ($state) {
+                            return;
+                        }
+                        $count = (int) ($get('image_count') ?: 1);
+                        $base = (string) ($record?->image_prompt ?? '');
+                        $set('prompts', array_fill(0, max(1, $count), ['text' => $base]));
+                    }),
+
+                Textarea::make('same_prompt_text')
+                    ->label('Image prompt')
+                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding.')
+                    ->default(fn () => (string) ($record?->image_prompt ?? ''))
+                    ->rows(3)
+                    ->required(fn (callable $get) => (bool) $get('same_prompt'))
+                    ->visible(fn (callable $get) => (bool) $get('same_prompt')),
+
+                SchemaActions::make([
+                    Action::make('aiFillPrompts')
+                        ->label('Vul prompts met AI')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('info')
+                        ->visible(fn () => Ai::hasProvider())
+                        ->action(function (callable $get, callable $set) use ($record): void {
+                            $count = (int) ($get('image_count') ?: 1);
+                            $prompts = $this->generateDistinctImagePrompts(
+                                $record,
+                                $count,
+                                $get('subject_type'),
+                                $get('subject_id'),
+                            );
+
+                            if (empty($prompts)) {
+                                Notification::make()
+                                    ->title('AI gaf geen geldige prompts terug')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
+
+                            Notification::make()
+                                ->title('Prompts ingevuld')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
+
+                Repeater::make('prompts')
+                    ->label('Prompts per afbeelding')
+                    ->helperText('Eén prompt per afbeelding. Gebruik de knop "Vul prompts met AI" hierboven om alle velden in één keer door AI te laten suggereren op basis van de caption en de inhoud van het gekoppelde onderwerp.')
+                    ->schema([
+                        Textarea::make('text')
+                            ->label('Prompt')
+                            ->rows(3)
+                            ->required(),
+                    ])
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
             ])
             ->action(function (array $data, $record): void {
                 if (! $record) {
