@@ -6,6 +6,7 @@ use BackedEnum;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
+use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Filament\Actions\Action;
@@ -82,7 +83,9 @@ class SocialPostResource extends Resource
     {
         static $cache = [];
 
-        return $cache[$slug] ??= SocialChannel::query()
+        $key = Sites::getActive() . ':' . $slug;
+
+        return $cache[$key] ??= SocialChannel::query()
             ->where('slug', $slug)
             ->value('name') ?? $slug;
     }

@@ -33,15 +33,17 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             ->whereIn('id', $this->ideaIds)
             ->get();
 
+        $allActiveChannels = SocialChannel::query()
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
         $dispatched = 0;
         foreach ($ideas as $idea) {
             $type = $idea->type ?: 'post';
             $channels = is_array($idea->channels) && ! empty($idea->channels)
                 ? $idea->channels
-                : SocialChannel::query()
-                    ->where('is_active', true)
-                    ->orderBy('order')
-                    ->get()
+                : $allActiveChannels
                     ->filter(fn (SocialChannel $ch) => in_array($type, $ch->accepted_types ?? [], true))
                     ->pluck('slug')
                     ->all();

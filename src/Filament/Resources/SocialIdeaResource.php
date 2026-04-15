@@ -57,7 +57,9 @@ class SocialIdeaResource extends Resource
     {
         static $cache = [];
 
-        return $cache[$slug] ??= SocialChannel::query()
+        $key = Sites::getActive() . ':' . $slug;
+
+        return $cache[$key] ??= SocialChannel::query()
             ->where('slug', $slug)
             ->value('name') ?? $slug;
     }
