@@ -80,7 +80,9 @@ class SocialPostResource extends Resource
 
     public static function resolveChannelLabel(string $slug): string
     {
-        return SocialChannel::query()
+        static $cache = [];
+
+        return $cache[$slug] ??= SocialChannel::query()
             ->where('slug', $slug)
             ->value('name') ?? $slug;
     }

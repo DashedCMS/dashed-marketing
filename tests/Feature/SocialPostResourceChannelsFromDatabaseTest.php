@@ -2,7 +2,6 @@
 
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
