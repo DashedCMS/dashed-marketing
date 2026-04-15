@@ -102,3 +102,33 @@ it('is idempotent: running the seeder twice does not duplicate rows', function (
     $count = SocialChannel::query()->withoutGlobalScopes()->where('site_id', 'default')->count();
     expect($count)->toBe(1);
 });
+
+it('seeds all registered sites when the migration runs', function () {
+    config()->set('dashed-marketing.channels', [
+        'instagram_feed' => [
+            'label' => 'Instagram Feed',
+            'accepted_types' => ['post'],
+            'caption_min' => 125,
+            'caption_max' => 300,
+            'hashtags_min' => 10,
+            'hashtags_max' => 15,
+            'tips' => 'test',
+        ],
+    ]);
+
+    cms()->builder('sites', [
+        ['id' => 'site_a', 'name' => 'Site A', 'locales' => []],
+        ['id' => 'site_b', 'name' => 'Site B', 'locales' => []],
+    ]);
+
+    SocialChannel::query()->withoutGlobalScopes()->delete();
+
+    $migration = require __DIR__ . '/../../database/migrations/2026_04_15_000002_create_social_channels_table.php';
+    $migration->seedExistingSites();
+
+    $siteA = SocialChannel::query()->withoutGlobalScopes()->where('site_id', 'site_a')->get();
+    $siteB = SocialChannel::query()->withoutGlobalScopes()->where('site_id', 'site_b')->get();
+
+    expect($siteA)->toHaveCount(1);
+    expect($siteB)->toHaveCount(1);
+});

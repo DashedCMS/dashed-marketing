@@ -1,5 +1,7 @@
 <?php
 
+use Dashed\DashedCore\Classes\Sites;
+use Dashed\DashedMarketing\Database\Seeders\SocialChannelSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -22,10 +24,21 @@ return new class extends Migration
             $table->unique(['site_id', 'slug']);
             $table->index('site_id');
         });
+
+        $this->seedExistingSites();
     }
 
     public function down(): void
     {
         Schema::dropIfExists('dashed__social_channels');
+    }
+
+    public function seedExistingSites(): void
+    {
+        $seeder = new SocialChannelSeeder;
+
+        foreach (Sites::getSites() as $site) {
+            $seeder->seedSite((string) $site['id']);
+        }
     }
 };
