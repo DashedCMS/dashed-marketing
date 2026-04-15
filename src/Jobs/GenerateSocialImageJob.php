@@ -30,8 +30,7 @@ class GenerateSocialImageJob implements ShouldQueue
 
     public function handle(): void
     {
-        $apiKey = Customsetting::get('fal_api_key', $this->post->site_id)
-            ?: Customsetting::get('social_fal_api_key', $this->post->site_id);
+        $apiKey = Customsetting::get('fal_api_key', $this->post->site_id);
 
         $prompt = $this->promptOverride ?: $this->post->image_prompt;
 

@@ -42,7 +42,6 @@ class SocialSettingsPage extends Page implements HasSchemas
             'social_channels' => $channels ? (is_array($channels) ? $channels : json_decode($channels, true)) : [],
             'social_target_audience' => Customsetting::get('social_target_audience'),
             'social_usps' => Customsetting::get('social_usps'),
-            'social_fal_api_key' => Customsetting::get('social_fal_api_key'),
             'social_notification_email' => Customsetting::get('social_notification_email'),
             'social_notify_due' => (bool) Customsetting::get('social_notify_due', null, true),
             'social_notify_missed' => (bool) Customsetting::get('social_notify_missed', null, true),
@@ -118,16 +117,6 @@ class SocialSettingsPage extends Page implements HasSchemas
                         ->rows(3),
                 ]),
 
-            Section::make('Afbeelding generatie (FAL.ai)')
-                ->schema([
-                    TextInput::make('social_fal_api_key')
-                        ->label('FAL.ai API sleutel')
-                        ->password()
-                        ->revealable()
-                        ->placeholder('fal-...')
-                        ->helperText('Je vindt je API sleutel op fal.ai → API Keys.'),
-                ]),
-
             Section::make('Meldingen')
                 ->schema([
                     TextInput::make('social_notification_email')
@@ -154,7 +143,6 @@ class SocialSettingsPage extends Page implements HasSchemas
             Customsetting::set('social_channels', json_encode($formData['social_channels'] ?? []), $site['id']);
             Customsetting::set('social_target_audience', $formData['social_target_audience'] ?? null, $site['id']);
             Customsetting::set('social_usps', $formData['social_usps'] ?? null, $site['id']);
-            Customsetting::set('social_fal_api_key', $formData['social_fal_api_key'] ?? null, $site['id']);
             Customsetting::set('social_notification_email', $formData['social_notification_email'] ?? null, $site['id']);
             Customsetting::set('social_notify_due', (int) ($formData['social_notify_due'] ?? true), $site['id']);
             Customsetting::set('social_notify_missed', (int) ($formData['social_notify_missed'] ?? true), $site['id']);
