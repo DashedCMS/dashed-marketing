@@ -6,6 +6,7 @@ use BackedEnum;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -63,15 +64,25 @@ class SocialPostResource extends Resource
 
     public static function getChannelOptions(?string $forType = null): array
     {
-        $options = [];
-        foreach (config('dashed-marketing.channels', []) as $key => $channel) {
-            if ($forType && ! in_array($forType, $channel['accepted_types'] ?? [], true)) {
-                continue;
-            }
-            $options[$key] = $channel['label'];
+        $channels = SocialChannel::query()
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        if ($forType) {
+            $channels = $channels->filter(
+                fn (SocialChannel $channel) => in_array($forType, $channel->accepted_types ?? [], true)
+            );
         }
 
-        return $options;
+        return $channels->pluck('name', 'slug')->toArray();
+    }
+
+    public static function resolveChannelLabel(string $slug): string
+    {
+        return SocialChannel::query()
+            ->where('slug', $slug)
+            ->value('name') ?? $slug;
     }
 
     /**
@@ -282,7 +293,7 @@ class SocialPostResource extends Resource
                         }
 
                         return collect($channels)
-                            ->map(fn ($c) => config("dashed-marketing.channels.{$c}.label", $c))
+                            ->map(fn ($c) => static::resolveChannelLabel($c))
                             ->implode(', ');
                     })
                     ->wrap(),
