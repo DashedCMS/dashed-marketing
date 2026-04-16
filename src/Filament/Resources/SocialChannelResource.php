@@ -11,7 +11,9 @@ use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Dashed\DashedCore\Models\Customsetting;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
@@ -19,8 +21,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\CheckboxList;
-use Illuminate\Support\Facades\Schema as DbSchema;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Illuminate\Support\Facades\Schema as DbSchema;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\EditSocialChannel;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\ListSocialChannels;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\CreateSocialChannel;
@@ -88,13 +90,33 @@ class SocialChannelResource extends Resource
 
                 Section::make('Omnisocials koppeling')
                     ->schema([
-                        TextInput::make('omnisocials_account_id')
-                            ->label('Omnisocials Account ID')
-                            ->helperText('Het account ID in Omnisocials dat aan dit kanaal gekoppeld is.'),
+                        Select::make('omnisocials_account_id')
+                            ->label('Omnisocials account')
+                            ->options(function () {
+                                $cached = Customsetting::get('omnisocials_accounts_cache');
+                                $accounts = is_array($cached) ? $cached : [];
+
+                                return collect($accounts)
+                                    ->mapWithKeys(fn (array $account) => [
+                                        $account['id'] => ($account['handle'] ?? $account['name'] ?? $account['id']) . ' (' . ($account['platform'] ?? '?') . ')',
+                                    ])
+                                    ->all();
+                            })
+                            ->searchable()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $cached = Customsetting::get('omnisocials_accounts_cache');
+                                $accounts = is_array($cached) ? $cached : [];
+                                $match = collect($accounts)->firstWhere('id', $state);
+                                $set('omnisocials_platform', $match['platform'] ?? null);
+                            })
+                            ->helperText('Selecteer het Omnisocials account dat aan dit kanaal gekoppeld moet worden. Sync eerst accounts in Omnisocials instellingen.'),
                         TextInput::make('omnisocials_platform')
                             ->label('Omnisocials Platform')
                             ->disabled()
-                            ->helperText('Het platform zoals Omnisocials het kent. Wordt automatisch ingesteld bij sync.'),
+                            ->dehydrated()
+                            ->helperText('Wordt automatisch ingevuld op basis van het geselecteerde account.'),
                     ])
                     ->columns(2)
                     ->columnSpanFull()
