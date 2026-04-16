@@ -64,6 +64,21 @@ class EditSocialPost extends EditRecord
                     'dashed-marketing::filament.modals.share-post',
                     ['record' => $record],
                 )),
+            Action::make('refreshAnalytics')
+                ->label('Analytics verversen')
+                ->icon('heroicon-o-chart-bar')
+                ->color('gray')
+                ->visible(fn () => $this->record->external_id !== null)
+                ->action(function () {
+                    if (class_exists(\Dashed\DashedOmnisocials\Jobs\RefreshAnalyticsJob::class)) {
+                        \Dashed\DashedOmnisocials\Jobs\RefreshAnalyticsJob::dispatch($this->record);
+                    }
+
+                    Notification::make()
+                        ->title('Analytics worden opgehaald')
+                        ->success()
+                        ->send();
+                }),
             $this->uploadImageAction(),
             GenerateImageAction::make(),
             DeleteAction::make(),
