@@ -98,7 +98,7 @@ class SocialChannelResource extends Resource
 
                                 return collect($accounts ?: [])
                                     ->mapWithKeys(fn (array $account) => [
-                                        $account['id'] => ($account['handle'] ?? $account['name'] ?? $account['id']) . ' (' . ($account['platform'] ?? '?') . ')',
+                                        $account['id'] => ($account['display_name'] ?? $account['username'] ?? $account['id']) . ' - ' . ($account['platform'] ?? '?'),
                                     ])
                                     ->all();
                             })
