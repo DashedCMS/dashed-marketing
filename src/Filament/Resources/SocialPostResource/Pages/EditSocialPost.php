@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 
 use Dashed\DashedMarketing\Filament\Actions\GenerateImageAction;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedMarketing\Models\SocialPostVersion;
 use Filament\Actions\Action;
@@ -19,10 +20,26 @@ class EditSocialPost extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('sharePost')
-                ->label('Deel post')
+            Action::make('publish')
+                ->label('Publiceer nu')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('success')
+                ->visible(fn () => in_array($this->record->status, ['concept', 'approved', 'publish_failed']))
+                ->requiresConfirmation()
+                ->modalHeading('Post publiceren?')
+                ->modalDescription('De post wordt via de actieve adapter gepubliceerd naar de geselecteerde kanalen.')
+                ->action(function () {
+                    PublishSocialPostJob::dispatch($this->record);
+
+                    Notification::make()
+                        ->title('Publicatie gestart')
+                        ->success()
+                        ->send();
+                }),
+            Action::make('sharePost')
+                ->label('Deel post')
+                ->icon('heroicon-o-share')
+                ->color('info')
                 ->modalHeading('Deel post')
                 ->modalDescription('Kopieer de caption, download de afbeelding en open de post URL.')
                 ->modalWidth('3xl')
