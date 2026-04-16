@@ -93,21 +93,22 @@ class SocialChannelResource extends Resource
                         Select::make('omnisocials_account_id')
                             ->label('Omnisocials account')
                             ->options(function () {
-                                $cached = Customsetting::get('omnisocials_accounts_cache');
-                                $accounts = is_array($cached) ? $cached : [];
+                                $cached = Customsetting::get('omnisocials_accounts');
+                                $accounts = is_array($cached) ? $cached : (is_string($cached) ? json_decode($cached, true) : []);
 
-                                return collect($accounts)
+                                return collect($accounts ?: [])
                                     ->mapWithKeys(fn (array $account) => [
                                         $account['id'] => ($account['handle'] ?? $account['name'] ?? $account['id']) . ' (' . ($account['platform'] ?? '?') . ')',
                                     ])
                                     ->all();
                             })
                             ->searchable()
+                            ->preload()
                             ->nullable()
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set) {
-                                $cached = Customsetting::get('omnisocials_accounts_cache');
-                                $accounts = is_array($cached) ? $cached : [];
+                                $cached = Customsetting::get('omnisocials_accounts');
+                                $accounts = is_array($cached) ? $cached : (is_string($cached) ? json_decode($cached, true) : []);
                                 $match = collect($accounts)->firstWhere('id', $state);
                                 $set('omnisocials_platform', $match['platform'] ?? null);
                             })
