@@ -9,7 +9,9 @@ use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedCore\Traits\HasSettingsPermission;
 use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
 use Filament\Actions\Action;
+use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -43,6 +45,7 @@ class SocialSettingsPage extends Page implements HasSchemas
             'social_channels' => $channels ? (is_array($channels) ? $channels : json_decode($channels, true)) : [],
             'social_target_audience' => Customsetting::get('social_target_audience'),
             'social_usps' => Customsetting::get('social_usps'),
+            'social_publishing_adapter' => Customsetting::get('social_publishing_adapter') ?: 'manual',
             'social_notification_email' => Customsetting::get('social_notification_email'),
             'social_notify_due' => (bool) Customsetting::get('social_notify_due', null, true),
             'social_notify_missed' => (bool) Customsetting::get('social_notify_missed', null, true),
@@ -98,6 +101,16 @@ class SocialSettingsPage extends Page implements HasSchemas
             ->toArray();
 
         return $schema->schema([
+            Section::make('Publicatie adapter')
+                ->schema([
+                    Select::make('social_publishing_adapter')
+                        ->label('Publicatie adapter')
+                        ->options(PublishingAdapterRegistry::all())
+                        ->default('manual')
+                        ->required()
+                        ->helperText('Selecteer hoe social posts gepubliceerd worden. \'Handmatig\' markeert alleen als gepost zonder externe API-call.'),
+                ]),
+
             Section::make('Actieve kanalen')
                 ->description('Vink aan welke kanalen je daadwerkelijk gebruikt. Alleen aangevinkte kanalen worden meegegeven aan de AI als context en verschijnen als selectie-optie bij nieuwe posts.')
                 ->schema([
@@ -146,6 +159,7 @@ class SocialSettingsPage extends Page implements HasSchemas
 
         foreach (Sites::getSites() as $site) {
             Customsetting::set('social_channels', json_encode($formData['social_channels'] ?? []), $site['id']);
+            Customsetting::set('social_publishing_adapter', $formData['social_publishing_adapter'] ?? 'manual', $site['id']);
             Customsetting::set('social_target_audience', $formData['social_target_audience'] ?? null, $site['id']);
             Customsetting::set('social_usps', $formData['social_usps'] ?? null, $site['id']);
             Customsetting::set('social_notification_email', $formData['social_notification_email'] ?? null, $site['id']);
