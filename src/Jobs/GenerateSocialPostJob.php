@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Illuminate\Bus\Queueable;
@@ -43,9 +44,11 @@ class GenerateSocialPostJob implements ShouldQueue
         $prompt = $this->buildPrompt($context);
         $result = Ai::json($prompt);
 
-        if (! $result || ! isset($result['caption'])) {
+        if (! $result || ! isset($result['channel_captions'])) {
             return;
         }
+
+        $firstCaption = reset($result['channel_captions']) ?: '';
 
         SocialPost::withoutGlobalScopes()->create([
             'site_id' => $this->siteId,
@@ -53,7 +56,8 @@ class GenerateSocialPostJob implements ShouldQueue
             'channels' => $this->channels,
             'platform' => $this->channels[0] ?? null,
             'status' => 'concept',
-            'caption' => $result['caption'],
+            'caption' => $firstCaption,
+            'channel_captions' => $result['channel_captions'],
             'hashtags' => $result['hashtags'] ?? null,
             'alt_text' => $result['alt_text'] ?? null,
             'image_prompt' => $result['image_prompt'] ?? null,
@@ -65,11 +69,32 @@ class GenerateSocialPostJob implements ShouldQueue
         ]);
     }
 
+    private function buildChannelRules(): string
+    {
+        $channelModels = SocialChannel::query()
+            ->withoutGlobalScopes()
+            ->whereIn('slug', $this->channels)
+            ->orderBy('order')
+            ->get();
+
+        $channelRules = '';
+        foreach ($channelModels as $ch) {
+            $meta = $ch->meta ?? [];
+            $min = $meta['caption_min'] ?? 0;
+            $max = $meta['caption_max'] ?? 0;
+            $tips = $meta['tips'] ?? '';
+            $channelRules .= "- {$ch->slug} ({$ch->name}): {$min}-{$max} tekens. {$tips}\n";
+        }
+
+        return $channelRules;
+    }
+
     private function buildPrompt(string $context): string
     {
         $toneSection = $this->toneOverride ? "\nToon override: {$this->toneOverride}" : '';
         $extraSection = $this->extraInstructions ? "\nExtra instructies: {$this->extraInstructions}" : '';
         $keywordSection = $this->includeKeywords ? "\nVerwerk goedgekeurde keywords op natuurlijke wijze in captions en hashtags - nooit keyword stuffing." : '';
+        $channelRules = $this->buildChannelRules();
 
         return <<<PROMPT
         {$context}
@@ -101,11 +126,16 @@ class GenerateSocialPostJob implements ShouldQueue
 
         Retourneer UITSLUITEND geldig JSON, zonder uitleg, zonder markdown fences:
         {
-            "caption": "de caption tekst",
+            "channel_captions": {
+                "<channel_slug>": "geoptimaliseerde caption voor dit kanaal"
+            },
             "hashtags": ["#tag1", "#tag2"],
             "alt_text": "beschrijvende alt-tekst voor de afbeelding",
             "image_prompt": "English image prompt"
         }
+
+        De "channel_captions" moet een key bevatten per kanaal-slug met een caption die geoptimaliseerd is voor dat kanaal. Elke caption MOET de karakterlimieten van dat kanaal respecteren. Kanalen:
+        {$channelRules}
         PROMPT;
     }
 }
