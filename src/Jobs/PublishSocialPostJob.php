@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
-use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
 
 class PublishSocialPostJob implements ShouldQueue
 {
@@ -20,7 +20,8 @@ class PublishSocialPostJob implements ShouldQueue
 
     public function __construct(
         public SocialPost $post,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {
@@ -35,6 +36,9 @@ class PublishSocialPostJob implements ShouldQueue
 
             if ($result->externalId) {
                 $update['external_id'] = $result->externalId;
+                // External adapter: actual confirmation comes via webhook
+                $update['status'] = $this->post->scheduled_at?->isFuture() ? 'scheduled' : 'publishing';
+                unset($update['posted_at']);
             }
 
             if ($result->externalUrl) {
