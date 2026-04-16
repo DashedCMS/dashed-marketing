@@ -134,9 +134,9 @@ class SocialPostResource extends Resource
                             ->required()
                             ->default('concept'),
                         Textarea::make('caption')
-                            ->label('Caption')
+                            ->label('Caption (standaard)')
+                            ->helperText('Wordt automatisch gevuld met de caption van het eerste kanaal als per-kanaal captions zijn ingevuld.')
                             ->rows(5)
-                            ->required()
                             ->columnSpanFull(),
                         TagsInput::make('hashtags')
                             ->label('Hashtags')
@@ -222,6 +222,61 @@ class SocialPostResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Captions per kanaal')
+                    ->schema(function (?SocialPost $record, callable $get): array {
+                        $channelSlugs = $get('channels') ?? [];
+
+                        if (empty($channelSlugs)) {
+                            return [
+                                Placeholder::make('no_channels_hint')
+                                    ->content('Selecteer eerst kanalen hierboven om per-kanaal captions te bewerken.')
+                                    ->columnSpanFull(),
+                            ];
+                        }
+
+                        $channels = SocialChannel::query()
+                            ->withoutGlobalScopes()
+                            ->whereIn('slug', $channelSlugs)
+                            ->orderBy('order')
+                            ->get();
+
+                        return $channels->map(function (SocialChannel $channel): Textarea {
+                            $meta = $channel->meta ?? [];
+                            $maxLabel = ($meta['caption_max'] ?? 0) > 0 ? " (max {$meta['caption_max']})" : '';
+                            $helperParts = [];
+                            if (! empty($meta['tips'])) {
+                                $helperParts[] = $meta['tips'];
+                            }
+
+                            return Textarea::make("channel_captions.{$channel->slug}")
+                                ->label($channel->name . $maxLabel)
+                                ->helperText(implode(' ', $helperParts))
+                                ->rows(3)
+                                ->maxLength(($meta['caption_max'] ?? 0) > 0 ? (int) $meta['caption_max'] : null)
+                                ->columnSpanFull();
+                        })->all();
+                    })
+                    ->visible(fn (callable $get): bool => ! empty($get('channels')))
+                    ->live()
+                    ->columnSpanFull(),
+
+                Section::make('Publicatie status')
+                    ->schema([
+                        Placeholder::make('external_status')
+                            ->label('Extern ID')
+                            ->content(fn (?SocialPost $record) => $record?->external_id ?? '-'),
+                        Placeholder::make('failed_platforms_display')
+                            ->label('Gefaalde kanalen')
+                            ->content(fn (?SocialPost $record) => $record?->failed_platforms ? implode(', ', $record->failed_platforms) : 'Geen')
+                            ->visible(fn (?SocialPost $record) => ! empty($record?->failed_platforms)),
+                        Placeholder::make('retry_count_display')
+                            ->label('Pogingen')
+                            ->content(fn (?SocialPost $record) => $record?->retry_count ?? 0),
+                    ])
+                    ->visible(fn (?SocialPost $record) => $record?->external_id !== null)
+                    ->collapsed()
                     ->columnSpanFull(),
 
                 Section::make('Planning')
