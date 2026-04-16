@@ -17,6 +17,8 @@ class SocialChannel extends Model
         'meta',
         'order',
         'is_active',
+        'omnisocials_account_id',
+        'omnisocials_platform',
     ];
 
     protected $casts = [

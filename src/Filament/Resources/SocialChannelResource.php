@@ -2,27 +2,28 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
+use UnitEnum;
 use BackedEnum;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\CreateSocialChannel;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\EditSocialChannel;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\ListSocialChannels;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
-use UnitEnum;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\CheckboxList;
+use Illuminate\Support\Facades\Schema as DbSchema;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\EditSocialChannel;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\ListSocialChannels;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\CreateSocialChannel;
 
 class SocialChannelResource extends Resource
 {
@@ -85,6 +86,20 @@ class SocialChannelResource extends Resource
                     ->columns(2)
                     ->columnSpanFull(),
 
+                Section::make('Omnisocials koppeling')
+                    ->schema([
+                        TextInput::make('omnisocials_account_id')
+                            ->label('Omnisocials Account ID')
+                            ->helperText('Het account ID in Omnisocials dat aan dit kanaal gekoppeld is.'),
+                        TextInput::make('omnisocials_platform')
+                            ->label('Omnisocials Platform')
+                            ->disabled()
+                            ->helperText('Het platform zoals Omnisocials het kent. Wordt automatisch ingesteld bij sync.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->visible(fn () => DbSchema::hasColumn('dashed__social_channels', 'omnisocials_account_id')),
+
                 Section::make('Limieten en tips')
                     ->schema([
                         TextInput::make('meta.caption_min')
@@ -128,6 +143,11 @@ class SocialChannelResource extends Resource
                 TextColumn::make('accepted_types')
                     ->label('Types')
                     ->badge(),
+                TextColumn::make('omnisocials_platform')
+                    ->label('Omnisocials')
+                    ->badge()
+                    ->color('info')
+                    ->visible(fn () => DbSchema::hasColumn('dashed__social_channels', 'omnisocials_account_id')),
                 TextColumn::make('order')
                     ->label('Volgorde')
                     ->sortable(),
