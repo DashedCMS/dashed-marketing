@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Actions\GenerateImageAction;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
-use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Models\SocialPostVersion;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Forms\Components\FileUpload;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Models\SocialPostVersion;
+use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
+use Dashed\DashedMarketing\Filament\Actions\GenerateImageAction;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class EditSocialPost extends EditRecord
 {
@@ -33,6 +33,21 @@ class EditSocialPost extends EditRecord
 
                     Notification::make()
                         ->title('Publicatie gestart')
+                        ->success()
+                        ->send();
+                }),
+            Action::make('retry')
+                ->label('Opnieuw proberen')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->visible(fn () => $this->record->status === 'partially_posted')
+                ->requiresConfirmation()
+                ->action(function () {
+                    $this->record->update(['retry_count' => 0]);
+                    PublishSocialPostJob::dispatch($this->record);
+
+                    Notification::make()
+                        ->title('Retry gestart')
                         ->success()
                         ->send();
                 }),
