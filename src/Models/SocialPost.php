@@ -24,6 +24,13 @@ class SocialPost extends Model
         'scheduled_at',
         'posted_at',
         'post_url',
+        'channel_captions',
+        'ratio_images',
+        'external_id',
+        'external_data',
+        'failed_platforms',
+        'retry_count',
+        'analytics_synced_at',
         'pillar_id',
         'subject_type',
         'subject_id',
@@ -42,6 +49,12 @@ class SocialPost extends Model
         'hashtags' => 'array',
         'channels' => 'array',
         'images' => 'array',
+        'channel_captions' => 'array',
+        'ratio_images' => 'array',
+        'external_data' => 'array',
+        'failed_platforms' => 'array',
+        'retry_count' => 'integer',
+        'analytics_synced_at' => 'datetime',
     ];
 
     public const STATUSES = [
@@ -51,6 +64,9 @@ class SocialPost extends Model
         'scheduled' => 'Ingepland',
         'posted' => 'Gepost',
         'archived' => 'Archief',
+        'publishing' => 'Publiceren...',
+        'partially_posted' => 'Deels gepost',
+        'publish_failed' => 'Publicatie mislukt',
     ];
 
     public const STATUS_COLORS = [
@@ -60,6 +76,9 @@ class SocialPost extends Model
         'scheduled' => 'purple',
         'posted' => 'success',
         'archived' => 'danger',
+        'publishing' => 'warning',
+        'partially_posted' => 'danger',
+        'publish_failed' => 'danger',
     ];
 
     protected static function booted(): void
