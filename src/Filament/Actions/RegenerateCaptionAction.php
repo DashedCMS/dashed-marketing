@@ -3,13 +3,11 @@
 namespace Dashed\DashedMarketing\Filament\Actions;
 
 use Filament\Actions\Action;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
+use Dashed\DashedAi\Facades\Ai;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class RegenerateCaptionAction

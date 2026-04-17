@@ -14,7 +14,6 @@ use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
 use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
 use Dashed\DashedMarketing\Templates\LandingPageTemplate;
 use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
-use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
 use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
 use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
@@ -23,6 +22,7 @@ use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
 use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
 use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
 use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
+use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
 use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
 use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 
