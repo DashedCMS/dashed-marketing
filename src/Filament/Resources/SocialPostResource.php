@@ -306,9 +306,13 @@ class SocialPostResource extends Resource
                             ->nullable(),
                         DateTimePicker::make('scheduled_at')
                             ->label('Ingepland op')
+                            ->timezone('Europe/Amsterdam')
+                            ->seconds(false)
                             ->nullable(),
                         DateTimePicker::make('posted_at')
                             ->label('Gepost op')
+                            ->timezone('Europe/Amsterdam')
+                            ->seconds(false)
                             ->nullable(),
                     ])
                     ->columns(2)
@@ -382,7 +386,7 @@ class SocialPostResource extends Resource
                     ->sortable(),
                 TextColumn::make('scheduled_at')
                     ->label('Ingepland')
-                    ->dateTime('d-m-Y H:i')
+                    ->dateTime('d-m-Y H:i', 'Europe/Amsterdam')
                     ->sortable(),
             ])
             ->filters([
