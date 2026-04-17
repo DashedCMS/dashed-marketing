@@ -2,11 +2,11 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedPages\Models\Page;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Throwable;
+use Dashed\DashedPages\Models\Page;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Dashed\DashedCore\Models\Customsetting;
 
 class SocialContextSourceCollector
 {

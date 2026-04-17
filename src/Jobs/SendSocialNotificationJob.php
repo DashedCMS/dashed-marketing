@@ -2,15 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedMarketing\Models\SocialNotificationLog;
 use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Dashed\DashedCore\Notifications\AdminNotifier;
+use Dashed\DashedMarketing\Models\SocialNotificationLog;
 
 class SendSocialNotificationJob implements ShouldQueue
 {
@@ -24,7 +23,8 @@ class SendSocialNotificationJob implements ShouldQueue
         public string $recipient,
         public string $type,
         public string $siteId,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

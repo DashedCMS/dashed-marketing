@@ -3,16 +3,17 @@
 namespace Dashed\DashedMarketing\Services;
 
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentEmbedding;
-use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentEmbedding;
 
 class ContentMatcher
 {
     public function __construct(
         protected KeywordNormalizer $normalizer,
         protected EmbeddingService $embeddings,
-    ) {}
+    ) {
+    }
 
     /** @return array<int, string> */
     public function candidateContentTypes(?string $intent): array

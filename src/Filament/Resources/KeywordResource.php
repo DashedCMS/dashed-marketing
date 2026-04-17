@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
-use Dashed\DashedMarketing\Models\Keyword;
+use UnitEnum;
+use Filament\Tables;
 use Filament\Actions;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Tables;
-use Filament\Tables\Table;
-use UnitEnum;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
 class KeywordResource extends Resource
 {

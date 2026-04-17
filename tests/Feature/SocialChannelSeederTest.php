@@ -3,10 +3,10 @@
 // Task 1 (Phase 1 Omnisocials plan): schema assertions only.
 // Task 3 and Task 4 will add seeder idempotency and field-value assertions to this file.
 
-use Dashed\DashedMarketing\Database\Seeders\SocialChannelSeeder;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Database\Seeders\SocialChannelSeeder;
 
 uses(TestCase::class);
 
@@ -41,7 +41,7 @@ it('creates the dashed__social_channels table with the expected columns', functi
 it('seeds every channel from DEFAULTS for a given site id', function () {
     SocialChannel::query()->withoutGlobalScopes()->delete();
 
-    (new SocialChannelSeeder)->seedSite('default');
+    (new SocialChannelSeeder())->seedSite('default');
 
     $channels = SocialChannel::query()->withoutGlobalScopes()->where('site_id', 'default')->get();
 
@@ -62,8 +62,8 @@ it('seeds every channel from DEFAULTS for a given site id', function () {
 it('is idempotent: running the seeder twice does not duplicate rows', function () {
     SocialChannel::query()->withoutGlobalScopes()->delete();
 
-    (new SocialChannelSeeder)->seedSite('default');
-    (new SocialChannelSeeder)->seedSite('default');
+    (new SocialChannelSeeder())->seedSite('default');
+    (new SocialChannelSeeder())->seedSite('default');
 
     $count = SocialChannel::query()->withoutGlobalScopes()->where('site_id', 'default')->count();
     expect($count)->toBe(count(SocialChannelSeeder::DEFAULTS));

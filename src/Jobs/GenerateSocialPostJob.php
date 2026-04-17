@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedAi\Facades\Ai;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class GenerateSocialPostJob implements ShouldQueue
 {
@@ -34,11 +34,12 @@ class GenerateSocialPostJob implements ShouldQueue
         public bool $includeKeywords,
         public ?string $scheduledAt,
         public string $siteId,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {
-        $contextBuilder = new SocialContextBuilder;
+        $contextBuilder = new SocialContextBuilder();
         $context = $contextBuilder->build($this->type, $this->channels, $this->subject);
 
         $prompt = $this->buildPrompt($context);

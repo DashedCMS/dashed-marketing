@@ -2,26 +2,26 @@
 
 namespace Dashed\DashedMarketing\Filament\Pages\Settings;
 
+use Filament\Pages\Page;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Classes\Sites;
-use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedCore\Traits\HasSettingsPermission;
-use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
-use Filament\Actions\Action;
-use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Schemas\Schema;
+use Dashed\DashedCore\Models\Customsetting;
+use Filament\Forms\Components\CheckboxList;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedCore\Traits\HasSettingsPermission;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
+use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
 
 class SocialSettingsPage extends Page implements HasSchemas
 {

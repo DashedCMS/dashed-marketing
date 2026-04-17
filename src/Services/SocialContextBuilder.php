@@ -2,13 +2,13 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Dashed\DashedCore\Models\Customsetting;
+use Illuminate\Database\Eloquent\Model;
 use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\SocialCampaign;
+use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedMarketing\Models\SocialPillar;
 use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialHoliday;
-use Dashed\DashedMarketing\Models\SocialPillar;
-use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Models\SocialCampaign;
 
 class SocialContextBuilder
 {

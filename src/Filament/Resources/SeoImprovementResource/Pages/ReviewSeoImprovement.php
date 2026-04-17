@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
-use Dashed\DashedMarketing\Jobs\ApplyContentImprovementJob;
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoImprovement;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Notifications\Notification;
+use Dashed\DashedMarketing\Models\SeoImprovement;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
+use Dashed\DashedMarketing\Jobs\ApplyContentImprovementJob;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 
 class ReviewSeoImprovement extends Page
 {

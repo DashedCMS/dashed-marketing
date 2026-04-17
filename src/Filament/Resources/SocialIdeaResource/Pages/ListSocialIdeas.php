@@ -2,10 +2,10 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Actions\GenerateBulkIdeasAction;
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
+use Dashed\DashedMarketing\Filament\Actions\GenerateBulkIdeasAction;
 
 class ListSocialIdeas extends ListRecords
 {

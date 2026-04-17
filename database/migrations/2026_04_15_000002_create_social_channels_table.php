@@ -1,13 +1,12 @@
 <?php
 
 use Dashed\DashedCore\Classes\Sites;
-use Dashed\DashedMarketing\Database\Seeders\SocialChannelSeeder;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+use Dashed\DashedMarketing\Database\Seeders\SocialChannelSeeder;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::create('dashed__social_channels', function (Blueprint $table) {
@@ -35,7 +34,7 @@ return new class extends Migration
 
     public function seedExistingSites(): void
     {
-        $seeder = new SocialChannelSeeder;
+        $seeder = new SocialChannelSeeder();
 
         foreach (Sites::getSites() as $site) {
             $seeder->seedSite((string) $site['id']);

@@ -2,24 +2,24 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use BackedEnum;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\CreateSeoImprovement;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ListSeoImprovements;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ReviewSeoImprovement;
-use Dashed\DashedMarketing\Models\SeoImprovement;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
 use UnitEnum;
+use BackedEnum;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Filters\SelectFilter;
+use Dashed\DashedMarketing\Models\SeoImprovement;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ListSeoImprovements;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\CreateSeoImprovement;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages\ReviewSeoImprovement;
 
 class SeoImprovementResource extends Resource
 {

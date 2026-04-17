@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Filament\Resources\Pages\CreateRecord;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 
 class CreateSeoImprovement extends CreateRecord
 {

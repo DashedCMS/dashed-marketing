@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Mail;
 
-use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
+use Illuminate\Mail\Mailables\Envelope;
+use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
+use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
 
 class PostMissedMail extends Mailable implements SendsToTelegram
 {
@@ -19,7 +19,8 @@ class PostMissedMail extends Mailable implements SendsToTelegram
     public function __construct(
         public SocialPost $post,
         public string $siteName,
-    ) {}
+    ) {
+    }
 
     public function envelope(): Envelope
     {

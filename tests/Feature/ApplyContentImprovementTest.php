@@ -1,12 +1,12 @@
 <?php
 
-use Dashed\DashedMarketing\Jobs\ApplyContentImprovementJob;
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoImprovement;
+use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Models\SeoImprovement;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
+use Dashed\DashedMarketing\Jobs\ApplyContentImprovementJob;
 
 uses(TestCase::class);
 

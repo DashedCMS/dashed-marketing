@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoImprovement;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
+use Dashed\DashedMarketing\Models\SeoImprovement;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
 
 class ApplyContentImprovementJob implements ShouldQueue
 {
@@ -23,7 +23,8 @@ class ApplyContentImprovementJob implements ShouldQueue
         public string $proposalKey,
         public mixed $editedValue = null,
         public ?int $userId = null,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

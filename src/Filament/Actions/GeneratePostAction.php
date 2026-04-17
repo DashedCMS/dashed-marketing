@@ -2,17 +2,17 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Dashed\DashedCore\Classes\Sites;
-use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
-use Dashed\DashedMarketing\Models\SocialChannel;
 use Filament\Actions\Action;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\DateTimePicker;
+use Dashed\DashedCore\Classes\Sites;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DateTimePicker;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
 
 class GeneratePostAction extends Action
 {
@@ -119,7 +119,7 @@ class GeneratePostAction extends Action
                     }
 
                     $query = $class::query();
-                    $model = new $class;
+                    $model = new $class();
                     $columns = [];
                     foreach (['name', 'title'] as $column) {
                         if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $column)) {

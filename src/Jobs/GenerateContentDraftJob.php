@@ -2,22 +2,22 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Facades\ContentTemplates;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\SeoImprovement;
-use Dashed\DashedMarketing\Services\ArticleSanitizer;
-use Dashed\DashedMarketing\Services\ContentMatcher;
-use Dashed\DashedMarketing\Services\EmbeddingService;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\SeoImprovement;
+use Dashed\DashedMarketing\Services\ContentMatcher;
+use Dashed\DashedMarketing\Facades\ContentTemplates;
+use Dashed\DashedMarketing\Services\ArticleSanitizer;
+use Dashed\DashedMarketing\Services\EmbeddingService;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class GenerateContentDraftJob implements ShouldQueue
 {
@@ -32,7 +32,8 @@ class GenerateContentDraftJob implements ShouldQueue
     public function __construct(
         public int $keywordId,
         public array $overrideAction = [],
-    ) {}
+    ) {
+    }
 
     public function handle(
         ContentMatcher $matcher,

@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
-use Dashed\DashedMarketing\Facades\ContentTemplates;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
-use Dashed\DashedMarketing\Jobs\RegenerateContentSectionJob;
-use Dashed\DashedMarketing\Models\ContentDraft;
 use Filament\Actions;
+use Illuminate\Support\Str;
+use Filament\Resources\Pages\Page;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
-use Filament\Resources\Pages\Page;
-use Illuminate\Support\Str;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Facades\ContentTemplates;
+use Dashed\DashedMarketing\Jobs\RegenerateContentSectionJob;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 
 class EditContentDraft extends Page
 {
@@ -121,7 +121,7 @@ class EditContentDraft extends Page
                     $template = ContentTemplates::make($cluster->content_type);
                     $targetClass = $data['target_class'];
 
-                    $new = new $targetClass;
+                    $new = new $targetClass();
                     $new->name = $this->record->keyword;
                     $new->slug = Str::slug($this->record->keyword);
                     $new->save();
@@ -156,6 +156,7 @@ class EditContentDraft extends Page
     protected function buildLinkCandidates(): array
     {
         $pool = [];
+
         try {
             $routeModels = (array) cms()->builder('routeModels');
         } catch (\Throwable) {

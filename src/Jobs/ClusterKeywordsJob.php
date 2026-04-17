@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Models\ContentCluster;
 
 class ClusterKeywordsJob implements ShouldQueue
 {
@@ -22,7 +22,8 @@ class ClusterKeywordsJob implements ShouldQueue
     public function __construct(
         public string $locale,
         public string $mode = 'full',
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

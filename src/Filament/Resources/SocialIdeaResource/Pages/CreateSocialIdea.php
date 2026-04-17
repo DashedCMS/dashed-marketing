@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Filament\Resources\Pages\CreateRecord;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 
 class CreateSocialIdea extends CreateRecord
 {

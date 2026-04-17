@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
-use Dashed\DashedMarketing\Jobs\GenerateContentDraftJob;
+use Filament\Resources\Pages\Page;
+use Filament\Notifications\Notification;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Services\ContentMatcher;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\Page;
+use Dashed\DashedMarketing\Jobs\GenerateContentDraftJob;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 
 class GenerateDrafts extends Page
 {

@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 
 class ListSeoImprovements extends ListRecords
 {

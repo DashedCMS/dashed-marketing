@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 
 class EditSocialHoliday extends EditRecord
 {
