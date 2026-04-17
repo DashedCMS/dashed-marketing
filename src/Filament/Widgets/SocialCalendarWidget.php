@@ -6,6 +6,7 @@ use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
 use Filament\Notifications\Notification;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class SocialCalendarWidget extends Widget
 {
@@ -90,7 +91,7 @@ class SocialCalendarWidget extends Widget
                 'caption' => str($post->caption)->limit(40),
                 'status' => $post->status,
                 'color' => SocialPost::STATUS_COLORS[$post->status] ?? 'gray',
-                'edit_url' => route('filament.admin.resources.social-posts.edit', $post->id),
+                'edit_url' => SocialPostResource::getUrl('edit', ['record' => $post->id]),
             ];
         }
 
