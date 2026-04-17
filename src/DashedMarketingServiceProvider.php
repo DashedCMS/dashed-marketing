@@ -14,6 +14,7 @@ use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
 use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
 use Dashed\DashedMarketing\Templates\LandingPageTemplate;
 use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
+use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
 use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
 use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
@@ -34,6 +35,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->command('social:publish-due')->everyMinute()->withoutOverlapping();
             $schedule->command('social:notify-due')->dailyAt('08:00');
             $schedule->command('social:notify-missed')->dailyAt('09:00');
             $schedule->command('social:check-holidays')->dailyAt('07:00');
@@ -415,6 +417,7 @@ MARKDOWN,
             ->hasConfigFile(['dashed-marketing', 'dashed-marketing-content'])
             ->hasViews('dashed-marketing')
             ->hasCommands([
+                PublishDueSocialPostsCommand::class,
                 SocialNotifyDueCommand::class,
                 SocialNotifyMissedCommand::class,
                 SocialCheckHolidaysCommand::class,
