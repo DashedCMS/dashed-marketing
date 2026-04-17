@@ -25,6 +25,7 @@ class SocialPost extends Model
         'posted_at',
         'post_url',
         'channel_captions',
+        'captions_per_channel',
         'ratio_images',
         'external_id',
         'external_data',
@@ -50,6 +51,7 @@ class SocialPost extends Model
         'channels' => 'array',
         'images' => 'array',
         'channel_captions' => 'array',
+        'captions_per_channel' => 'boolean',
         'ratio_images' => 'array',
         'external_data' => 'array',
         'failed_platforms' => 'array',
@@ -89,6 +91,17 @@ class SocialPost extends Model
 
         static::creating(function ($model) {
             $model->site_id = $model->site_id ?? Sites::getActive();
+        });
+
+        static::saving(function ($model) {
+            $hasFutureSchedule = $model->scheduled_at && $model->scheduled_at->isFuture();
+            $inPlannableStatus = in_array($model->status, ['concept', 'approved'], true);
+
+            if ($hasFutureSchedule && $inPlannableStatus) {
+                $model->status = 'scheduled';
+            } elseif (! $model->scheduled_at && $model->status === 'scheduled') {
+                $model->status = 'concept';
+            }
         });
     }
 

@@ -14,6 +14,7 @@ use Illuminate\Support\HtmlString;
 use Dashed\DashedCore\Classes\Sites;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Textarea;
@@ -28,6 +29,8 @@ use Filament\Forms\Components\CheckboxList;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Filament\Forms\Components\DateTimePicker;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Filament\Actions\RegenerateCaptionAction;
+use Dashed\DashedMarketing\Filament\Actions\RegenerateImagePromptAction;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
@@ -135,8 +138,14 @@ class SocialPostResource extends Resource
                             ->default('concept'),
                         Textarea::make('caption')
                             ->label('Caption (standaard)')
-                            ->helperText('Wordt automatisch gevuld met de caption van het eerste kanaal als per-kanaal captions zijn ingevuld.')
+                            ->helperText('Gebruikt voor alle kanalen, tenzij "Caption per kanaal aanpassen" aan staat.')
                             ->rows(5)
+                            ->columnSpanFull()
+                            ->hintAction(RegenerateCaptionAction::forDefault()),
+                        Toggle::make('captions_per_channel')
+                            ->label('Caption per kanaal aanpassen')
+                            ->helperText('Wanneer aan: elk kanaal krijgt zijn eigen caption hieronder. Wanneer uit: de standaard caption wordt overal gebruikt.')
+                            ->live()
                             ->columnSpanFull(),
                         TagsInput::make('hashtags')
                             ->label('Hashtags')
@@ -149,7 +158,8 @@ class SocialPostResource extends Resource
                         TextInput::make('image_prompt')
                             ->label('Afbeelding prompt (AI)')
                             ->helperText('Wordt gebruikt door "Genereer afbeelding met AI" als basisprompt. Pas aan om volgende generaties te sturen.')
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->hintAction(RegenerateImagePromptAction::make()),
                         Placeholder::make('generated_images_preview')
                             ->label('Afbeeldingen')
                             ->helperText('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund - gebruik de knoppen om volgorde te veranderen.')
@@ -255,10 +265,11 @@ class SocialPostResource extends Resource
                                 ->helperText(implode(' ', $helperParts))
                                 ->rows(3)
                                 ->maxLength(($meta['caption_max'] ?? 0) > 0 ? (int) $meta['caption_max'] : null)
-                                ->columnSpanFull();
+                                ->columnSpanFull()
+                                ->hintAction(RegenerateCaptionAction::forChannel($channel->slug));
                         })->all();
                     })
-                    ->visible(fn (callable $get): bool => ! empty($get('channels')))
+                    ->visible(fn (callable $get): bool => ! empty($get('channels')) && (bool) $get('captions_per_channel'))
                     ->live()
                     ->columnSpanFull(),
 

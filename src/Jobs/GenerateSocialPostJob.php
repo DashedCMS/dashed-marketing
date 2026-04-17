@@ -59,6 +59,7 @@ class GenerateSocialPostJob implements ShouldQueue
             'status' => 'concept',
             'caption' => $firstCaption,
             'channel_captions' => $result['channel_captions'],
+            'captions_per_channel' => count($result['channel_captions']) > 1,
             'hashtags' => $result['hashtags'] ?? null,
             'alt_text' => $result['alt_text'] ?? null,
             'image_prompt' => $result['image_prompt'] ?? null,
