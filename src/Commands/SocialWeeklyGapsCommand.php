@@ -3,13 +3,13 @@
 namespace Dashed\DashedMarketing\Commands;
 
 use Carbon\Carbon;
-use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Mail\WeeklyGapsMail;
 use Dashed\DashedMarketing\Jobs\SendSocialNotificationJob;
+use Dashed\DashedMarketing\Mail\WeeklyGapsMail;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 class SocialWeeklyGapsCommand extends Command
 {

@@ -2,29 +2,40 @@
 
 namespace Dashed\DashedMarketing;
 
-use Spatie\LaravelPackageTools\Package;
 use Dashed\DashedCore\Models\Customsetting;
-use Illuminate\Console\Scheduling\Schedule;
-use Dashed\DashedMarketing\Facades\ContentTemplates;
-use Dashed\DashedMarketing\Templates\ProductTemplate;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
-use Dashed\DashedMarketing\Managers\KeywordDataManager;
 use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
-use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
-use Dashed\DashedMarketing\Templates\LandingPageTemplate;
+use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
+use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
+use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
 use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
+use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
 use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
-use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
-use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
-use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
-use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
-use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
-use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
-use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
-use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
+use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
+use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
+use Dashed\DashedMarketing\Managers\KeywordDataManager;
+use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
+use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
+use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
+use Dashed\DashedMarketing\Templates\LandingPageTemplate;
+use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
+use Dashed\DashedMarketing\Templates\ProductTemplate;
+use Illuminate\Console\Scheduling\Schedule;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class DashedMarketingServiceProvider extends PackageServiceProvider
 {
@@ -44,7 +55,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         });
 
         cms()->builder('plugins', [
-            new DashedMarketingPlugin(),
+            new DashedMarketingPlugin,
         ]);
 
         cms()->registerSettingsPage(
@@ -57,13 +68,13 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         PublishingAdapterRegistry::register('manual', ManualPublishAdapter::class, 'Handmatig');
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\ContentClusterResource::class,
+            resource: ContentClusterResource::class,
             title: 'Content clusters',
             intro: 'Een content cluster bundelt gerelateerde onderwerpen rond een thema. Je koppelt er keywords en content concepten aan, zodat je in een oogopslag ziet welke stukken samen bij een thema horen. Ideaal om je content marketing planning overzichtelijk te houden.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe clusters aanmaken rond een thema of onderwerp.
 - Keywords aan een cluster koppelen.
 - Content concepten binnen een cluster plannen.
@@ -79,13 +90,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\ContentDraftResource::class,
+            resource: ContentDraftResource::class,
             title: 'Content concepten',
             intro: 'Hier vind je AI-gegenereerde concept artikelen met een duidelijke opbouw in H2 secties. Elk concept doorloopt een cyclus van in afwachting, planning, schrijven, klaar en toegepast. Van elke wijziging wordt een snapshot bewaard zodat je altijd terug kunt naar een eerdere versie.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - AI laten voorstellen doen voor nieuwe artikelen.
 - De status van een concept aanpassen tijdens het schrijfproces.
 - Per sectie de tekst controleren en bijsturen.
@@ -106,13 +117,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\KeywordResource::class,
+            resource: KeywordResource::class,
             title: 'Keywords',
             intro: 'Beheer de SEO keywords die de basis vormen van je content planning en vindbaarheid. Per keyword zie je het maandelijks zoekvolume, de moeilijkheid en de zoekintentie. Zo bepaal je snel welke termen kansrijk zijn om op in te zetten.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe keywords toevoegen aan je lijst.
 - Zoekvolume, moeilijkheid en intentie per keyword bekijken.
 - Keywords koppelen aan clusters of concepten.
@@ -129,13 +140,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource::class,
+            resource: SeoImprovementResource::class,
             title: 'SEO verbeteringen',
             intro: 'Hier zie je AI-gegenereerde verbetervoorstellen voor bestaande content. Per voorstel krijg je een heldere vergelijking tussen de huidige tekst en de voorgestelde versie. Je kunt elk voorstel accepteren, weigeren of later alsnog terugdraaien.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Voorgestelde SEO verbeteringen inzien per pagina of artikel.
 - Een vergelijking bekijken tussen de huidige en de nieuwe tekst.
 - Voorstellen accepteren en direct doorvoeren.
@@ -155,13 +166,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource::class,
+            resource: SocialCampaignResource::class,
             title: 'Social campagnes',
             intro: 'Bundel je social posts onder een gezamenlijk doel in een campagne. Per campagne leg je een naam, beschrijving, looptijd, doelen en status vast. Zo hou je grip op welke posts bij welk verhaal horen.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe campagnes starten met een duidelijke naam en looptijd.
 - Doelen per campagne beschrijven.
 - Social posts aan een campagne koppelen.
@@ -178,13 +189,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource::class,
+            resource: SocialHolidayResource::class,
             title: 'Feestdagen',
             intro: 'Hou overzicht over land-specifieke feestdagen zodat je op tijd je social media content kunt voorbereiden. Per feestdag leg je een datum, een land en optioneel een herinnering met voorlooptijd vast.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Feestdagen toevoegen per land.
 - Een herinnering instellen met een voorlooptijd die bij jou past.
 - Onderscheid maken tussen nationale en internationale feestdagen.
@@ -201,13 +212,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource::class,
+            resource: SocialIdeaResource::class,
             title: 'Social ideeen',
             intro: 'Een plek voor ruwe social media ideeen die je later verder uitwerkt. Per idee leg je een titel, notities, tags, een type en de kanalen vast. Zo verlies je geen enkel inzicht, ook al heb je op dat moment nog geen tijd om er echt iets mee te doen.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe ideeen snel vastleggen zodra ze opkomen.
 - Notities en tags toevoegen om het idee later terug te vinden.
 - Het type en de kanalen kiezen die bij het idee passen.
@@ -228,13 +239,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SocialPillarResource::class,
+            resource: SocialPillarResource::class,
             title: 'Social pijlers',
             intro: 'Pijlers zijn de kernthema\'s waar je social strategie op rust. Door elke post en elk idee aan een pijler te koppelen, zorg je voor een herkenbare mix en een duidelijk verhaal richting je volgers.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe pijlers definieren voor je strategie.
 - Per pijler omschrijven waar die over gaat.
 - Pijlers koppelen aan posts en ideeen.
@@ -250,13 +261,13 @@ MARKDOWN,
         );
 
         cms()->registerResourceDocs(
-            resource: \Dashed\DashedMarketing\Filament\Resources\SocialPostResource::class,
+            resource: SocialPostResource::class,
             title: 'Social posts',
             intro: 'Hier beheer je AI-gegenereerde social media posts inclusief planning, kanalen, hashtags, beeld en prestaties. Per post kies je een type, zoals content, promotie, educatief, vermaak of engagement, en de kanalen waar de post verschijnt.',
             sections: [
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Nieuwe posts aanmaken met AI-ondersteuning.
 - Een type en kanalen kiezen per post.
 - Hashtags en beeldmateriaal toevoegen.
@@ -277,13 +288,13 @@ MARKDOWN,
         );
 
         cms()->registerSettingsDocs(
-            page: \Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage::class,
+            page: SocialDashboardPage::class,
             title: 'Social dashboard',
             intro: 'Het strategie overzicht voor je social media. Hier zie je in een oogopslag hoeveel je post, of je content mix klopt met je targets en welke feestdagen eraan komen.',
             sections: [
                 [
                     'heading' => 'Wat zie je hier?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 Het dashboard bestaat uit drie onderdelen:
 
 - **Vier stat-kaarten voor de huidige week** met het aantal geposte berichten, ingeplande berichten, posts die te laat zijn en concepten die nog wachten op afronding.
@@ -303,13 +314,13 @@ MARKDOWN,
         );
 
         cms()->registerSettingsDocs(
-            page: \Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage::class,
+            page: SocialCalendarPage::class,
             title: 'Social kalender',
             intro: 'De maandkalender voor je social media planning. Hier zie je alle geplande en geposte berichten per dag en kun je ze slepen naar een andere datum.',
             sections: [
                 [
                     'heading' => 'Wat zie je hier?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 De kalender toont een hele maand in een raster:
 
 - **Maand- en jaarnavigatie** om vooruit en terug te bladeren.
@@ -320,7 +331,7 @@ MARKDOWN,
                 ],
                 [
                     'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<MARKDOWN
+                    'body' => <<<'MARKDOWN'
 - Bladeren tussen maanden om ver vooruit te plannen of terug te kijken naar wat je hebt gepost.
 - Een post naar een andere dag slepen om hem te herplannen zonder het bericht te openen.
 - Op een post klikken om hem te bewerken, bijvoorbeeld om de tekst, media of het tijdstip aan te passen.
@@ -335,7 +346,7 @@ MARKDOWN,
         );
 
         cms()->registerSettingsDocs(
-            page: \Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage::class,
+            page: SocialSettingsPage::class,
             title: 'Social media instellingen',
             intro: 'Hier bepaal je hoe de AI posts voor je social kanalen schrijft en welke beelden er bij gegenereerd worden. Je legt vast op welke kanalen je actief bent, voor wie je schrijft en wat de unieke punten van je merk zijn. Daarnaast stel je in wanneer je notificaties wil ontvangen over geplande, gemiste of ontbrekende posts.',
             sections: [
@@ -431,7 +442,7 @@ MARKDOWN,
     {
         $keywordResearchAdapter = config('dashed-marketing.adapters.keyword_research');
         if ($keywordResearchAdapter) {
-            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter());
+            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter);
         }
 
         $this->app->bind(PublishingAdapter::class, function ($app, array $parameters = []) {
@@ -439,11 +450,11 @@ MARKDOWN,
             $slug = Customsetting::get('social_publishing_adapter', $siteId) ?: 'manual';
             $entry = PublishingAdapterRegistry::get($slug);
 
-            return $entry ? new $entry['class']() : new ManualPublishAdapter();
+            return $entry ? new $entry['class'] : new ManualPublishAdapter;
         });
 
         $this->app->singleton(KeywordDataManager::class, function () {
-            return new KeywordDataManager();
+            return new KeywordDataManager;
         });
 
         $this->app->singleton(ContentTemplateRegistry::class);

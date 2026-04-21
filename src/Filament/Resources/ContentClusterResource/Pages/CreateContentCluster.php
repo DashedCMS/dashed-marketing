@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateContentCluster extends CreateRecord
 {

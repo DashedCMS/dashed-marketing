@@ -2,30 +2,30 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Illuminate\Support\Str;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
 use Dashed\DashedCore\Models\Customsetting;
-use Filament\Forms\Components\CheckboxList;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Illuminate\Support\Facades\Schema as DbSchema;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\CreateSocialChannel;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\EditSocialChannel;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\ListSocialChannels;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\CreateSocialChannel;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Schema as DbSchema;
+use Illuminate\Support\Str;
+use UnitEnum;
 
 class SocialChannelResource extends Resource
 {
@@ -98,7 +98,7 @@ class SocialChannelResource extends Resource
 
                                 return collect($accounts ?: [])
                                     ->mapWithKeys(fn (array $account) => [
-                                        $account['id'] => ($account['display_name'] ?? $account['username'] ?? $account['id']) . ' - ' . ($account['platform'] ?? '?'),
+                                        $account['id'] => ($account['display_name'] ?? $account['username'] ?? $account['id']).' - '.($account['platform'] ?? '?'),
                                     ])
                                     ->all();
                             })

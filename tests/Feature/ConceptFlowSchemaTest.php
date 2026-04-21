@@ -1,8 +1,8 @@
 <?php
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

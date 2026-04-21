@@ -2,18 +2,18 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Throwable;
-use Illuminate\Bus\Queueable;
-use Dashed\DashedCore\Models\User;
-use Illuminate\Support\Facades\Log;
 use Dashed\DashedCore\Classes\Sites;
-use Illuminate\Queue\SerializesModels;
+use Dashed\DashedCore\Models\User;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialIdea;
 use Filament\Notifications\Notification;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Models\SocialChannel;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class GenerateBulkPostsFromIdeasJob implements ShouldQueue
 {
@@ -25,8 +25,7 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
     public function __construct(
         public array $ideaIds,
         public ?int $userId = null,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

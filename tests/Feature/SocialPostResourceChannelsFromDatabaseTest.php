@@ -1,15 +1,15 @@
 <?php
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Schema;
-use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 uses(TestCase::class);
 
 beforeEach(function () {
     Schema::dropIfExists('dashed__social_channels');
-    $migration = require __DIR__ . '/../../database/migrations/2026_04_15_000002_create_social_channels_table.php';
+    $migration = require __DIR__.'/../../database/migrations/2026_04_15_000002_create_social_channels_table.php';
     $migration->up();
 
     SocialChannel::query()->withoutGlobalScopes()->delete();

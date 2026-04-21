@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialPost;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class GenerateSocialImageJob implements ShouldQueue
 {
@@ -26,8 +26,7 @@ class GenerateSocialImageJob implements ShouldQueue
         public ?string $referenceImageUrl = null,
         public float $referenceStrength = 0.7,
         public ?string $promptOverride = null,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

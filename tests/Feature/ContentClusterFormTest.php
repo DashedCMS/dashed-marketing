@@ -1,11 +1,11 @@
 <?php
 
-use Tests\TestCase;
-use Livewire\Livewire;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

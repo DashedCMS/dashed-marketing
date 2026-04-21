@@ -2,22 +2,23 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
-use Filament\Tables;
-use Filament\Actions;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Radio;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Textarea;
-use Illuminate\Support\Facades\DB;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Filament\Actions;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
+use UnitEnum;
 
 class KeywordResource extends Resource
 {
@@ -261,7 +262,7 @@ class KeywordResource extends Resource
                                     ]);
                                     $cluster->keywords()->attach($data['keywords']);
                                 });
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->title('Cluster "'.$data['name'].'" aangemaakt met '.count($data['keywords']).' keywords')
                                     ->success()
                                     ->send();
@@ -271,7 +272,7 @@ class KeywordResource extends Resource
 
                             $cluster = ContentCluster::findOrFail($data['cluster_id']);
                             $cluster->keywords()->syncWithoutDetaching($data['keywords_to_add']);
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title(count($data['keywords_to_add']).' keywords toegevoegd aan "'.$cluster->name.'"')
                                 ->success()
                                 ->send();

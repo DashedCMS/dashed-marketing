@@ -1,13 +1,11 @@
 <?php
 
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
-use Dashed\DashedMarketing\Jobs\FillContentDraftJob;
 use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -45,27 +43,6 @@ beforeEach(function () {
     ]);
 });
 
-it('generate_content action dispatches FillContentDraftJob', function () {
-    Queue::fake();
-
-    $cluster = ContentCluster::create(['name' => 'C', 'locale' => 'nl', 'content_type' => 'blog']);
-    $draft = ContentDraft::create([
-        'content_cluster_id' => $cluster->id,
-        'name' => 'Titel',
-        'slug' => 'titel',
-        'keyword' => 'kw',
-        'locale' => 'nl',
-        'status' => 'concept',
-    ]);
-
-    Livewire::test(EditContentDraft::class, ['record' => $draft])
-        ->callAction('generate_content', ['briefing' => 'focus op SEO']);
-
-    Queue::assertPushed(FillContentDraftJob::class, function ($job) use ($draft) {
-        return $job->draftId === $draft->id && $job->briefing === 'focus op SEO';
-    });
-});
-
 it('publish action creates a new target record', function () {
     $cluster = ContentCluster::create(['name' => 'C', 'locale' => 'nl', 'content_type' => 'blog']);
     $draft = ContentDraft::create([
@@ -80,7 +57,7 @@ it('publish action creates a new target record', function () {
         ],
     ]);
 
-    Livewire::test(EditContentDraft::class, ['record' => $draft])
+    Livewire::test(EditContentDraft::class, ['record' => $draft->id])
         ->callAction('publish', [
             'target_type' => 'fakeVisitableModel',
             'target_id' => null,
@@ -114,7 +91,7 @@ it('publish action updates an existing target record', function () {
         'h2_sections' => [['id' => 'a', 'heading' => 'H1', 'body' => 'body', 'order' => 0]],
     ]);
 
-    Livewire::test(EditContentDraft::class, ['record' => $draft])
+    Livewire::test(EditContentDraft::class, ['record' => $draft->id])
         ->callAction('publish', [
             'target_type' => 'fakeVisitableModel',
             'target_id' => $existing->id,

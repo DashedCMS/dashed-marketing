@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Illuminate\Database\Seeder;
 
 class SocialChannelSeeder extends Seeder
 {

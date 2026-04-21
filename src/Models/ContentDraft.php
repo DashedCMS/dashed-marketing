@@ -3,8 +3,9 @@
 namespace Dashed\DashedMarketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ContentDraft extends Model
 {
@@ -46,6 +47,16 @@ class ContentDraft extends Model
     public function subject(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function keywords(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Keyword::class,
+            'dashed__content_draft_keyword',
+            'content_draft_id',
+            'keyword_id',
+        );
     }
 
     public function setProgress(string $message): void

@@ -1,11 +1,12 @@
 <?php
 
-use Tests\TestCase;
-use Livewire\Livewire;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages\ListKeywords;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
+use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
@@ -70,7 +71,7 @@ it('does not detach current keywords when adding to existing cluster', function 
         ]);
 
     expect(
-        \Illuminate\Support\Facades\DB::table('dashed__content_cluster_keyword')
+        DB::table('dashed__content_cluster_keyword')
             ->where('content_cluster_id', $cluster->id)
             ->where('keyword_id', $existing->id)
             ->exists()

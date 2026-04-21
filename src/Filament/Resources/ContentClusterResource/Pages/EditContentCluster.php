@@ -60,23 +60,46 @@ class EditContentCluster extends EditRecord
                     $cluster = $this->record->fresh();
                     $concepts = $cluster->pending_concepts ?? [];
                     $created = 0;
+                    $routeModels = (array) cms()->builder('routeModels');
 
                     foreach ($concepts as $concept) {
                         if (empty($concept['title'] ?? null)) {
                             continue;
                         }
 
-                        ContentDraft::create([
+                        $typeKey = (string) ($concept['suggested_target_type'] ?? '');
+                        $entry = $routeModels[$typeKey] ?? null;
+                        $targetClass = is_array($entry) ? ($entry['class'] ?? null) : null;
+
+                        $h2 = [];
+                        $order = 0;
+                        foreach ((array) ($concept['h2_sections'] ?? []) as $section) {
+                            $h2[] = [
+                                'id' => (string) ($section['id'] ?? Str::uuid()),
+                                'heading' => (string) ($section['heading'] ?? ''),
+                                'intent' => (string) ($section['intent'] ?? ''),
+                                'body' => '',
+                                'order' => $order++,
+                            ];
+                        }
+
+                        $draft = ContentDraft::create([
                             'content_cluster_id' => $cluster->id,
                             'name' => $concept['title'],
                             'slug' => Str::slug($concept['title']),
                             'keyword' => $concept['title'],
                             'locale' => $cluster->locale ?? 'nl',
                             'status' => 'concept',
-                            'subject_type' => null,
-                            'subject_id' => null,
+                            'subject_type' => $targetClass,
+                            'subject_id' => $concept['target_id'] ?? null,
                             'instruction' => $concept['description'] ?? null,
+                            'h2_sections' => $h2,
                         ]);
+
+                        if (! empty($concept['keyword_ids'])) {
+                            $draft->keywords()->attach($concept['keyword_ids']);
+                        }
+
                         $created++;
                     }
 

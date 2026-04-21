@@ -1,7 +1,7 @@
 <?php
 
 it('has no remaining config reads for dashed-marketing.channels in src', function () {
-    $srcPath = realpath(__DIR__ . '/../../src');
+    $srcPath = realpath(__DIR__.'/../../src');
 
     $offenders = [];
 
@@ -15,7 +15,7 @@ it('has no remaining config reads for dashed-marketing.channels in src', functio
         }
         $contents = file_get_contents($file->getPathname());
         if (str_contains($contents, 'dashed-marketing.channels')) {
-            $offenders[] = str_replace($srcPath . DIRECTORY_SEPARATOR, '', $file->getPathname());
+            $offenders[] = str_replace($srcPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
         }
     }
 

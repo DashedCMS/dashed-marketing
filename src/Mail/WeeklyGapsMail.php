@@ -2,14 +2,15 @@
 
 namespace Dashed\DashedMarketing\Mail;
 
+use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
+use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Support\Collection;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
-use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class WeeklyGapsMail extends Mailable implements SendsToTelegram
 {
@@ -19,8 +20,7 @@ class WeeklyGapsMail extends Mailable implements SendsToTelegram
     public function __construct(
         public Collection $emptyDates,
         public string $siteName,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
@@ -57,7 +57,7 @@ class WeeklyGapsMail extends Mailable implements SendsToTelegram
 
         return new self(
             emptyDates: $emptyDates,
-            siteName: (string) (\Dashed\DashedCore\Models\Customsetting::get('site_name') ?: config('app.name')),
+            siteName: (string) (Customsetting::get('site_name') ?: config('app.name')),
         );
     }
 }

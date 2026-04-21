@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
 
 class SubjectImageResolver
 {

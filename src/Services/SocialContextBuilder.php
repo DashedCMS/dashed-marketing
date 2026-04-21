@@ -2,13 +2,13 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Illuminate\Database\Eloquent\Model;
-use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Models\SocialPillar;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\SocialCampaign;
 use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Models\SocialHoliday;
-use Dashed\DashedMarketing\Models\SocialCampaign;
+use Dashed\DashedMarketing\Models\SocialPillar;
+use Illuminate\Database\Eloquent\Model;
 
 class SocialContextBuilder
 {
@@ -90,9 +90,9 @@ class SocialContextBuilder
 
             $meta = $channel->meta ?? [];
             $blocks[] = "### {$channel->name}\n"
-                ."- Caption lengte: ".($meta['caption_min'] ?? 0)."-".($meta['caption_max'] ?? 0)." tekens\n"
-                ."- Hashtags: ".($meta['hashtags_min'] ?? 0)."-".($meta['hashtags_max'] ?? 0)."\n"
-                ."- Tips: ".($meta['tips'] ?? '');
+                .'- Caption lengte: '.($meta['caption_min'] ?? 0).'-'.($meta['caption_max'] ?? 0)." tekens\n"
+                .'- Hashtags: '.($meta['hashtags_min'] ?? 0).'-'.($meta['hashtags_max'] ?? 0)."\n"
+                .'- Tips: '.($meta['tips'] ?? '');
         }
 
         if ($blocks) {
@@ -275,8 +275,8 @@ class SocialContextBuilder
         }
 
         if ($items) {
-            $intro = "Gebruik de [ref:type:id] tags om te verwijzen naar een specifiek item. "
-                ."Beschikbare types: ".implode(', ', array_keys($classToKey)).".";
+            $intro = 'Gebruik de [ref:type:id] tags om te verwijzen naar een specifiek item. '
+                .'Beschikbare types: '.implode(', ', array_keys($classToKey)).'.';
 
             $sections[] = "## Beschikbare content\n".$intro."\n".implode("\n", $items);
         }

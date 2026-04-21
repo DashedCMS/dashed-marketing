@@ -2,16 +2,17 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 
-use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Forms\Components\FileUpload;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Models\SocialPostVersion;
-use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
 use Dashed\DashedMarketing\Filament\Actions\GenerateImageAction;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Models\SocialPostVersion;
+use Dashed\DashedOmnisocials\Jobs\RefreshAnalyticsJob;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 
 class EditSocialPost extends EditRecord
 {
@@ -70,8 +71,8 @@ class EditSocialPost extends EditRecord
                 ->color('gray')
                 ->visible(fn () => $this->record->external_id !== null)
                 ->action(function () {
-                    if (class_exists(\Dashed\DashedOmnisocials\Jobs\RefreshAnalyticsJob::class)) {
-                        \Dashed\DashedOmnisocials\Jobs\RefreshAnalyticsJob::dispatch($this->record);
+                    if (class_exists(RefreshAnalyticsJob::class)) {
+                        RefreshAnalyticsJob::dispatch($this->record);
                     }
 
                     Notification::make()

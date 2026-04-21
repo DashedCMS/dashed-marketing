@@ -2,19 +2,21 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Filament\Actions\Action;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\HtmlString;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Forms\Components\Placeholder;
 use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions as SchemaActions;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class GenerateImageAction extends Action
 {
@@ -95,7 +97,7 @@ class GenerateImageAction extends Action
                 continue;
             }
 
-            $value = \Illuminate\Support\Str::limit($value, 500);
+            $value = Str::limit($value, 500);
             $lines[] = "{$key}: {$value}";
         }
 
@@ -262,12 +264,12 @@ class GenerateImageAction extends Action
                             return [];
                         }
 
-                        $model = new $class();
+                        $model = new $class;
 
                         return $class::query()
                             ->where(function ($q) use ($search, $model) {
                                 foreach (['name', 'title'] as $col) {
-                                    if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $col)) {
+                                    if (Schema::hasColumn($model->getTable(), $col)) {
                                         $q->orWhere($col, 'like', "%{$search}%");
                                     }
                                 }

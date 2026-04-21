@@ -2,26 +2,27 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\ListContentClusters;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class ContentClusterResource extends Resource
 {
@@ -96,7 +97,7 @@ class ContentClusterResource extends Resource
                             ->options(function ($get) {
                                 $locale = $get('locale') ?? config('app.locale', 'nl');
 
-                                return \Dashed\DashedMarketing\Models\Keyword::where('locale', $locale)
+                                return Keyword::where('locale', $locale)
                                     ->where('status', '!=', 'rejected')
                                     ->orderBy('keyword')
                                     ->pluck('keyword', 'id');
@@ -107,7 +108,7 @@ class ContentClusterResource extends Resource
                             ->createOptionUsing(function (array $data, $get) {
                                 $locale = $get('locale') ?? config('app.locale', 'nl');
 
-                                return \Dashed\DashedMarketing\Models\Keyword::create([
+                                return Keyword::create([
                                     'keyword' => $data['keyword'],
                                     'locale' => $locale,
                                     'status' => 'approved',
@@ -139,18 +140,62 @@ class ContentClusterResource extends Resource
                                             //
                                         }
 
-                                        if (empty($options)) {
-                                            $options = ['article' => 'Artikel'];
-                                        }
-
-                                        return $options;
+                                        return $options ?: ['article' => 'Artikel'];
                                     })
-                                    ->required(),
+                                    ->required()
+                                    ->live(),
+                                Select::make('target_id')
+                                    ->label('Target record')
+                                    ->placeholder('Nieuw record aanmaken')
+                                    ->options(function ($get) {
+                                        $typeKey = $get('suggested_target_type');
+                                        if (! $typeKey) {
+                                            return [];
+                                        }
+                                        try {
+                                            $entry = cms()->builder('routeModels')[$typeKey] ?? null;
+                                            $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+                                            if (! $class || ! class_exists($class)) {
+                                                return [];
+                                            }
+
+                                            return $class::query()->limit(50)->get()->mapWithKeys(function ($m) {
+                                                $name = $m->name ?? $m->title ?? 'Record #'.$m->getKey();
+                                                if (is_array($name)) {
+                                                    $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #'.$m->getKey());
+                                                }
+
+                                                return [$m->getKey() => $name];
+                                            })->all();
+                                        } catch (\Throwable) {
+                                            return [];
+                                        }
+                                    })
+                                    ->nullable(),
+                                Select::make('keyword_ids')
+                                    ->label('Gekoppelde keywords')
+                                    ->multiple()
+                                    ->options(fn ($record) => $record ? $record->keywords()->pluck('keyword', 'id') : [])
+                                    ->preload(),
+                                Repeater::make('h2_sections')
+                                    ->label('H2 outline')
+                                    ->schema([
+                                        TextInput::make('heading')->label('Heading')->required(),
+                                        Textarea::make('intent')->label('Intent')->rows(2),
+                                    ])
+                                    ->reorderable()
+                                    ->addable()
+                                    ->deletable()
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string => $state['heading'] ?? null)
+                                    ->columnSpanFull(),
                             ])
                             ->reorderable(false)
                             ->addable(false)
                             ->deletable()
-                            ->columns(3)
+                            ->columns(2)
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),

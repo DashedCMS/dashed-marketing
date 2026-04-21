@@ -1,12 +1,12 @@
 <?php
 
-use Tests\TestCase;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Jobs\ClusterKeywordsJob;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 uses(TestCase::class);
 
