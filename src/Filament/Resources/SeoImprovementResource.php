@@ -35,7 +35,7 @@ class SeoImprovementResource extends Resource
 
     protected static ?string $pluralLabel = 'SEO verbeteringen';
 
-    protected static ?int $navigationSort = 23;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {

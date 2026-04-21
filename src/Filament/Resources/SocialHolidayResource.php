@@ -38,7 +38,7 @@ class SocialHolidayResource extends Resource
 
     protected static ?string $pluralLabel = 'Feestdagen';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 17;
 
     public static function form(Schema $schema): Schema
     {

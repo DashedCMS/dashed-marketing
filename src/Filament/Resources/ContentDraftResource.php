@@ -37,7 +37,7 @@ class ContentDraftResource extends Resource
 
     protected static ?string $pluralLabel = 'Content concepten';
 
-    protected static ?int $navigationSort = 21;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

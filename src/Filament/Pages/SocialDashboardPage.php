@@ -23,7 +23,7 @@ class SocialDashboardPage extends Page
 
     protected static ?string $title = 'Social dashboard';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 10;
 
     protected string $view = 'dashed-marketing::pages.social-dashboard';
 

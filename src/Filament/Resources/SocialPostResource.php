@@ -49,7 +49,7 @@ class SocialPostResource extends Resource
 
     protected static ?string $pluralLabel = 'Social posts';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 12;
 
     public static function getPlatformOptions(): array
     {

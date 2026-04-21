@@ -38,7 +38,7 @@ class SocialCampaignResource extends Resource
 
     protected static ?string $pluralLabel = 'Campagnes';
 
-    protected static ?int $navigationSort = 16;
+    protected static ?int $navigationSort = 14;
 
     public static function form(Schema $schema): Schema
     {

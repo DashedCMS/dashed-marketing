@@ -37,7 +37,7 @@ class ContentClusterResource extends Resource
 
     protected static ?string $pluralLabel = 'Content clusters';
 
-    protected static ?int $navigationSort = 22;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

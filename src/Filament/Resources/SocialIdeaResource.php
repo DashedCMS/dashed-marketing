@@ -44,7 +44,7 @@ class SocialIdeaResource extends Resource
 
     protected static ?string $pluralLabel = 'Ideeën';
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 13;
 
     public static function getPlatformOptions(): array
     {

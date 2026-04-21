@@ -41,7 +41,7 @@ class SocialChannelResource extends Resource
 
     protected static ?string $pluralLabel = 'Kanalen';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 16;
 
     public static function form(Schema $schema): Schema
     {

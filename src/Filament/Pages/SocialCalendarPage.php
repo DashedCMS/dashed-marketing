@@ -17,7 +17,7 @@ class SocialCalendarPage extends Page
 
     protected static ?string $title = 'Social kalender';
 
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 11;
 
     protected string $view = 'dashed-marketing::pages.social-calendar';
 
