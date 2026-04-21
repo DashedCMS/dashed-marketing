@@ -4,9 +4,9 @@ namespace Dashed\DashedMarketing\Models;
 
 use Dashed\DashedCore\Classes\Sites;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SocialPost extends Model
 {
@@ -30,6 +30,7 @@ class SocialPost extends Model
         'external_id',
         'external_data',
         'failed_platforms',
+        'published_urls',
         'retry_count',
         'analytics_synced_at',
         'pillar_id',
@@ -55,6 +56,7 @@ class SocialPost extends Model
         'ratio_images' => 'array',
         'external_data' => 'array',
         'failed_platforms' => 'array',
+        'published_urls' => 'array',
         'retry_count' => 'integer',
         'analytics_synced_at' => 'datetime',
     ];
