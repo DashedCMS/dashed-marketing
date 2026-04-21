@@ -5,15 +5,17 @@ namespace Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
+use Dashed\DashedMarketing\Jobs\GenerateDraftFaqsJob;
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentDraftSection;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 
 class EditContentCluster extends EditRecord
@@ -52,7 +54,7 @@ class EditContentCluster extends EditRecord
                     );
                     Notification::make()
                         ->title('Concepten worden gegenereerd')
-                        ->body('De pagina ververst automatisch wanneer klaar.')
+                        ->body('Ververs de pagina om resultaten te zien')
                         ->success()
                         ->send();
                 }),
@@ -76,18 +78,6 @@ class EditContentCluster extends EditRecord
                         $entry = $routeModels[$typeKey] ?? null;
                         $targetClass = is_array($entry) ? ($entry['class'] ?? null) : null;
 
-                        $h2 = [];
-                        $order = 0;
-                        foreach ((array) ($concept['h2_sections'] ?? []) as $section) {
-                            $h2[] = [
-                                'id' => (string) ($section['id'] ?? Str::uuid()),
-                                'heading' => (string) ($section['heading'] ?? ''),
-                                'intent' => (string) ($section['intent'] ?? ''),
-                                'body' => '',
-                                'order' => $order++,
-                            ];
-                        }
-
                         $draft = ContentDraft::create([
                             'content_cluster_id' => $cluster->id,
                             'name' => $concept['title'],
@@ -98,16 +88,28 @@ class EditContentCluster extends EditRecord
                             'subject_type' => $targetClass,
                             'subject_id' => $concept['target_id'] ?? null,
                             'instruction' => $concept['description'] ?? null,
-                            'h2_sections' => $h2,
                         ]);
 
                         if (! empty($concept['keyword_ids'])) {
                             $draft->keywords()->attach($concept['keyword_ids']);
                         }
 
-                        foreach ($h2 as $section) {
-                            GenerateSectionBodyJob::dispatch($draft->id, $section['id']);
+                        $createdSections = [];
+                        foreach ((array) ($concept['h2_sections'] ?? []) as $index => $section) {
+                            $createdSections[] = ContentDraftSection::create([
+                                'content_draft_id' => $draft->id,
+                                'sort_order' => $index,
+                                'heading' => (string) ($section['heading'] ?? ''),
+                                'intent' => (string) ($section['intent'] ?? ''),
+                            ]);
                         }
+
+                        $sectionJobs = array_map(
+                            fn (ContentDraftSection $section) => new GenerateSectionBodyJob($section->id),
+                            $createdSections,
+                        );
+                        $sectionJobs[] = new GenerateDraftFaqsJob($draft->id);
+                        Bus::chain($sectionJobs)->dispatch();
 
                         $created++;
                     }

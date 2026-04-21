@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentDraftSection;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,72 +20,69 @@ class GenerateSectionBodyJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(
-        public int $draftId,
-        public string $sectionId,
-    ) {}
+    public int $tries = 3;
+
+    public int $backoff = 15;
+
+    public int $timeout = 60;
+
+    public function __construct(public int $sectionId) {}
 
     public function handle(LinkCandidatesService $links): void
     {
-        $draft = ContentDraft::with('contentCluster', 'keywords')->find($this->draftId);
+        $section = ContentDraftSection::with('contentDraft.keywords')->find($this->sectionId);
+        if ($section === null) {
+            return;
+        }
+
+        $draft = $section->contentDraft;
         if ($draft === null) {
             return;
         }
 
-        $sections = $draft->h2_sections ?? [];
-        $index = null;
-        foreach ($sections as $i => $section) {
-            if (($section['id'] ?? null) === $this->sectionId) {
-                $index = $i;
-                break;
-            }
-        }
-        if ($index === null) {
-            Log::warning('GenerateSectionBodyJob: section id not found', ['draft_id' => $draft->id, 'section_id' => $this->sectionId]);
-
-            return;
-        }
-
         $candidates = $links->forLocale($draft->locale ?? 'nl', 20);
+        $allSections = $draft->sections()->orderBy('sort_order')->get();
 
-        try {
-            $response = Ai::json($this->buildPrompt($draft, $sections, $index, $candidates));
-        } catch (\Throwable $e) {
-            Log::error('GenerateSectionBodyJob: AI call threw', ['draft_id' => $draft->id, 'error' => $e->getMessage()]);
-            $sections[$index]['error_message'] = 'AI-aanroep gefaald: '.$e->getMessage();
-            $draft->update(['h2_sections' => $sections]);
-            $this->maybeUpdateStatus($draft);
-
-            return;
-        }
+        $response = Ai::json($this->buildPrompt($draft, $section, $allSections, $candidates));
 
         if ($response === null) {
-            Log::warning('GenerateSectionBodyJob: Ai::json returned null', ['draft_id' => $draft->id]);
-            $sections[$index]['error_message'] = 'AI-provider gaf geen JSON terug. Controleer of er een Json-provider geconfigureerd is in dashed-ai.';
-            $draft->update(['h2_sections' => $sections]);
-            $this->maybeUpdateStatus($draft);
-
-            return;
+            throw new \RuntimeException('Ai::json returned null');
         }
 
         $body = $this->extractBody($response);
 
         if ($body === '') {
-            Log::warning('GenerateSectionBodyJob: empty body in AI response', [
-                'draft_id' => $draft->id,
-                'response_keys' => array_keys($response),
-            ]);
-            $sections[$index]['error_message'] = 'AI gaf geen bruikbare body terug. Ruwe keys: '.implode(', ', array_keys($response));
-            $draft->update(['h2_sections' => $sections]);
-            $this->maybeUpdateStatus($draft);
+            throw new \RuntimeException('AI returned no body. Keys: '.implode(', ', array_keys($response)));
+        }
 
+        $section->update([
+            'body' => $body,
+            'error_message' => null,
+        ]);
+
+        $this->maybeUpdateDraftStatus($draft);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        $section = ContentDraftSection::find($this->sectionId);
+        if ($section === null) {
             return;
         }
 
-        $sections[$index]['body'] = $body;
-        unset($sections[$index]['error_message']);
-        $draft->update(['h2_sections' => $sections]);
-        $this->maybeUpdateStatus($draft);
+        Log::error('GenerateSectionBodyJob: final failure after retries', [
+            'section_id' => $section->id,
+            'draft_id' => $section->content_draft_id,
+            'error' => $exception->getMessage(),
+        ]);
+
+        $section->update([
+            'error_message' => 'AI-generatie gefaald na '.$this->tries.' pogingen: '.$exception->getMessage(),
+        ]);
+
+        if ($section->contentDraft) {
+            $this->maybeUpdateDraftStatus($section->contentDraft);
+        }
     }
 
     private function extractBody(array $response): string
@@ -98,28 +96,28 @@ class GenerateSectionBodyJob implements ShouldQueue
         return '';
     }
 
-    private function maybeUpdateStatus(ContentDraft $draft): void
+    private function maybeUpdateDraftStatus(ContentDraft $draft): void
     {
-        $draft->refresh();
-        $sections = (array) ($draft->h2_sections ?? []);
-
-        if (empty($sections)) {
+        $sections = $draft->sections()->get();
+        if ($sections->isEmpty()) {
             return;
         }
 
-        $withBody = 0;
-        foreach ($sections as $section) {
-            if (! empty($section['body'] ?? null)) {
-                $withBody++;
-            }
+        $withBody = $sections->filter(fn ($s) => ! empty($s->body))->count();
+        $withError = $sections->filter(fn ($s) => empty($s->body) && ! empty($s->error_message))->count();
+        $processed = $withBody + $withError;
+
+        if ($processed < $sections->count()) {
+            return;
         }
 
-        if ($withBody === count($sections) && $draft->status !== 'ready') {
-            $draft->update(['status' => 'ready']);
+        $newStatus = $withBody > 0 ? 'ready' : 'failed';
+        if ($draft->status !== $newStatus) {
+            $draft->update(['status' => $newStatus]);
         }
     }
 
-    protected function buildPrompt(ContentDraft $draft, array $sections, int $index, array $candidates): string
+    protected function buildPrompt(ContentDraft $draft, ContentDraftSection $current, $allSections, array $candidates): string
     {
         $keywords = $draft->keywords->map(function ($k) {
             $volume = $k->volume_exact ? "volume {$k->volume_exact}" : "volume {$k->volume_indication}";
@@ -127,10 +125,14 @@ class GenerateSectionBodyJob implements ShouldQueue
             return "- {$k->keyword} ({$k->type}, {$volume})";
         })->implode("\n");
 
-        $outline = collect($sections)->map(fn ($s, $i) => ($i === $index ? '>> ' : '   ').($s['heading'] ?? ''))->implode("\n");
-        $current = $sections[$index];
+        $outline = $allSections
+            ->map(fn ($s) => ($s->id === $current->id ? '>> ' : '   ').($s->heading ?? ''))
+            ->implode("\n");
 
-        $candidatesJson = json_encode(array_map(fn ($c) => ['title' => $c['title'], 'url' => $c['url']], $candidates), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $candidatesJson = json_encode(
+            array_map(fn ($c) => ['title' => $c['title'], 'url' => $c['url']], $candidates),
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        );
 
         return <<<TXT
 Schrijf HTML body voor de gemarkeerde (>>) sectie van artikel "{$draft->name}" (taal: {$draft->locale}).
@@ -139,8 +141,8 @@ Outline (>> is de te schrijven sectie):
 {$outline}
 
 Huidige sectie:
-- heading: {$current['heading']}
-- intent: {$current['intent']}
+- heading: {$current->heading}
+- intent: {$current->intent}
 
 Keywords om thematisch te gebruiken (primaire keywords zwaarder):
 {$keywords}
@@ -152,9 +154,7 @@ Regels (hard):
 - Retourneer HTML-string in veld "body".
 - Alleen deze tags: p, ul, ol, li, strong, em, a.
 - Geen img, geen script, geen style, geen heading tags (h1-h6).
-- 1 tot 3 interne links als <a href="...">anchor</a> naar URLs uit de link-kandidaten. Gebruik alleen URLs die exact in de lijst staan.
-- Geen em-dashes. Actieve vorm. "je"-vorm.
-- Geen AI-clichés ("duik in", "ontdek de geheimen").
+- 1 tot 3 interne links als <a href='...'>anchor</a> naar URLs uit de link-kandidaten. Gebruik alleen URLs die exact in de lijst staan.
 - Laat andere secties ongemoeid, schrijf alleen deze sectie.
 
 Retourneer JSON: {"body": "<p>...</p>"}

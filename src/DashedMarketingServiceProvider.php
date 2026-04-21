@@ -13,6 +13,7 @@ use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
 use Dashed\DashedMarketing\Contracts\PublishingAdapter;
 use Dashed\DashedMarketing\Facades\ContentTemplates;
+use Dashed\DashedMarketing\Filament\Pages\Settings\ContentPublishSettingsPage;
 use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
@@ -63,6 +64,13 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
             'Social media',
             'share',
             'Social media platforms, AI context en notificaties'
+        );
+
+        cms()->registerSettingsPage(
+            ContentPublishSettingsPage::class,
+            'Content publicatie',
+            'document-duplicate',
+            'Standaard blokken voor header, content en FAQ bij het publiceren van content drafts'
         );
 
         PublishingAdapterRegistry::register('manual', ManualPublishAdapter::class, 'Handmatig');

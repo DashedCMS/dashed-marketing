@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ContentDraft extends Model
@@ -15,6 +16,8 @@ class ContentDraft extends Model
         'content_cluster_id',
         'name',
         'slug',
+        'meta_title',
+        'meta_description',
         'keyword',
         'locale',
         'instruction',
@@ -27,7 +30,6 @@ class ContentDraft extends Model
         'subject_id',
         'applied_by',
         'applied_at',
-        'h2_sections',
         'history',
     ];
 
@@ -35,7 +37,6 @@ class ContentDraft extends Model
         'content_plan' => 'array',
         'article_content' => 'array',
         'applied_at' => 'datetime',
-        'h2_sections' => 'array',
         'history' => 'array',
     ];
 
@@ -57,6 +58,16 @@ class ContentDraft extends Model
             'content_draft_id',
             'keyword_id',
         );
+    }
+
+    public function sections(): HasMany
+    {
+        return $this->hasMany(ContentDraftSection::class, 'content_draft_id')->orderBy('sort_order');
+    }
+
+    public function faqs(): HasMany
+    {
+        return $this->hasMany(ContentDraftFaq::class, 'content_draft_id')->orderBy('sort_order');
     }
 
     public function setProgress(string $message): void
@@ -95,7 +106,7 @@ class ContentDraft extends Model
         $history = $this->history ?? [];
         array_unshift($history, [
             'at' => now()->toIso8601String(),
-            'h2_sections' => $snapshot,
+            'sections' => $snapshot,
         ]);
         $this->history = array_slice($history, 0, 3);
         $this->save();

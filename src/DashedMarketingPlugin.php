@@ -2,6 +2,7 @@
 
 namespace Dashed\DashedMarketing;
 
+use Dashed\DashedMarketing\Filament\Pages\Settings\ContentPublishSettingsPage;
 use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
@@ -45,6 +46,7 @@ class DashedMarketingPlugin implements Plugin
                 SocialDashboardPage::class,
                 SocialCalendarPage::class,
                 SocialSettingsPage::class,
+                ContentPublishSettingsPage::class,
             ])
             ->widgets([
                 SocialCalendarWidget::class,

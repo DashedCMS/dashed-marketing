@@ -10,13 +10,12 @@ use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Jobs\RegenerateSectionHeadingJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
-use Filament\Forms\Components\Placeholder;
-use Illuminate\Support\HtmlString;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -29,6 +28,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use UnitEnum;
 
@@ -51,6 +51,12 @@ class ContentDraftResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
+            Placeholder::make('live_status_poller')
+                ->label('')
+                ->visible(fn ($record) => $record?->status === 'writing')
+                ->content(fn ($record) => new HtmlString('<div wire:poll.5s="pollDraft" class="rounded-md bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800 p-3 text-sm text-info-700 dark:text-info-300"><strong>Bezig met schrijven…</strong> bodies worden op de achtergrond gegenereerd. Deze pagina ververst automatisch elke 5 seconden tot het klaar is.</div>'))
+                ->columnSpanFull(),
+
             Section::make('Algemeen')
                 ->columns(1)
                 ->columnSpanFull()
@@ -69,6 +75,17 @@ class ContentDraftResource extends Resource
                         ->label('Slug')
                         ->required()
                         ->maxLength(255),
+                    TextInput::make('meta_title')
+                        ->label('Meta title (SEO)')
+                        ->helperText('50-60 tekens. Wordt bij publiceren naar de metadata-title van het doelrecord geschreven.')
+                        ->maxLength(150)
+                        ->nullable(),
+                    Textarea::make('meta_description')
+                        ->label('Meta description (SEO)')
+                        ->helperText('140-160 tekens. Wordt bij publiceren naar de metadata-description van het doelrecord geschreven.')
+                        ->rows(2)
+                        ->maxLength(250)
+                        ->nullable(),
                     Select::make('subject_type')
                         ->label('Target type')
                         ->options(function () {
@@ -180,14 +197,16 @@ class ContentDraftResource extends Resource
 
             Section::make('Structuur en inhoud')
                 ->schema([
-                    Repeater::make('h2_sections')
+                    Repeater::make('sections')
+                        ->relationship()
+                        ->orderColumn('sort_order')
                         ->label('')
                         ->schema([
-                            TextInput::make('heading')->label('H2 titel')->required(),
+                            TextInput::make('heading')->label('Titel')->required(),
                             Textarea::make('intent')->label('Waar gaat deze sectie over')->rows(2),
                             Placeholder::make('error_message_display')
                                 ->label('')
-                                ->visible(fn ($state, $get) => ! empty($get('error_message')))
+                                ->visible(fn ($get) => ! empty($get('error_message')))
                                 ->content(fn ($get) => new HtmlString('<div class="rounded-md bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 p-3 text-sm text-danger-700 dark:text-danger-300"><strong>Laatste fout:</strong> '.e($get('error_message')).'</div>'))
                                 ->columnSpanFull(),
                             RichEditor::make('body')
@@ -210,8 +229,9 @@ class ContentDraftResource extends Resource
                                     if (! $uuid) {
                                         return;
                                     }
-                                    $state = $livewire->data['h2_sections'][$uuid] ?? null;
-                                    if (! $state || empty($state['id'])) {
+                                    $state = $livewire->data['sections'][$uuid] ?? null;
+                                    $sectionId = $state['id'] ?? null;
+                                    if (! $sectionId) {
                                         Notification::make()
                                             ->title('Sla eerst op voor je een bestaande sectie regenereert')
                                             ->warning()
@@ -219,7 +239,7 @@ class ContentDraftResource extends Resource
 
                                         return;
                                     }
-                                    RegenerateSectionHeadingJob::dispatch($livewire->record->id, $state['id']);
+                                    RegenerateSectionHeadingJob::dispatch((int) $sectionId);
                                     Notification::make()
                                         ->title('Heading wordt vernieuwd op de achtergrond')
                                         ->body('Ververs de pagina over een moment.')
@@ -235,8 +255,9 @@ class ContentDraftResource extends Resource
                                     if (! $uuid) {
                                         return;
                                     }
-                                    $state = $livewire->data['h2_sections'][$uuid] ?? null;
-                                    if (! $state || empty($state['id'])) {
+                                    $state = $livewire->data['sections'][$uuid] ?? null;
+                                    $sectionId = $state['id'] ?? null;
+                                    if (! $sectionId) {
                                         Notification::make()
                                             ->title('Sla eerst op voor je inhoud genereert')
                                             ->warning()
@@ -244,7 +265,7 @@ class ContentDraftResource extends Resource
 
                                         return;
                                     }
-                                    GenerateSectionBodyJob::dispatch($livewire->record->id, $state['id']);
+                                    GenerateSectionBodyJob::dispatch((int) $sectionId);
                                     Notification::make()
                                         ->title('Inhoud wordt gegenereerd')
                                         ->body('Ververs de pagina over een moment.')
@@ -252,6 +273,27 @@ class ContentDraftResource extends Resource
                                         ->send();
                                 }),
                         ])
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
+
+            Section::make('FAQs')
+                ->description('Worden automatisch gegenereerd aan het eind van de content-generatie.')
+                ->collapsible()
+                ->schema([
+                    Repeater::make('faqs')
+                        ->relationship()
+                        ->orderColumn('sort_order')
+                        ->label('')
+                        ->schema([
+                            TextInput::make('question')->label('Vraag')->required(),
+                            Textarea::make('answer')->label('Antwoord')->rows(3)->required(),
+                        ])
+                        ->reorderableWithButtons()
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => $state['question'] ?? 'Nieuwe FAQ')
+                        ->addable()
+                        ->deletable()
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),

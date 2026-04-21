@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentDraftSection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,51 +19,52 @@ class RegenerateSectionHeadingJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(
-        public int $draftId,
-        public string $sectionId,
-    ) {}
+    public int $tries = 3;
+
+    public int $backoff = 10;
+
+    public int $timeout = 45;
+
+    public function __construct(public int $sectionId) {}
 
     public function handle(): void
     {
-        $draft = ContentDraft::with('contentCluster', 'keywords')->find($this->draftId);
+        $section = ContentDraftSection::with('contentDraft.keywords')->find($this->sectionId);
+        if ($section === null) {
+            return;
+        }
+
+        $draft = $section->contentDraft;
         if ($draft === null) {
             return;
         }
 
-        $sections = $draft->h2_sections ?? [];
-        $index = null;
-        foreach ($sections as $i => $section) {
-            if (($section['id'] ?? null) === $this->sectionId) {
-                $index = $i;
-                break;
-            }
-        }
-        if ($index === null) {
-            Log::warning('RegenerateSectionHeadingJob: section id not found', ['draft_id' => $draft->id, 'section_id' => $this->sectionId]);
+        $allSections = $draft->sections()->orderBy('sort_order')->get();
 
-            return;
-        }
+        $response = Ai::json($this->buildPrompt($draft, $section, $allSections)) ?? [];
+        $heading = trim((string) ($response['heading'] ?? ''));
+        $intent = trim((string) ($response['intent'] ?? ''));
 
-        $response = Ai::json($this->buildPrompt($draft, $sections, $index)) ?? [];
-        $heading = (string) ($response['heading'] ?? '');
-        $intent = (string) ($response['intent'] ?? '');
         if ($heading === '') {
-            Log::warning('RegenerateSectionHeadingJob: empty AI response', ['draft_id' => $draft->id]);
+            Log::warning('RegenerateSectionHeadingJob: empty AI response', [
+                'section_id' => $section->id,
+            ]);
 
             return;
         }
 
-        $sections[$index]['heading'] = $heading;
-        $sections[$index]['intent'] = $intent;
-        $draft->update(['h2_sections' => $sections]);
+        $section->update([
+            'heading' => $heading,
+            'intent' => $intent ?: $section->intent,
+        ]);
     }
 
-    protected function buildPrompt(ContentDraft $draft, array $sections, int $index): string
+    protected function buildPrompt(ContentDraft $draft, ContentDraftSection $current, $allSections): string
     {
         $keywords = $draft->keywords->map(fn ($k) => "- {$k->keyword}")->implode("\n");
-        $outline = collect($sections)->map(fn ($s, $i) => ($i === $index ? '>> ' : '   ').($s['heading'] ?? ''))->implode("\n");
-        $current = $sections[$index];
+        $outline = $allSections
+            ->map(fn ($s) => ($s->id === $current->id ? '>> ' : '   ').($s->heading ?? ''))
+            ->implode("\n");
 
         return <<<TXT
 Regenereer alleen de heading en intent van de gemarkeerde (>>) sectie voor artikel "{$draft->name}" (taal: {$draft->locale}).
@@ -70,14 +72,13 @@ Regenereer alleen de heading en intent van de gemarkeerde (>>) sectie voor artik
 Huidige outline (>> is de te herschrijven sectie):
 {$outline}
 
-Huidige heading: {$current['heading']}
-Huidige intent: {$current['intent']}
+Huidige heading: {$current->heading}
+Huidige intent: {$current->intent}
 
 Gekoppelde keywords:
 {$keywords}
 
 Regels:
-- Geen em-dashes. Actieve vorm. "je"-vorm.
 - Heading max 70 tekens, concreet.
 - Intent max 200 tekens, beschrijft waar deze sectie over gaat.
 - Laat de andere secties ongemoeid.
