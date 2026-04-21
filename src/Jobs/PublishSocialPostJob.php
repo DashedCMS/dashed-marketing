@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class PublishSocialPostJob implements ShouldQueue
 {
@@ -20,8 +20,7 @@ class PublishSocialPostJob implements ShouldQueue
 
     public function __construct(
         public SocialPost $post,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {
@@ -31,12 +30,18 @@ class PublishSocialPostJob implements ShouldQueue
 
         $result = $adapter->publish($this->post);
 
+        $attempt = $this->post->retry_count + 1;
+
         if ($result->success) {
-            $update = ['status' => 'posted', 'posted_at' => now()];
+            $update = [
+                'status' => 'posted',
+                'posted_at' => now(),
+                'retry_count' => $attempt,
+            ];
 
             if ($result->externalId) {
                 $update['external_id'] = $result->externalId;
-                // External adapter: actual confirmation comes via webhook
+                // External adapter: actual state is confirmed by the sync-post-statuses polling command
                 $update['status'] = $this->post->scheduled_at?->isFuture() ? 'scheduled' : 'publishing';
                 unset($update['posted_at']);
             }
@@ -49,7 +54,7 @@ class PublishSocialPostJob implements ShouldQueue
         } else {
             $this->post->update([
                 'status' => 'publish_failed',
-                'retry_count' => $this->post->retry_count + 1,
+                'retry_count' => $attempt,
                 'external_data' => array_merge(
                     $this->post->external_data ?? [],
                     ['last_error' => $result->error, 'last_error_at' => now()->toIso8601String()]
