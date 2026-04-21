@@ -3,8 +3,10 @@
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -15,6 +17,48 @@ class EditContentDraft extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('generate_all_bodies')
+                ->label('Genereer alle inhoud')
+                ->icon('heroicon-o-sparkles')
+                ->color('primary')
+                ->schema([
+                    Toggle::make('overwrite')
+                        ->label('Overschrijf al gevulde secties')
+                        ->helperText('Uit: alleen lege secties worden gevuld.')
+                        ->default(false),
+                ])
+                ->action(function (array $data) {
+                    $overwrite = (bool) ($data['overwrite'] ?? false);
+                    $sections = (array) ($this->record->h2_sections ?? []);
+
+                    $queued = 0;
+                    $skipped = 0;
+
+                    foreach ($sections as $section) {
+                        if (empty($section['id'] ?? null)) {
+                            continue;
+                        }
+                        if (! $overwrite && ! empty($section['body'] ?? null)) {
+                            $skipped++;
+
+                            continue;
+                        }
+
+                        GenerateSectionBodyJob::dispatch($this->record->id, $section['id']);
+                        $queued++;
+                    }
+
+                    if ($queued > 0) {
+                        $this->record->update(['status' => 'writing']);
+                        $this->fillForm();
+                    }
+
+                    Notification::make()
+                        ->title("{$queued} secties worden gegenereerd op de achtergrond, {$skipped} overgeslagen")
+                        ->body('Ververs de pagina over een moment om de bodies te zien.')
+                        ->success()
+                        ->send();
+                }),
             Action::make('publish')
                 ->label('Publiceer')
                 ->icon('heroicon-o-rocket-launch')
@@ -41,29 +85,47 @@ class EditContentDraft extends EditRecord
                     Select::make('target_id')
                         ->label('Bestaand record bijwerken')
                         ->placeholder('Nieuw record aanmaken')
+                        ->searchable()
+                        ->preload()
+                        ->getSearchResultsUsing(function (string $search, $get) {
+                            $class = self::resolveTargetClass($get('target_type'));
+                            if (! $class) {
+                                return [];
+                            }
+
+                            $locale = app()->getLocale();
+
+                            return $class::query()
+                                ->where(function ($q) use ($search, $locale) {
+                                    $q->where('name', 'like', "%{$search}%")
+                                        ->orWhere('name->' . $locale, 'like', "%{$search}%");
+                                })
+                                ->limit(50)
+                                ->get()
+                                ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
+                                ->all();
+                        })
+                        ->getOptionLabelUsing(function ($value, $get) {
+                            $class = self::resolveTargetClass($get('target_type'));
+                            if (! $class || ! $value) {
+                                return null;
+                            }
+
+                            $record = $class::find($value);
+
+                            return $record ? self::recordLabel($record) : null;
+                        })
                         ->options(function ($get) {
-                            $type = $get('target_type');
-                            if (! $type) {
+                            $class = self::resolveTargetClass($get('target_type'));
+                            if (! $class) {
                                 return [];
                             }
-                            try {
-                                $entry = cms()->builder('routeModels')[$type] ?? null;
-                                $class = is_array($entry) ? ($entry['class'] ?? null) : null;
-                                if (! $class || ! class_exists($class)) {
-                                    return [];
-                                }
 
-                                return $class::query()->limit(50)->get()->mapWithKeys(function ($m) {
-                                    $name = $m->name ?? $m->title ?? 'Record #'.$m->getKey();
-                                    if (is_array($name)) {
-                                        $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #'.$m->getKey());
-                                    }
-
-                                    return [$m->getKey() => $name];
-                                })->all();
-                            } catch (\Throwable) {
-                                return [];
-                            }
+                            return $class::query()
+                                ->limit(50)
+                                ->get()
+                                ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
+                                ->all();
                         })
                         ->nullable(),
                 ])
@@ -125,4 +187,31 @@ class EditContentDraft extends EditRecord
                 }),
         ];
     }
+
+    private static function resolveTargetClass(?string $typeKey): ?string
+    {
+        if (! $typeKey) {
+            return null;
+        }
+
+        try {
+            $entry = cms()->builder('routeModels')[$typeKey] ?? null;
+            $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+
+            return ($class && class_exists($class)) ? $class : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private static function recordLabel($record): string
+    {
+        $name = $record->name ?? $record->title ?? 'Record #' . $record->getKey();
+        if (is_array($name)) {
+            $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #' . $record->getKey());
+        }
+
+        return (string) $name;
+    }
+
 }

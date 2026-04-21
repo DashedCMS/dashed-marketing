@@ -48,20 +48,35 @@ class GenerateSectionBodyJob implements ShouldQueue
         $candidates = $links->forLocale($draft->locale ?? 'nl', 20);
 
         try {
-            $response = Ai::json($this->buildPrompt($draft, $sections, $index, $candidates)) ?? [];
+            $response = Ai::json($this->buildPrompt($draft, $sections, $index, $candidates));
         } catch (\Throwable $e) {
             Log::error('GenerateSectionBodyJob: AI call threw', ['draft_id' => $draft->id, 'error' => $e->getMessage()]);
-            $sections[$index]['error_message'] = $e->getMessage();
+            $sections[$index]['error_message'] = 'AI-aanroep gefaald: '.$e->getMessage();
             $draft->update(['h2_sections' => $sections]);
+            $this->maybeUpdateStatus($draft);
 
             return;
         }
 
-        $body = (string) ($response['body'] ?? '');
-        if ($body === '') {
-            Log::warning('GenerateSectionBodyJob: empty body', ['draft_id' => $draft->id]);
-            $sections[$index]['error_message'] = 'AI gaf geen bruikbare body terug.';
+        if ($response === null) {
+            Log::warning('GenerateSectionBodyJob: Ai::json returned null', ['draft_id' => $draft->id]);
+            $sections[$index]['error_message'] = 'AI-provider gaf geen JSON terug. Controleer of er een Json-provider geconfigureerd is in dashed-ai.';
             $draft->update(['h2_sections' => $sections]);
+            $this->maybeUpdateStatus($draft);
+
+            return;
+        }
+
+        $body = $this->extractBody($response);
+
+        if ($body === '') {
+            Log::warning('GenerateSectionBodyJob: empty body in AI response', [
+                'draft_id' => $draft->id,
+                'response_keys' => array_keys($response),
+            ]);
+            $sections[$index]['error_message'] = 'AI gaf geen bruikbare body terug. Ruwe keys: '.implode(', ', array_keys($response));
+            $draft->update(['h2_sections' => $sections]);
+            $this->maybeUpdateStatus($draft);
 
             return;
         }
@@ -69,6 +84,39 @@ class GenerateSectionBodyJob implements ShouldQueue
         $sections[$index]['body'] = $body;
         unset($sections[$index]['error_message']);
         $draft->update(['h2_sections' => $sections]);
+        $this->maybeUpdateStatus($draft);
+    }
+
+    private function extractBody(array $response): string
+    {
+        foreach (['body', 'html', 'content', 'text'] as $key) {
+            if (! empty($response[$key]) && is_string($response[$key])) {
+                return trim($response[$key]);
+            }
+        }
+
+        return '';
+    }
+
+    private function maybeUpdateStatus(ContentDraft $draft): void
+    {
+        $draft->refresh();
+        $sections = (array) ($draft->h2_sections ?? []);
+
+        if (empty($sections)) {
+            return;
+        }
+
+        $withBody = 0;
+        foreach ($sections as $section) {
+            if (! empty($section['body'] ?? null)) {
+                $withBody++;
+            }
+        }
+
+        if ($withBody === count($sections) && $draft->status !== 'ready') {
+            $draft->update(['status' => 'ready']);
+        }
     }
 
     protected function buildPrompt(ContentDraft $draft, array $sections, int $index, array $candidates): string

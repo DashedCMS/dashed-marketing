@@ -33,7 +33,17 @@ class GenerateClusterConceptsJob implements ShouldQueue
             return;
         }
 
-        $allowedKeywordIds = $cluster->keywords->pluck('id')->all();
+        $mainKeywordIds = $cluster->keywords->where('type', 'primary')->pluck('id')->values()->all();
+        $restKeywordIds = $cluster->keywords
+            ->whereNotIn('id', $mainKeywordIds)
+            ->sortByDesc(fn (Keyword $k) => (int) ($k->volume_exact ?? 0))
+            ->pluck('id')
+            ->values()
+            ->all();
+
+        if (empty($mainKeywordIds) && ! empty($restKeywordIds)) {
+            $mainKeywordIds = [array_shift($restKeywordIds)];
+        }
 
         $response = Ai::json($this->buildPrompt($cluster)) ?? [];
         $concepts = $response['concepts'] ?? [];
@@ -49,16 +59,6 @@ class GenerateClusterConceptsJob implements ShouldQueue
 
         foreach ($concepts as $c) {
             if (empty($c['title'] ?? null)) {
-                continue;
-            }
-
-            $keywordIds = array_values(array_intersect(
-                $allowedKeywordIds,
-                array_map('intval', (array) ($c['keyword_ids'] ?? []))
-            ));
-            if (empty($keywordIds)) {
-                Log::warning('GenerateClusterConceptsJob: concept skipped (no valid keywords)', ['title' => $c['title']]);
-
                 continue;
             }
 
@@ -115,7 +115,7 @@ class GenerateClusterConceptsJob implements ShouldQueue
                 'target_mode' => $targetMode,
                 'target_id' => $targetId,
                 'target_preview_name' => $targetPreviewName,
-                'keyword_ids' => $keywordIds,
+                'keyword_ids' => [],
                 'h2_sections' => $h2,
             ];
         }
@@ -123,6 +123,19 @@ class GenerateClusterConceptsJob implements ShouldQueue
         if (empty($normalized)) {
             return;
         }
+
+        // Hoofd-keywords hangen aan élk concept; secundaire keywords worden
+        // round-robin verdeeld zodat ze niet dubbel voorkomen.
+        $numConcepts = count($normalized);
+        $distributed = array_fill(0, $numConcepts, []);
+        foreach ($restKeywordIds as $index => $keywordId) {
+            $distributed[$index % $numConcepts][] = $keywordId;
+        }
+
+        foreach ($normalized as $i => &$concept) {
+            $concept['keyword_ids'] = array_values(array_unique(array_merge($mainKeywordIds, $distributed[$i])));
+        }
+        unset($concept);
 
         $cluster->update(['pending_concepts' => $normalized]);
     }
@@ -190,7 +203,6 @@ Per concept retourneer:
 - suggested_target_type: een van de type-sleutels hierboven
 - target_mode: "new" of "overwrite". Gebruik "overwrite" als een bestaand record thematisch sterk overlapt.
 - target_id: null voor nieuw, of het id van het bestaande record bij overwrite.
-- keyword_ids: array met keyword ids uit bovenstaande lijst (alleen ids die passen bij dit concept, primaire keyword eerst). Gebruik volume als leidraad: hogere volumes zwaarder.
 - h2_sections: minimaal 3 items, elk met heading (string) en intent (string, waar gaat deze sectie over, max 200 tekens).
 
 Regels:

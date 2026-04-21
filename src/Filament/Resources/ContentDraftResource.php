@@ -9,6 +9,9 @@ use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\ListCon
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Jobs\RegenerateSectionHeadingJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -49,7 +52,8 @@ class ContentDraftResource extends Resource
     {
         return $schema->schema([
             Section::make('Algemeen')
-                ->columns(2)
+                ->columns(1)
+                ->columnSpanFull()
                 ->schema([
                     TextInput::make('name')
                         ->label('Titel (H1)')
@@ -149,6 +153,31 @@ class ContentDraftResource extends Resource
                 ])
                 ->columnSpanFull(),
 
+            Section::make('Interne link-kandidaten')
+                ->description('Deze links gebruikt de AI in de bodies. Dezelfde lijst komt in de tekst terug als <a>-tags.')
+                ->collapsible()
+                ->collapsed()
+                ->schema([
+                    Placeholder::make('link_candidates')
+                        ->label('')
+                        ->content(function ($record) {
+                            $locale = $record?->locale ?? app()->getLocale();
+                            $candidates = app(LinkCandidatesService::class)->forLocale($locale, 20);
+
+                            if (empty($candidates)) {
+                                return new HtmlString('<p class="text-sm text-gray-500">Geen link-kandidaten gevonden voor locale '.e($locale).'.</p>');
+                            }
+
+                            $rows = collect($candidates)
+                                ->map(fn (array $c) => '<li class="py-1"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">'.e($c['type']).'</span><a href="'.e($c['url']).'" target="_blank" class="text-primary-600 hover:underline">'.e($c['title']).'</a> <span class="text-xs text-gray-400">'.e($c['url']).'</span></li>')
+                                ->implode('');
+
+                            return new HtmlString('<ul class="divide-y divide-gray-100 dark:divide-gray-700">'.$rows.'</ul>');
+                        })
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
+
             Section::make('Structuur en inhoud')
                 ->schema([
                     Repeater::make('h2_sections')
@@ -156,6 +185,11 @@ class ContentDraftResource extends Resource
                         ->schema([
                             TextInput::make('heading')->label('H2 titel')->required(),
                             Textarea::make('intent')->label('Waar gaat deze sectie over')->rows(2),
+                            Placeholder::make('error_message_display')
+                                ->label('')
+                                ->visible(fn ($state, $get) => ! empty($get('error_message')))
+                                ->content(fn ($get) => new HtmlString('<div class="rounded-md bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 p-3 text-sm text-danger-700 dark:text-danger-300"><strong>Laatste fout:</strong> '.e($get('error_message')).'</div>'))
+                                ->columnSpanFull(),
                             RichEditor::make('body')
                                 ->label('Inhoud')
                                 ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList', 'undo'])
@@ -185,10 +219,12 @@ class ContentDraftResource extends Resource
 
                                         return;
                                     }
-                                    RegenerateSectionHeadingJob::dispatchSync($livewire->record->id, $state['id']);
-                                    $livewire->record->refresh();
-                                    $livewire->fillForm();
-                                    Notification::make()->title('Heading vernieuwd')->success()->send();
+                                    RegenerateSectionHeadingJob::dispatch($livewire->record->id, $state['id']);
+                                    Notification::make()
+                                        ->title('Heading wordt vernieuwd op de achtergrond')
+                                        ->body('Ververs de pagina over een moment.')
+                                        ->success()
+                                        ->send();
                                 }),
                             Action::make('generate_body')
                                 ->label('Genereer inhoud')
@@ -237,12 +273,22 @@ class ContentDraftResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->status_label)
                     ->color(fn ($record) => $record->status_color),
+                TextColumn::make('contentCluster.name')
+                    ->label('Cluster')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('—'),
                 TextColumn::make('created_at')
                     ->label('Aangemaakt')
                     ->dateTime('d-m-Y H:i')
                     ->sortable(),
             ])
             ->filters([
+                SelectFilter::make('content_cluster_id')
+                    ->label('Cluster')
+                    ->relationship('contentCluster', 'name')
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([

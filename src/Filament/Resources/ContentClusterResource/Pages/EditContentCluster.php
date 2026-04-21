@@ -3,11 +3,14 @@
 namespace Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages;
 
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
+use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -25,10 +28,12 @@ class EditContentCluster extends EditRecord
                 ->icon('heroicon-o-sparkles')
                 ->color('primary')
                 ->schema([
-                    Select::make('count')
+                    TextInput::make('count')
                         ->label('Aantal concepten')
-                        ->options([5 => '5', 10 => '10', 15 => '15', 20 => '20'])
-                        ->default(10)
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(50)
+                        ->default(4)
                         ->required(),
                     Textarea::make('briefing')
                         ->label('Briefing (optioneel)')
@@ -89,7 +94,7 @@ class EditContentCluster extends EditRecord
                             'slug' => Str::slug($concept['title']),
                             'keyword' => $concept['title'],
                             'locale' => $cluster->locale ?? 'nl',
-                            'status' => 'concept',
+                            'status' => 'writing',
                             'subject_type' => $targetClass,
                             'subject_id' => $concept['target_id'] ?? null,
                             'instruction' => $concept['description'] ?? null,
@@ -100,16 +105,35 @@ class EditContentCluster extends EditRecord
                             $draft->keywords()->attach($concept['keyword_ids']);
                         }
 
+                        foreach ($h2 as $section) {
+                            GenerateSectionBodyJob::dispatch($draft->id, $section['id']);
+                        }
+
                         $created++;
                     }
 
                     $cluster->update(['pending_concepts' => null]);
 
                     Notification::make()
-                        ->title("{$created} drafts aangemaakt")
+                        ->title("{$created} drafts aangemaakt — content wordt op de achtergrond gegenereerd")
                         ->success()
                         ->send();
+
+                    return redirect(ContentDraftResource::getUrl('index', [
+                        'tableFilters' => [
+                            'content_cluster_id' => ['value' => $cluster->id],
+                        ],
+                    ]));
                 }),
+            Action::make('view_drafts')
+                ->label('Bekijk concepten')
+                ->icon('heroicon-o-list-bullet')
+                ->color('gray')
+                ->url(fn () => ContentDraftResource::getUrl('index', [
+                    'tableFilters' => [
+                        'content_cluster_id' => ['value' => $this->record->id],
+                    ],
+                ])),
             DeleteAction::make(),
         ];
     }
