@@ -2,15 +2,16 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
-use Filament\Actions;
-use Illuminate\Support\Str;
-use Filament\Resources\Pages\Page;
-use Filament\Forms\Components\Select;
-use Filament\Notifications\Notification;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Facades\ContentTemplates;
-use Dashed\DashedMarketing\Jobs\RegenerateContentSectionJob;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Jobs\FillContentDraftJob;
+use Dashed\DashedMarketing\Jobs\RegenerateContentSectionJob;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Filament\Actions;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\Page;
+use Illuminate\Support\Str;
 
 class EditContentDraft extends Page
 {
@@ -78,66 +79,124 @@ class EditContentDraft extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('apply_as_new')
-                ->label('Apply als nieuwe entity')
-                ->icon('heroicon-o-check')
-                ->visible(fn () => $this->record->subject === null)
+            Actions\Action::make('generate_content')
+                ->label('Genereer content')
+                ->icon('heroicon-o-sparkles')
+                ->color('primary')
+                ->visible(fn () => in_array($this->record->status, ['concept', 'ready'], true))
                 ->schema([
-                    Select::make('target_class')
-                        ->label('Target')
+                    Textarea::make('briefing')
+                        ->label('Briefing (optioneel)')
+                        ->rows(3)
+                        ->maxLength(500),
+                ])
+                ->action(function (array $data) {
+                    FillContentDraftJob::dispatch($this->record->id, $data['briefing'] ?? null);
+                    Notification::make()
+                        ->title('Content wordt gegenereerd')
+                        ->body('De pagina ververst automatisch zodra klaar.')
+                        ->success()
+                        ->send();
+                }),
+
+            Actions\Action::make('publish')
+                ->label('Publiceer')
+                ->icon('heroicon-o-rocket-launch')
+                ->color('success')
+                ->visible(fn () => $this->record->status === 'ready')
+                ->schema([
+                    Select::make('target_type')
+                        ->label('Target type')
                         ->options(function () {
-                            try {
-                                $routeModels = (array) cms()->builder('routeModels');
-                            } catch (\Throwable) {
-                                return [];
-                            }
                             $options = [];
-                            foreach ($routeModels as $entry) {
-                                $class = is_array($entry) ? ($entry['class'] ?? null) : (is_string($entry) ? $entry : null);
-                                $name = is_array($entry) ? ($entry['name'] ?? $class) : $class;
-                                if ($class && class_exists($class)) {
-                                    $options[$class] = $name;
+                            try {
+                                foreach ((array) cms()->builder('routeModels') as $key => $entry) {
+                                    $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
+                                    $options[$key] = $name;
                                 }
+                            } catch (\Throwable) {
+                                //
                             }
 
                             return $options;
                         })
-                        ->required(),
+                        ->required()
+                        ->live(),
+                    Select::make('target_id')
+                        ->label('Bestaand record bijwerken')
+                        ->placeholder('Nieuw record aanmaken')
+                        ->options(function ($get) {
+                            $type = $get('target_type');
+                            if (! $type) {
+                                return [];
+                            }
+                            try {
+                                $entry = cms()->builder('routeModels')[$type] ?? null;
+                                $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+                                if (! $class || ! class_exists($class)) {
+                                    return [];
+                                }
+
+                                return $class::query()->limit(50)->get()->mapWithKeys(function ($m) {
+                                    $name = $m->name ?? $m->title ?? 'Record #'.$m->getKey();
+                                    if (is_array($name)) {
+                                        $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #'.$m->getKey());
+                                    }
+
+                                    return [$m->getKey() => $name];
+                                })->all();
+                            } catch (\Throwable) {
+                                return [];
+                            }
+                        })
+                        ->nullable(),
                 ])
                 ->action(function (array $data) {
-                    $cluster = $this->record->contentCluster ?? null;
-                    if ($cluster === null) {
-                        Notification::make()->title('Draft heeft geen cluster')->danger()->send();
+                    $typeKey = $data['target_type'];
+                    $entry = cms()->builder('routeModels')[$typeKey] ?? null;
+                    $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+
+                    if (! $class || ! class_exists($class)) {
+                        Notification::make()->title('Onbekend target type')->danger()->send();
 
                         return;
                     }
 
-                    if (! ContentTemplates::has($cluster->content_type)) {
-                        Notification::make()->title('Geen template geregistreerd voor dit content type')->danger()->send();
+                    $draft = $this->record;
+                    $locale = $draft->locale ?? 'nl';
 
-                        return;
+                    // All dashed visitableModels have translatable json name/slug/content.
+                    $nameValue = [$locale => $draft->name];
+                    $slugValue = [$locale => $draft->slug];
+                    $contentValue = [$locale => $draft->h2_sections ?? []];
+
+                    if (! empty($data['target_id'])) {
+                        $record = $class::findOrFail($data['target_id']);
+                        $existingName = is_array($record->name) ? $record->name : [];
+                        $existingSlug = is_array($record->slug) ? $record->slug : [];
+                        $existingContent = is_array($record->content) ? $record->content : [];
+                        $record->name = array_merge($existingName, $nameValue);
+                        $record->slug = array_merge($existingSlug, $slugValue);
+                        $record->content = array_merge($existingContent, $contentValue);
+                        $record->save();
+                    } else {
+                        $record = new $class;
+                        $record->name = $nameValue;
+                        $record->slug = $slugValue;
+                        $record->content = $contentValue;
+                        $record->save();
                     }
 
-                    $template = ContentTemplates::make($cluster->content_type);
-                    $targetClass = $data['target_class'];
-
-                    $new = new $targetClass();
-                    $new->name = $this->record->keyword;
-                    $new->slug = Str::slug($this->record->keyword);
-                    $new->save();
-
-                    $template->applyTo($new, ['h2_sections' => $this->sections]);
-
-                    $this->record->update([
-                        'subject_type' => $targetClass,
-                        'subject_id' => $new->getKey(),
+                    $draft->update([
+                        'subject_type' => $class,
+                        'subject_id' => $record->getKey(),
                         'status' => 'applied',
                         'applied_at' => now(),
                         'applied_by' => auth()->id(),
                     ]);
 
                     Notification::make()
-                        ->title('Nieuwe entity aangemaakt en content toegepast')
+                        ->title('Gepubliceerd naar '.class_basename($class))
                         ->success()
                         ->send();
                 }),
@@ -168,11 +227,20 @@ class EditContentDraft extends Page
             if (! $class || ! class_exists($class)) {
                 continue;
             }
+            $locale = app()->getLocale();
             foreach ($class::query()->limit(20)->get() as $entity) {
+                $title = $entity->name ?? $entity->title ?? '';
+                if (is_array($title)) {
+                    $title = $title[$locale] ?? reset($title) ?? '';
+                }
+                $slug = $entity->slug ?? '';
+                if (is_array($slug)) {
+                    $slug = $slug[$locale] ?? reset($slug) ?? '';
+                }
                 $pool[] = [
                     'type' => class_basename($class),
-                    'title' => $entity->name ?? $entity->title ?? '',
-                    'url' => method_exists($entity, 'getUrl') ? $entity->getUrl() : '/'.($entity->slug ?? ''),
+                    'title' => (string) $title,
+                    'url' => method_exists($entity, 'getUrl') ? $entity->getUrl() : '/'.$slug,
                 ];
             }
         }

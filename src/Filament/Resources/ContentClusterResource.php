@@ -12,6 +12,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
@@ -59,6 +60,12 @@ class ContentClusterResource extends Resource
                                 'other' => 'Anders',
                             ])
                             ->required(),
+                        Select::make('locale')
+                            ->label('Taal')
+                            ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                            ->default(config('app.locale', 'nl'))
+                            ->required()
+                            ->live(),
                         Select::make('status')
                             ->label('Status')
                             ->options([
@@ -76,6 +83,76 @@ class ContentClusterResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Zoekwoorden')
+                    ->schema([
+                        Select::make('keywords')
+                            ->label('Gekoppelde zoekwoorden')
+                            ->multiple()
+                            ->relationship('keywords', 'keyword')
+                            ->preload()
+                            ->searchable()
+                            ->options(function ($get) {
+                                $locale = $get('locale') ?? config('app.locale', 'nl');
+
+                                return \Dashed\DashedMarketing\Models\Keyword::where('locale', $locale)
+                                    ->where('status', '!=', 'rejected')
+                                    ->orderBy('keyword')
+                                    ->pluck('keyword', 'id');
+                            })
+                            ->createOptionForm([
+                                TextInput::make('keyword')->required()->maxLength(255),
+                            ])
+                            ->createOptionUsing(function (array $data, $get) {
+                                $locale = $get('locale') ?? config('app.locale', 'nl');
+
+                                return \Dashed\DashedMarketing\Models\Keyword::create([
+                                    'keyword' => $data['keyword'],
+                                    'locale' => $locale,
+                                    'status' => 'approved',
+                                ])->id;
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
+
+                Section::make('Content concepten (preview)')
+                    ->description('Bewerk de AI-voorstellen of verwijder ongewenste, en maak er in bulk drafts van.')
+                    ->visible(fn ($record) => $record !== null)
+                    ->schema([
+                        Repeater::make('pending_concepts')
+                            ->label(false)
+                            ->schema([
+                                TextInput::make('title')->label('Titel')->required(),
+                                Textarea::make('description')->label('Beschrijving')->rows(2),
+                                Select::make('suggested_target_type')
+                                    ->label('Target type')
+                                    ->options(function () {
+                                        $options = [];
+                                        try {
+                                            foreach ((array) cms()->builder('routeModels') as $key => $entry) {
+                                                $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
+                                                $options[$key] = $name;
+                                            }
+                                        } catch (\Throwable) {
+                                            //
+                                        }
+
+                                        if (empty($options)) {
+                                            $options = ['article' => 'Artikel'];
+                                        }
+
+                                        return $options;
+                                    })
+                                    ->required(),
+                            ])
+                            ->reorderable(false)
+                            ->addable(false)
+                            ->deletable()
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
                     ->columnSpanFull(),
             ]);
     }

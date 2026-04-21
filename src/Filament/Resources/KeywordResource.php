@@ -10,7 +10,13 @@ use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Radio;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Textarea;
+use Illuminate\Support\Facades\DB;
 use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
 class KeywordResource extends Resource
@@ -75,6 +81,16 @@ class KeywordResource extends Resource
                 Tables\Columns\TextColumn::make('status')->badge(),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('show_rejected')
+                    ->label('Toon afgewezen')
+                    ->placeholder('Verbergen (standaard)')
+                    ->trueLabel('Alleen afgewezen')
+                    ->falseLabel('Exclusief afgewezen')
+                    ->queries(
+                        true: fn ($query) => $query->where('status', 'rejected'),
+                        false: fn ($query) => $query->where('status', '!=', 'rejected'),
+                        blank: fn ($query) => $query->where('status', '!=', 'rejected'),
+                    ),
                 Tables\Filters\SelectFilter::make('locale')
                     ->options(['nl' => 'Nederlands', 'en' => 'English'])
                     ->default(config('app.locale', 'nl')),
@@ -123,18 +139,145 @@ class KeywordResource extends Resource
                     }),
             ])
             ->recordActions([
+                Actions\Action::make('approve')
+                    ->label('Goedkeuren')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Keyword $record) => $record->status !== 'approved')
+                    ->action(fn (Keyword $record) => $record->update(['status' => 'approved'])),
+                Actions\Action::make('reject')
+                    ->label('Afwijzen')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (Keyword $record) => $record->status !== 'rejected')
+                    ->action(fn (Keyword $record) => $record->update(['status' => 'rejected'])),
                 Actions\EditAction::make(),
                 Actions\DeleteAction::make(),
             ])
             ->toolbarActions([
                 Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
                     Actions\BulkAction::make('approve')
                         ->label('Goedkeuren')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
                         ->action(fn ($records) => $records->each->update(['status' => 'approved'])),
                     Actions\BulkAction::make('reject')
                         ->label('Afwijzen')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
                         ->action(fn ($records) => $records->each->update(['status' => 'rejected'])),
+                    Actions\BulkAction::make('attach_cluster')
+                        ->label('Koppel aan cluster')
+                        ->icon('heroicon-o-rectangle-stack')
+                        ->color('primary')
+                        ->schema(function ($records) {
+                            $ids = $records->pluck('id')->all();
+                            $locale = $records->first()?->locale ?? config('app.locale', 'nl');
+
+                            return [
+                                Radio::make('koppel_modus')
+                                    ->label('Modus')
+                                    ->options([
+                                        'new' => 'Nieuwe cluster aanmaken',
+                                        'existing' => 'Toevoegen aan bestaande cluster',
+                                    ])
+                                    ->default('new')
+                                    ->required()
+                                    ->live(),
+
+                                Section::make()
+                                    ->visible(fn ($get) => $get('koppel_modus') === 'new')
+                                    ->schema([
+                                        TextInput::make('name')->label('Naam')->required(),
+                                        Select::make('content_type')
+                                            ->label('Type')
+                                            ->options([
+                                                'blog' => 'Blog',
+                                                'landing_page' => 'Landingspagina',
+                                                'category' => 'Categoriepagina',
+                                                'faq' => 'FAQ pagina',
+                                                'product' => 'Productpagina',
+                                                'other' => 'Anders',
+                                            ])
+                                            ->required()
+                                            ->default('blog'),
+                                        Select::make('locale')
+                                            ->label('Taal')
+                                            ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                                            ->default($locale)
+                                            ->required(),
+                                        Textarea::make('description')->label('Beschrijving')->rows(2),
+                                        Select::make('keywords')
+                                            ->label('Zoekwoorden')
+                                            ->multiple()
+                                            ->options(Keyword::whereIn('id', $ids)->pluck('keyword', 'id'))
+                                            ->default($ids)
+                                            ->required(),
+                                    ]),
+
+                                Section::make()
+                                    ->visible(fn ($get) => $get('koppel_modus') === 'existing')
+                                    ->schema([
+                                        Select::make('cluster_id')
+                                            ->label('Bestaande cluster')
+                                            ->options(
+                                                ContentCluster::where('locale', $locale)
+                                                    ->orderBy('name')
+                                                    ->pluck('name', 'id')
+                                            )
+                                            ->required()
+                                            ->live(),
+                                        Placeholder::make('current_keywords')
+                                            ->label('Huidige keywords in cluster')
+                                            ->content(function ($get) {
+                                                $id = $get('cluster_id');
+                                                if (! $id) {
+                                                    return '-';
+                                                }
+                                                $cluster = ContentCluster::with('keywords')->find($id);
+
+                                                return $cluster?->keywords->pluck('keyword')->implode(', ') ?: '-';
+                                            }),
+                                        Select::make('keywords_to_add')
+                                            ->label('Toe te voegen keywords')
+                                            ->multiple()
+                                            ->options(Keyword::whereIn('id', $ids)->pluck('keyword', 'id'))
+                                            ->default($ids)
+                                            ->required(),
+                                    ]),
+                            ];
+                        })
+                        ->action(function (array $data, $records) {
+                            if ($data['koppel_modus'] === 'new') {
+                                DB::transaction(function () use ($data) {
+                                    $cluster = ContentCluster::create([
+                                        'name' => $data['name'],
+                                        'content_type' => $data['content_type'],
+                                        'locale' => $data['locale'],
+                                        'description' => $data['description'] ?? null,
+                                        'status' => 'planned',
+                                    ]);
+                                    $cluster->keywords()->attach($data['keywords']);
+                                });
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Cluster "'.$data['name'].'" aangemaakt met '.count($data['keywords']).' keywords')
+                                    ->success()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $cluster = ContentCluster::findOrFail($data['cluster_id']);
+                            $cluster->keywords()->syncWithoutDetaching($data['keywords_to_add']);
+                            \Filament\Notifications\Notification::make()
+                                ->title(count($data['keywords_to_add']).' keywords toegevoegd aan "'.$cluster->name.'"')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    Actions\DeleteBulkAction::make()
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
                 ]),
             ]);
     }

@@ -69,6 +69,7 @@ class Keyword extends Model
         return match ($this->status) {
             'new' => 'Nieuw',
             'approved' => 'Goedgekeurd',
+            'rejected' => 'Afgewezen',
             'blacklisted' => 'Geblacklist',
             default => $this->status,
         };
@@ -79,6 +80,7 @@ class Keyword extends Model
         return match ($this->status) {
             'new' => 'gray',
             'approved' => 'success',
+            'rejected' => 'danger',
             'blacklisted' => 'danger',
             default => 'gray',
         };

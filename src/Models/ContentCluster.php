@@ -17,6 +17,11 @@ class ContentCluster extends Model
         'content_type',
         'description',
         'status',
+        'pending_concepts',
+    ];
+
+    protected $casts = [
+        'pending_concepts' => 'array',
     ];
 
     public function scopeForLocale($query, string $locale)

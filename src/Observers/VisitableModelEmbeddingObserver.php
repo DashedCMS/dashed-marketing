@@ -2,23 +2,32 @@
 
 namespace Dashed\DashedMarketing\Observers;
 
-use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Jobs\RebuildContentEmbeddingJob;
 use Dashed\DashedMarketing\Models\ContentEmbedding;
 use Dashed\DashedMarketing\Services\EmbeddingService;
-use Dashed\DashedMarketing\Jobs\RebuildContentEmbeddingJob;
+use Illuminate\Database\Eloquent\Model;
 
 class VisitableModelEmbeddingObserver
 {
-    public function __construct(protected EmbeddingService $embeddings)
-    {
-    }
+    public function __construct(protected EmbeddingService $embeddings) {}
 
     public function saved(Model $model): void
     {
+        $flatten = function ($value): string {
+            if (is_array($value)) {
+                $value = implode(' ', array_filter(array_map(
+                    fn ($v) => is_scalar($v) ? (string) $v : '',
+                    $value,
+                )));
+            }
+
+            return is_scalar($value) ? (string) $value : '';
+        };
+
         $text = trim(implode(' ', array_filter([
-            $model->name ?? $model->title ?? '',
-            $model->meta_title ?? $model->seo_title ?? '',
-            $model->short_description ?? $model->meta_description ?? '',
+            $flatten($model->name ?? $model->title ?? ''),
+            $flatten($model->meta_title ?? $model->seo_title ?? ''),
+            $flatten($model->short_description ?? $model->meta_description ?? ''),
         ])));
 
         if ($text === '') {

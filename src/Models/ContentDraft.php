@@ -12,6 +12,8 @@ class ContentDraft extends Model
 
     protected $fillable = [
         'content_cluster_id',
+        'name',
+        'slug',
         'keyword',
         'locale',
         'instruction',
@@ -54,6 +56,7 @@ class ContentDraft extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
+            'concept' => 'Concept',
             'pending' => 'In wachtrij',
             'planning' => 'Planning...',
             'writing' => 'Schrijven...',
@@ -67,6 +70,7 @@ class ContentDraft extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
+            'concept' => 'gray',
             'pending', 'planning', 'writing' => 'warning',
             'ready' => 'success',
             'applied' => 'primary',

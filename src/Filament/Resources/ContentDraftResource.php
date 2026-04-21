@@ -2,25 +2,26 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateContentDraft;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\ListContentDrafts;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateContentDraft;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use UnitEnum;
 
 class ContentDraftResource extends Resource
 {
@@ -44,6 +45,20 @@ class ContentDraftResource extends Resource
             ->schema([
                 Section::make('Content concept')
                     ->schema([
+                        TextInput::make('name')
+                            ->label('Titel (gepubliceerde pagina)')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, $set, $get) {
+                                if (empty($get('slug'))) {
+                                    $set('slug', Str::slug((string) $state));
+                                }
+                            }),
+                        TextInput::make('slug')
+                            ->label('Slug')
+                            ->required()
+                            ->maxLength(255),
                         TextInput::make('keyword')
                             ->label('Keyword')
                             ->required()
@@ -61,6 +76,7 @@ class ContentDraftResource extends Resource
                         Select::make('status')
                             ->label('Status')
                             ->options([
+                                'concept' => 'Concept',
                                 'pending' => 'In wachtrij',
                                 'planning' => 'Planning...',
                                 'writing' => 'Schrijven...',
@@ -68,7 +84,7 @@ class ContentDraftResource extends Resource
                                 'applied' => 'Toegepast',
                                 'failed' => 'Mislukt',
                             ])
-                            ->default('pending')
+                            ->default('concept')
                             ->disabled(),
                         Textarea::make('instruction')
                             ->label('Instructie')
