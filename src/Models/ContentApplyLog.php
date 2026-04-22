@@ -14,6 +14,7 @@ class ContentApplyLog extends Model
 
     protected $fillable = [
         'seo_improvement_id',
+        'audit_id',
         'content_draft_id',
         'subject_type',
         'subject_id',
@@ -43,5 +44,10 @@ class ContentApplyLog extends Model
     public function draft(): BelongsTo
     {
         return $this->belongsTo(ContentDraft::class, 'content_draft_id');
+    }
+
+    public function audit(): BelongsTo
+    {
+        return $this->belongsTo(SeoAudit::class, 'audit_id');
     }
 }
