@@ -230,7 +230,7 @@ class ContentDraftResource extends Resource
                         ])
                         ->action(function (array $data, $record) {
                             $locale = $record->locale ?? app()->getLocale();
-                            $pool = app(LinkCandidatesService::class)->forLocale($locale, 100);
+                            $pool = app(LinkCandidatesService::class)->allForLocale($locale, 500);
 
                             if (empty($pool)) {
                                 Notification::make()
@@ -244,15 +244,51 @@ class ContentDraftResource extends Resource
                             $topic = trim((string) $data['topic']);
                             $max = (int) ($data['max'] ?? 10);
 
-                            $indexed = [];
-                            $listText = collect($pool)->map(function (array $c, int $i) use (&$indexed) {
-                                $indexed[$i] = $c;
+                            // Pre-filter: score each candidate by how many significant
+                            // topic words appear in its title/url. Wide net op de sitemap,
+                            // zodat AI alleen een gefocuste shortlist hoeft te beoordelen.
+                            $words = preg_split('/\s+/u', mb_strtolower($topic), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                            $words = array_values(array_filter($words, fn ($w) => mb_strlen($w) >= 3));
 
-                                return sprintf('%d | %s | %s | %s', $i, $c['type'] ?? '', $c['title'] ?? '', $c['url'] ?? '');
-                            })->implode("\n");
+                            $scored = [];
+                            foreach ($pool as $c) {
+                                $hay = mb_strtolower(($c['title'] ?? '').' '.($c['url'] ?? ''));
+                                $score = 0;
+                                foreach ($words as $w) {
+                                    if (mb_strpos($hay, $w) !== false) {
+                                        $score++;
+                                    }
+                                }
+                                $scored[] = ['c' => $c, 'score' => $score];
+                            }
 
-                            $prompt = <<<TXT
-Kies uit de volgende lijst interne pagina's de maximaal {$max} meest relevante voor het onderwerp:
+                            if (! empty($words)) {
+                                $matched = array_values(array_filter($scored, fn ($e) => $e['score'] > 0));
+                                $shortlist = ! empty($matched) ? $matched : $scored;
+                            } else {
+                                $shortlist = $scored;
+                            }
+
+                            usort($shortlist, fn ($a, $b) => $b['score'] <=> $a['score']);
+                            $shortlist = array_slice($shortlist, 0, 80);
+
+                            // If all topic words hit on a small set, skip AI entirely.
+                            $needed = max(1, count($words));
+                            $strong = array_values(array_filter($shortlist, fn ($e) => $e['score'] >= $needed));
+
+                            if (! empty($strong) && count($strong) <= $max) {
+                                $picked = array_map(fn ($e) => $e['c'], $strong);
+                            } else {
+                                $indexed = [];
+                                $listText = collect($shortlist)->map(function (array $e, int $i) use (&$indexed) {
+                                    $indexed[$i] = $e['c'];
+                                    $c = $e['c'];
+
+                                    return sprintf('%d | %s | %s | %s', $i, $c['type'] ?? '', $c['title'] ?? '', $c['url'] ?? '');
+                                })->implode("\n");
+
+                                $prompt = <<<TXT
+Je krijgt een shortlist interne pagina's van de site. Kies de maximaal {$max} meest relevante voor het onderwerp:
 "{$topic}"
 
 Lijst (index | type | titel | url):
@@ -260,31 +296,38 @@ Lijst (index | type | titel | url):
 
 Regels:
 - Alleen indices die in de lijst staan.
-- Sorteer op hoe relevant ze thematisch zijn (meest relevant eerst).
-- Als er minder dan {$max} echt passen, geef er minder terug.
+- Sorteer op relevantie (meest relevant eerst).
+- Beter 3 echt relevante dan 10 matige.
 
 Retourneer JSON: {"indices": [3, 7, 12, ...]}
 TXT;
 
-                            try {
-                                $response = Ai::json($prompt) ?? [];
-                            } catch (\Throwable $e) {
-                                Notification::make()
-                                    ->title('AI-aanroep mislukt')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
+                                try {
+                                    $response = Ai::json($prompt) ?? [];
+                                } catch (\Throwable $e) {
+                                    Notification::make()
+                                        ->title('AI-aanroep mislukt, fallback op tekstmatch')
+                                        ->body($e->getMessage())
+                                        ->warning()
+                                        ->send();
+                                    $response = [];
+                                }
 
-                                return;
+                                $indices = is_array($response['indices'] ?? null) ? $response['indices'] : [];
+                                $indices = array_values(array_unique(array_filter($indices, fn ($i) => is_numeric($i) && isset($indexed[(int) $i]))));
+
+                                if (! empty($indices)) {
+                                    $picked = array_map(fn ($i) => $indexed[(int) $i], $indices);
+                                } else {
+                                    // AI had no usable output — fall back to top scored shortlist.
+                                    $picked = array_map(fn ($e) => $e['c'], array_slice($shortlist, 0, $max));
+                                }
                             }
 
-                            $indices = is_array($response['indices'] ?? null) ? $response['indices'] : [];
-                            $indices = array_values(array_unique(array_filter($indices, fn ($i) => is_numeric($i) && isset($indexed[(int) $i]))));
-
-                            if (empty($indices)) {
+                            if (empty($picked)) {
                                 Notification::make()
-                                    ->title('AI gaf geen bruikbare selectie terug')
-                                    ->body('Probeer het onderwerp specifieker te formuleren.')
+                                    ->title('Geen matches gevonden voor dit onderwerp')
+                                    ->body('Probeer het breder of specifieker te formuleren.')
                                     ->warning()
                                     ->send();
 
@@ -292,8 +335,7 @@ TXT;
                             }
 
                             $record->linkCandidates()->delete();
-                            foreach ($indices as $order => $i) {
-                                $c = $indexed[(int) $i];
+                            foreach ($picked as $order => $c) {
                                 $record->linkCandidates()->create([
                                     'sort_order' => $order,
                                     'type' => $c['type'] ?? null,
@@ -305,7 +347,7 @@ TXT;
                             }
 
                             Notification::make()
-                                ->title(count($indices).' link-kandidaten geselecteerd door AI')
+                                ->title(count($picked).' link-kandidaten geselecteerd')
                                 ->body('Bekijk en pas ze desgewenst nog aan voor je regenereert.')
                                 ->success()
                                 ->send();
