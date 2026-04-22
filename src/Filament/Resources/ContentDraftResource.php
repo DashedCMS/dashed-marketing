@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Filament\Resources;
 
 use BackedEnum;
+use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateContentDraft;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\ListContentDrafts;
@@ -202,6 +203,129 @@ class ContentDraftResource extends Resource
 
                             Notification::make()
                                 ->title(count($candidates).' link-kandidaten geladen uit routes')
+                                ->success()
+                                ->send();
+
+                            return redirect(request()->header('Referer') ?: url()->current());
+                        }),
+                    Action::make('ai_pick_link_candidates')
+                        ->label('AI-selectie op onderwerp')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('primary')
+                        ->visible(fn ($record) => $record !== null)
+                        ->modalHeading('Laat AI relevante interne links kiezen')
+                        ->modalDescription('Geef een onderwerp op. AI selecteert uit alle beschikbare route-modellen de meest relevante pagina\'s en zet die als link-kandidaten.')
+                        ->schema([
+                            Textarea::make('topic')
+                                ->label('Onderwerp')
+                                ->placeholder('Bijv. Leren tassen voor vrouwen, duurzame mode, zakelijk reizen')
+                                ->rows(3)
+                                ->required(),
+                            TextInput::make('max')
+                                ->label('Maximaal aantal links')
+                                ->numeric()
+                                ->default(10)
+                                ->minValue(1)
+                                ->maxValue(30),
+                        ])
+                        ->action(function (array $data, $record) {
+                            $locale = $record->locale ?? app()->getLocale();
+                            $pool = app(LinkCandidatesService::class)->forLocale($locale, 100);
+
+                            if (empty($pool)) {
+                                Notification::make()
+                                    ->title('Geen route-modellen gevonden voor deze locale')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $topic = trim((string) $data['topic']);
+                            $max = (int) ($data['max'] ?? 10);
+
+                            $indexed = [];
+                            $listText = collect($pool)->map(function (array $c, int $i) use (&$indexed) {
+                                $indexed[$i] = $c;
+
+                                return sprintf('%d | %s | %s | %s', $i, $c['type'] ?? '', $c['title'] ?? '', $c['url'] ?? '');
+                            })->implode("\n");
+
+                            $prompt = <<<TXT
+Kies uit de volgende lijst interne pagina's de maximaal {$max} meest relevante voor het onderwerp:
+"{$topic}"
+
+Lijst (index | type | titel | url):
+{$listText}
+
+Regels:
+- Alleen indices die in de lijst staan.
+- Sorteer op hoe relevant ze thematisch zijn (meest relevant eerst).
+- Als er minder dan {$max} echt passen, geef er minder terug.
+
+Retourneer JSON: {"indices": [3, 7, 12, ...]}
+TXT;
+
+                            try {
+                                $response = Ai::json($prompt) ?? [];
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title('AI-aanroep mislukt')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $indices = is_array($response['indices'] ?? null) ? $response['indices'] : [];
+                            $indices = array_values(array_unique(array_filter($indices, fn ($i) => is_numeric($i) && isset($indexed[(int) $i]))));
+
+                            if (empty($indices)) {
+                                Notification::make()
+                                    ->title('AI gaf geen bruikbare selectie terug')
+                                    ->body('Probeer het onderwerp specifieker te formuleren.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $record->linkCandidates()->delete();
+                            foreach ($indices as $order => $i) {
+                                $c = $indexed[(int) $i];
+                                $record->linkCandidates()->create([
+                                    'sort_order' => $order,
+                                    'type' => $c['type'] ?? null,
+                                    'title' => (string) ($c['title'] ?? ''),
+                                    'url' => (string) ($c['url'] ?? ''),
+                                    'subject_type' => $c['subject_type'] ?? null,
+                                    'subject_id' => $c['subject_id'] ?? null,
+                                ]);
+                            }
+
+                            Notification::make()
+                                ->title(count($indices).' link-kandidaten geselecteerd door AI')
+                                ->body('Bekijk en pas ze desgewenst nog aan voor je regenereert.')
+                                ->success()
+                                ->send();
+
+                            return redirect(request()->header('Referer') ?: url()->current());
+                        }),
+                    Action::make('clear_link_candidates')
+                        ->label('Verwijder alles')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Alle link-kandidaten verwijderen?')
+                        ->modalDescription('Dit haalt elke link-kandidaat van deze draft weg. Bij de eerstvolgende generatie valt de AI terug op de globale route-lijst.')
+                        ->visible(fn ($record) => $record !== null && $record->linkCandidates()->exists())
+                        ->action(function ($record) {
+                            $count = $record->linkCandidates()->count();
+                            $record->linkCandidates()->delete();
+
+                            Notification::make()
+                                ->title("{$count} link-kandidaten verwijderd")
                                 ->success()
                                 ->send();
 
