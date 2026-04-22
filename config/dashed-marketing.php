@@ -53,4 +53,34 @@ return [
         'default_strength' => 0.7,
     ],
     'context_builder' => ['max_tokens' => 8000, 'max_products' => 50],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEO Audit - block rewrite whitelist
+    |--------------------------------------------------------------------------
+    |
+    | Per block-type: welke velden mag de AI herschrijven. Andere velden
+    | blijven onaangeraakt bij apply. Sleutels moeten matchen met het
+    | block-type zoals geregistreerd in cms()->builder('blocks').
+    |
+    */
+    'seo_block_whitelist' => [
+        'content' => ['content'],
+        'header' => ['title', 'subtitle'],
+        'hero' => ['title', 'subtitle'],
+        'cta' => ['title', 'subtitle'],
+        'text' => ['content'],
+        'text_image' => ['content', 'title'],
+        'faq' => ['questions', 'faqs'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEO Audit - FAQ block types
+    |--------------------------------------------------------------------------
+    |
+    | Block types die herkend worden als FAQ-blok voor FAQ apply.
+    |
+    */
+    'seo_faq_block_types' => ['faq'],
 ];
