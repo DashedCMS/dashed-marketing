@@ -471,7 +471,35 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestStructuredData(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::structuredData($context));
+        $response = Ai::json(SeoAuditPromptBuilder::structuredData($context)) ?? [];
+
+        $audit->structuredDataSuggestions()->delete();
+
+        foreach ((array) ($response['suggestions'] ?? []) as $s) {
+            if (! is_array($s)) {
+                continue;
+            }
+            $schema = trim((string) ($s['schema_type'] ?? ''));
+            $jsonLd = (string) ($s['json_ld'] ?? '');
+
+            if ($schema === '' || $jsonLd === '') {
+                continue;
+            }
+
+            if (json_decode($jsonLd, true) === null) {
+                continue;
+            }
+
+            $audit->structuredDataSuggestions()->updateOrCreate(
+                ['schema_type' => $schema],
+                [
+                    'json_ld' => $jsonLd,
+                    'reason' => is_string($s['reason'] ?? null) ? $s['reason'] : null,
+                    'priority' => $this->normalisePriority($s['priority'] ?? null),
+                    'status' => 'pending',
+                ]
+            );
+        }
     }
 
     protected function suggestInternalLinks(SeoAudit $audit, array $context): void
