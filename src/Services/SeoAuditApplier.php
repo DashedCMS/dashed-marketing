@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Services;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
+use Dashed\DashedMarketing\Models\SeoAuditFaqSuggestion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -34,7 +35,13 @@ class SeoAuditApplier
             $this->applyBlock($audit, $subject, (int) $id, $userId, $result);
         }
 
-        // FAQ and structured data appliers land in Tasks 4.4-4.5.
+        $faqIds = array_map('intval', (array) ($selectedIds['faqs'] ?? []));
+        $faqTarget = (string) ($selectedIds['faq_target'] ?? 'existing');
+        if (! empty($faqIds)) {
+            $this->applyFaqs($audit, $subject, $faqIds, $faqTarget, $userId, $result);
+        }
+
+        // Structured data applier lands in Task 4.5.
 
         $this->updateAuditStatus($audit, $userId, $result);
 
@@ -216,6 +223,110 @@ class SeoAuditApplier
         } catch (Throwable $e) {
             $sug->update(['status' => 'failed']);
             $result->recordFailure('block.'.($sug->block_index ?? 'new').'.'.$sug->field_key, $e->getMessage());
+        }
+    }
+
+    /**
+     * @param  array<int>  $ids
+     */
+    protected function applyFaqs(SeoAudit $audit, Model $subject, array $ids, string $target, ?int $userId, SeoAuditApplyResult $result): void
+    {
+        if (! method_exists($subject, 'customBlocks')) {
+            foreach ($ids as $id) {
+                $result->recordFailure("faq.{$id}", 'Subject heeft geen customBlocks relatie');
+            }
+
+            return;
+        }
+
+        $sugs = $audit->faqSuggestions()->whereIn('id', $ids)
+            ->whereIn('status', ['pending', 'edited'])->get();
+
+        if ($sugs->isEmpty()) {
+            foreach ($ids as $id) {
+                $result->recordSkipped();
+            }
+
+            return;
+        }
+
+        $items = $sugs->map(fn ($f) => [
+            'question' => (string) $f->question,
+            'description' => (string) $f->answer,
+            'title' => (string) $f->question,
+            'content' => (string) $f->answer,
+        ])->values()->all();
+
+        try {
+            DB::transaction(function () use ($subject, $audit, $sugs, $items, $target, $userId) {
+                $customBlocks = $subject->customBlocks()->firstOrNew([
+                    'blockable_type' => $subject::class,
+                    'blockable_id' => $subject->getKey(),
+                ]);
+                $blocks = (array) ($customBlocks->getTranslation('blocks', $audit->locale) ?? []);
+                $faqTypes = (array) config('dashed-marketing.seo_faq_block_types', ['faq']);
+
+                $previous = null;
+                $faqIndex = null;
+                foreach ($blocks as $i => $b) {
+                    if (in_array($b['type'] ?? null, $faqTypes, true)) {
+                        $faqIndex = $i;
+                        $previous = $b['data'] ?? [];
+
+                        break;
+                    }
+                }
+
+                if ($target === 'new' || $faqIndex === null) {
+                    $blocks[] = [
+                        'type' => $faqTypes[0] ?? 'faq',
+                        'data' => [
+                            'in_container' => true,
+                            'top_margin' => true,
+                            'bottom_margin' => true,
+                            'title' => 'Veelgestelde vragen',
+                            'questions' => $items,
+                            'faqs' => $items,
+                        ],
+                    ];
+                    $logKey = 'faq.new';
+                } else {
+                    $current = $blocks[$faqIndex]['data'];
+                    $existingQ = (array) ($current['questions'] ?? []);
+                    $existingF = (array) ($current['faqs'] ?? []);
+                    $current['questions'] = array_merge($existingQ, $items);
+                    $current['faqs'] = array_merge($existingF, $items);
+                    $blocks[$faqIndex]['data'] = $current;
+                    $logKey = "faq.{$faqIndex}";
+                }
+
+                $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
+                $customBlocks->save();
+
+                ContentApplyLog::create([
+                    'seo_improvement_id' => null,
+                    'audit_id' => $audit->id,
+                    'subject_type' => $subject::class,
+                    'subject_id' => $subject->getKey(),
+                    'field_key' => $logKey,
+                    'previous_value' => json_encode($previous),
+                    'new_value' => json_encode($items),
+                    'applied_by' => $userId,
+                    'applied_at' => now(),
+                ]);
+
+                foreach ($sugs as $sug) {
+                    $sug->update(['status' => 'applied', 'applied_at' => now()]);
+                }
+            });
+
+            foreach ($sugs as $_) {
+                $result->recordApplied();
+            }
+        } catch (Throwable $e) {
+            foreach ($sugs as $sug) {
+                $result->recordFailure('faq.'.$sug->id, $e->getMessage());
+            }
         }
     }
 
