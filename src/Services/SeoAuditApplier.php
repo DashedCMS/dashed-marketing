@@ -2,6 +2,7 @@
 
 namespace Dashed\DashedMarketing\Services;
 
+use Dashed\DashedCore\Models\CustomStructuredData;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
@@ -41,7 +42,9 @@ class SeoAuditApplier
             $this->applyFaqs($audit, $subject, $faqIds, $faqTarget, $userId, $result);
         }
 
-        // Structured data applier lands in Task 4.5.
+        foreach ((array) ($selectedIds['structured_data'] ?? []) as $id) {
+            $this->applyStructuredData($audit, $subject, (int) $id, $userId, $result);
+        }
 
         $this->updateAuditStatus($audit, $userId, $result);
 
@@ -327,6 +330,51 @@ class SeoAuditApplier
             foreach ($sugs as $sug) {
                 $result->recordFailure('faq.'.$sug->id, $e->getMessage());
             }
+        }
+    }
+
+    protected function applyStructuredData(SeoAudit $audit, Model $subject, int $id, ?int $userId, SeoAuditApplyResult $result): void
+    {
+        $sug = $audit->structuredDataSuggestions()->find($id);
+        if (! $sug) {
+            return;
+        }
+        if ($sug->status !== 'pending' && $sug->status !== 'edited') {
+            $result->recordSkipped();
+
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($audit, $subject, $sug, $userId) {
+                $previous = CustomStructuredData::where('subject_type', $subject::class)
+                    ->where('subject_id', $subject->getKey())
+                    ->where('schema_type', $sug->schema_type)
+                    ->first()?->json_ld;
+
+                CustomStructuredData::updateOrCreate(
+                    ['subject_type' => $subject::class, 'subject_id' => $subject->getKey(), 'schema_type' => $sug->schema_type],
+                    ['json_ld' => $sug->json_ld]
+                );
+
+                ContentApplyLog::create([
+                    'seo_improvement_id' => null,
+                    'audit_id' => $audit->id,
+                    'subject_type' => $subject::class,
+                    'subject_id' => $subject->getKey(),
+                    'field_key' => 'structured_data.'.$sug->schema_type,
+                    'previous_value' => json_encode($previous),
+                    'new_value' => json_encode($sug->json_ld),
+                    'applied_by' => $userId,
+                    'applied_at' => now(),
+                ]);
+
+                $sug->update(['status' => 'applied', 'applied_at' => now()]);
+            });
+
+            $result->recordApplied();
+        } catch (Throwable $e) {
+            $result->recordFailure('structured_data.'.$sug->schema_type, $e->getMessage());
         }
     }
 
