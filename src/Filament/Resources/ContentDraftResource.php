@@ -171,26 +171,68 @@ class ContentDraftResource extends Resource
                 ->columnSpanFull(),
 
             Section::make('Interne link-kandidaten')
-                ->description('Deze links gebruikt de AI in de bodies. Dezelfde lijst komt in de tekst terug als <a>-tags.')
+                ->description('Deze links gebruikt de AI in de bodies. Voeg toe, bewerk of verwijder om te sturen welke internal links de tekstgeneratie mag gebruiken.')
                 ->collapsible()
                 ->collapsed()
-                ->schema([
-                    Placeholder::make('link_candidates')
-                        ->label('')
-                        ->content(function ($record) {
-                            $locale = $record?->locale ?? app()->getLocale();
-                            $candidates = app(LinkCandidatesService::class)->forLocale($locale, 20);
+                ->headerActions([
+                    Action::make('seed_link_candidates')
+                        ->label('Vul uit routes')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('gray')
+                        ->requiresConfirmation()
+                        ->modalHeading('Vul link-kandidaten uit routes')
+                        ->modalDescription('Dit leest alle route-modellen voor de locale van deze draft en vervangt de huidige lijst.')
+                        ->visible(fn ($record) => $record !== null)
+                        ->action(function ($record, $livewire) {
+                            $locale = $record->locale ?? app()->getLocale();
+                            $candidates = app(LinkCandidatesService::class)->forLocale($locale, 30);
 
-                            if (empty($candidates)) {
-                                return new HtmlString('<p class="text-sm text-gray-500">Geen link-kandidaten gevonden voor locale '.e($locale).'.</p>');
+                            $record->linkCandidates()->delete();
+
+                            foreach ($candidates as $index => $c) {
+                                $record->linkCandidates()->create([
+                                    'sort_order' => $index,
+                                    'type' => $c['type'] ?? null,
+                                    'title' => (string) ($c['title'] ?? ''),
+                                    'url' => (string) ($c['url'] ?? ''),
+                                ]);
                             }
 
-                            $rows = collect($candidates)
-                                ->map(fn (array $c) => '<li class="py-1"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2">'.e($c['type']).'</span><a href="'.e($c['url']).'" target="_blank" class="text-primary-600 hover:underline">'.e($c['title']).'</a> <span class="text-xs text-gray-400">'.e($c['url']).'</span></li>')
-                                ->implode('');
+                            $livewire->fillForm();
 
-                            return new HtmlString('<ul class="divide-y divide-gray-100 dark:divide-gray-700">'.$rows.'</ul>');
-                        })
+                            Notification::make()
+                                ->title(count($candidates).' link-kandidaten geladen uit routes')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                ->schema([
+                    Repeater::make('linkCandidates')
+                        ->relationship()
+                        ->orderColumn('sort_order')
+                        ->label('')
+                        ->columns(6)
+                        ->schema([
+                            TextInput::make('title')
+                                ->label('Titel')
+                                ->required()
+                                ->columnSpan(2),
+                            TextInput::make('url')
+                                ->label('URL')
+                                ->required()
+                                ->maxLength(2048)
+                                ->columnSpan(3),
+                            TextInput::make('type')
+                                ->label('Type')
+                                ->placeholder('Page, Product, ...')
+                                ->columnSpan(1),
+                        ])
+                        ->reorderableWithButtons()
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => $state['title'] ?? $state['url'] ?? 'Nieuwe link')
+                        ->addable()
+                        ->deletable()
+                        ->defaultItems(0)
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),

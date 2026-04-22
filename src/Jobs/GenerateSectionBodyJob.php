@@ -40,7 +40,7 @@ class GenerateSectionBodyJob implements ShouldQueue
             return;
         }
 
-        $candidates = $links->forLocale($draft->locale ?? 'nl', 20);
+        $candidates = $this->resolveCandidates($draft, $links);
         $allSections = $draft->sections()->orderBy('sort_order')->get();
 
         $response = Ai::json($this->buildPrompt($draft, $section, $allSections, $candidates));
@@ -83,6 +83,30 @@ class GenerateSectionBodyJob implements ShouldQueue
         if ($section->contentDraft) {
             $this->maybeUpdateDraftStatus($section->contentDraft);
         }
+    }
+
+    /**
+     * Prefer the draft's curated link candidates (user-edited). Fall back to
+     * the route-model service only when the draft has none set yet.
+     *
+     * @return array<int, array{type: string, title: string, url: string}>
+     */
+    private function resolveCandidates(ContentDraft $draft, LinkCandidatesService $links): array
+    {
+        $drafted = $draft->linkCandidates()->orderBy('sort_order')->get();
+
+        if ($drafted->isNotEmpty()) {
+            return $drafted
+                ->map(fn ($c) => [
+                    'type' => (string) ($c->type ?? ''),
+                    'title' => (string) $c->title,
+                    'url' => (string) $c->url,
+                ])
+                ->values()
+                ->all();
+        }
+
+        return $links->forLocale($draft->locale ?? 'nl', 20);
     }
 
     private function extractBody(array $response): string

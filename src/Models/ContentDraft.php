@@ -70,6 +70,11 @@ class ContentDraft extends Model
         return $this->hasMany(ContentDraftFaq::class, 'content_draft_id')->orderBy('sort_order');
     }
 
+    public function linkCandidates(): HasMany
+    {
+        return $this->hasMany(ContentDraftLinkCandidate::class, 'content_draft_id')->orderBy('sort_order');
+    }
+
     public function setProgress(string $message): void
     {
         $this->update(['progress_message' => $message]);
