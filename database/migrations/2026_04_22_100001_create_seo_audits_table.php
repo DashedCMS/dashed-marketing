@@ -12,10 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('subject_type');
             $table->unsignedBigInteger('subject_id');
-            $table->enum('status', [
-                'analyzing', 'ready', 'partially_applied',
-                'fully_applied', 'archived', 'failed',
-            ])->default('analyzing');
+            $table->string('status')->default('analyzing');
             $table->unsignedTinyInteger('overall_score')->nullable();
             $table->json('score_breakdown')->nullable();
             $table->text('analysis_summary')->nullable();
