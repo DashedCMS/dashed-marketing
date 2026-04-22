@@ -271,7 +271,25 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function analysePage(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::pageAnalysis($context));
+        $response = Ai::json(SeoAuditPromptBuilder::pageAnalysis($context)) ?? [];
+
+        $audit->pageAnalysis()->updateOrCreate(
+            ['audit_id' => $audit->id],
+            [
+                'headings_structure' => is_array($response['headings_structure'] ?? null) ? $response['headings_structure'] : null,
+                'content_length' => is_numeric($response['content_length'] ?? null) ? (int) $response['content_length'] : null,
+                'keyword_density' => is_array($response['keyword_density'] ?? null) ? $response['keyword_density'] : null,
+                'alt_text_coverage' => is_array($response['alt_text_coverage'] ?? null) ? $response['alt_text_coverage'] : null,
+                'readability_score' => is_numeric($response['readability_score'] ?? null)
+                    ? (int) max(0, min(100, $response['readability_score']))
+                    : null,
+                'notes' => is_string($response['notes'] ?? null) ? $response['notes'] : null,
+            ]
+        );
+
+        if (! empty($response['summary']) && empty($audit->analysis_summary)) {
+            $audit->update(['analysis_summary' => $response['summary']]);
+        }
     }
 
     protected function suggestKeywords(SeoAudit $audit, array $context): void
