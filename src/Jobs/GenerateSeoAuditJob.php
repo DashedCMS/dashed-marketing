@@ -281,7 +281,57 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestMeta(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::meta($context));
+        $response = Ai::json(SeoAuditPromptBuilder::meta($context)) ?? [];
+        $allowed = ['name', 'slug', 'excerpt', 'meta_title', 'meta_description'];
+
+        foreach ((array) ($response['suggestions'] ?? []) as $s) {
+            if (! is_array($s)) {
+                continue;
+            }
+            $field = $s['field'] ?? null;
+            $value = $s['suggested_value'] ?? null;
+            if (! in_array($field, $allowed, true) || ! is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            $current = $this->currentMetaValue($audit, $field, $context);
+
+            $audit->metaSuggestions()->updateOrCreate(
+                ['field' => $field],
+                [
+                    'current_value' => $current,
+                    'suggested_value' => trim($value),
+                    'reason' => $s['reason'] ?? null,
+                    'priority' => $this->normalisePriority($s['priority'] ?? null),
+                    'status' => 'pending',
+                ]
+            );
+        }
+
+        if (! empty($response['summary']) && empty($audit->analysis_summary)) {
+            $audit->update(['analysis_summary' => $response['summary']]);
+        }
+    }
+
+    private function currentMetaValue(SeoAudit $audit, string $field, array $context): ?string
+    {
+        if ($field === 'meta_title') {
+            return $context['current_meta']['title'] ?? null;
+        }
+        if ($field === 'meta_description') {
+            return $context['current_meta']['description'] ?? null;
+        }
+        $subject = $audit->subject;
+        if (! $subject) {
+            return null;
+        }
+
+        return $this->readTranslatable($subject, $field, $audit->locale);
+    }
+
+    private function normalisePriority(?string $p): string
+    {
+        return in_array($p, ['high', 'medium', 'low'], true) ? $p : 'medium';
     }
 
     protected function suggestBlockRewrites(SeoAudit $audit, array $context): void
