@@ -504,6 +504,33 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestInternalLinks(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::internalLinks($context));
+        $response = Ai::json(SeoAuditPromptBuilder::internalLinks($context)) ?? [];
+
+        $validUrls = array_flip(array_column($context['route_pool'], 'url'));
+        $audit->internalLinkSuggestions()->delete();
+
+        foreach ((array) ($response['suggestions'] ?? []) as $s) {
+            if (! is_array($s)) {
+                continue;
+            }
+            $anchor = trim((string) ($s['anchor_text'] ?? ''));
+            $url = trim((string) ($s['target_url'] ?? ''));
+            $context_desc = trim((string) ($s['context_description'] ?? ''));
+
+            if ($anchor === '' || $url === '' || ! isset($validUrls[$url])) {
+                continue;
+            }
+
+            $audit->internalLinkSuggestions()->create([
+                'anchor_text' => $anchor,
+                'target_url' => $url,
+                'target_subject_type' => is_string($s['target_subject_type'] ?? null) ? $s['target_subject_type'] : null,
+                'target_subject_id' => is_numeric($s['target_subject_id'] ?? null) ? (int) $s['target_subject_id'] : null,
+                'context_description' => $context_desc,
+                'reason' => is_string($s['reason'] ?? null) ? $s['reason'] : null,
+                'priority' => $this->normalisePriority($s['priority'] ?? null),
+                'status' => 'pending',
+            ]);
+        }
     }
 }
