@@ -294,7 +294,32 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestKeywords(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::keywords($context));
+        $response = Ai::json(SeoAuditPromptBuilder::keywords($context)) ?? [];
+        $types = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
+        $intents = ['informational', 'commercial', 'transactional', 'navigational'];
+        $volumes = ['high', 'medium', 'low'];
+
+        $audit->keywords()->delete();
+
+        foreach ((array) ($response['suggestions'] ?? []) as $k) {
+            if (! is_array($k)) {
+                continue;
+            }
+            $keyword = trim((string) ($k['keyword'] ?? ''));
+            $type = $k['type'] ?? null;
+            if ($keyword === '' || ! in_array($type, $types, true)) {
+                continue;
+            }
+
+            $audit->keywords()->create([
+                'keyword' => $keyword,
+                'type' => $type,
+                'intent' => in_array($k['intent'] ?? null, $intents, true) ? $k['intent'] : null,
+                'volume_indication' => in_array($k['volume_indication'] ?? null, $volumes, true) ? $k['volume_indication'] : null,
+                'priority' => $this->normalisePriority($k['priority'] ?? null),
+                'notes' => is_string($k['notes'] ?? null) ? $k['notes'] : null,
+            ]);
+        }
     }
 
     protected function suggestMeta(SeoAudit $audit, array $context): void
