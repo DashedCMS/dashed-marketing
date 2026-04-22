@@ -379,7 +379,67 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestBlockRewrites(SeoAudit $audit, array $context): void
     {
-        Ai::json(SeoAuditPromptBuilder::blocks($context));
+        $response = Ai::json(SeoAuditPromptBuilder::blocks($context)) ?? [];
+        $whitelist = $context['block_whitelist'];
+        $blocksByIndex = [];
+        foreach ($context['current_blocks'] as $b) {
+            $blocksByIndex[$b['index']] = $b;
+        }
+
+        $audit->blockSuggestions()->delete();
+
+        foreach ((array) ($response['suggestions'] ?? []) as $s) {
+            if (! is_array($s)) {
+                continue;
+            }
+
+            $isNew = (bool) ($s['is_new_block'] ?? false);
+            $blockType = (string) ($s['block_type'] ?? '');
+            $fieldKey = (string) ($s['field_key'] ?? '');
+            $suggested = $s['suggested_value'] ?? null;
+
+            if ($blockType === '' || $suggested === null) {
+                continue;
+            }
+
+            $allowed = (array) ($whitelist[$blockType] ?? []);
+            if (! $isNew && ! in_array($fieldKey, $allowed, true)) {
+                continue;
+            }
+
+            $blockIndex = $s['block_index'] ?? null;
+            $current = null;
+            if (! $isNew) {
+                if (! is_numeric($blockIndex) || ! isset($blocksByIndex[(int) $blockIndex])) {
+                    continue;
+                }
+                $blockIndex = (int) $blockIndex;
+                $existingBlock = $blocksByIndex[$blockIndex];
+                $current = $existingBlock['data'][$fieldKey] ?? null;
+                if (is_array($current)) {
+                    $current = json_encode($current, JSON_UNESCAPED_UNICODE);
+                }
+            } else {
+                $blockIndex = null;
+                if (! is_string($suggested) || json_decode($suggested, true) === null) {
+                    continue;
+                }
+                $fieldKey = $fieldKey !== '' ? $fieldKey : '_new';
+            }
+
+            $audit->blockSuggestions()->create([
+                'block_index' => $blockIndex,
+                'block_key' => null,
+                'block_type' => $blockType,
+                'field_key' => $fieldKey,
+                'is_new_block' => $isNew,
+                'current_value' => $current !== null ? (string) $current : null,
+                'suggested_value' => is_string($suggested) ? $suggested : json_encode($suggested, JSON_UNESCAPED_UNICODE),
+                'reason' => is_string($s['reason'] ?? null) ? $s['reason'] : null,
+                'priority' => $this->normalisePriority($s['priority'] ?? null),
+                'status' => 'pending',
+            ]);
+        }
     }
 
     protected function suggestFaqs(SeoAudit $audit, array $context): void
