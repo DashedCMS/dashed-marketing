@@ -63,12 +63,104 @@ class SeoAuditApplier
 
     public function rollbackAudit(SeoAudit $audit): void
     {
-        // Implemented in Task 4.6.
+        $logs = ContentApplyLog::where('audit_id', $audit->id)
+            ->whereNull('reverted_at')
+            ->orderByDesc('applied_at')
+            ->get();
+
+        foreach ($logs as $log) {
+            $this->revertOne($log);
+        }
     }
 
     public function revertOne(ContentApplyLog $log): void
     {
-        // Implemented in Task 4.6.
+        if (! class_exists($log->subject_type)) {
+            return;
+        }
+        $subject = ($log->subject_type)::find($log->subject_id);
+        if (! $subject) {
+            return;
+        }
+
+        $previous = json_decode($log->previous_value ?? 'null', true);
+        $key = $log->field_key;
+        $locale = $log->audit?->locale ?? app()->getLocale();
+
+        DB::transaction(function () use ($log, $subject, $key, $previous, $locale) {
+            if (str_starts_with($key, 'meta.')) {
+                $field = substr($key, 5);
+                if ($field === 'meta_title' || $field === 'meta_description') {
+                    $attr = $field === 'meta_title' ? 'title' : 'description';
+                    $metadata = $subject->metadata;
+                    if ($metadata) {
+                        $metadata->setTranslation($attr, $locale, (string) ($previous ?? ''));
+                        $metadata->save();
+                    }
+                } else {
+                    if (method_exists($subject, 'setTranslation')) {
+                        $subject->setTranslation($field, $locale, $previous);
+                    } else {
+                        $subject->{$field} = $previous;
+                    }
+                    $subject->save();
+                }
+            } elseif (str_starts_with($key, 'block.') && method_exists($subject, 'customBlocks') && $subject->customBlocks) {
+                $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $locale) ?? []);
+                if (str_starts_with($key, 'block.new.')) {
+                    // pop last block with matching type
+                    $type = substr($key, strlen('block.new.'));
+                    for ($i = count($blocks) - 1; $i >= 0; $i--) {
+                        if (($blocks[$i]['type'] ?? null) === $type) {
+                            array_splice($blocks, $i, 1);
+
+                            break;
+                        }
+                    }
+                } else {
+                    [, $idx, $fieldKey] = array_pad(explode('.', $key, 3), 3, null);
+                    if (is_numeric($idx) && isset($blocks[(int) $idx])) {
+                        $blocks[(int) $idx]['data'][$fieldKey] = $previous;
+                    }
+                }
+                $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
+                $subject->customBlocks->save();
+            } elseif (str_starts_with($key, 'faq.') && method_exists($subject, 'customBlocks') && $subject->customBlocks) {
+                $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $locale) ?? []);
+                if ($key === 'faq.new') {
+                    // pop the last faq-typed block
+                    for ($i = count($blocks) - 1; $i >= 0; $i--) {
+                        if (in_array($blocks[$i]['type'] ?? null, (array) config('dashed-marketing.seo_faq_block_types', ['faq']), true)) {
+                            array_splice($blocks, $i, 1);
+
+                            break;
+                        }
+                    }
+                } else {
+                    $idx = (int) substr($key, 4);
+                    if (isset($blocks[$idx]) && is_array($previous)) {
+                        $blocks[$idx]['data'] = $previous;
+                    }
+                }
+                $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
+                $subject->customBlocks->save();
+            } elseif (str_starts_with($key, 'structured_data.')) {
+                $schema = substr($key, strlen('structured_data.'));
+                if ($previous === null) {
+                    CustomStructuredData::where('subject_type', $subject::class)
+                        ->where('subject_id', $subject->getKey())
+                        ->where('schema_type', $schema)
+                        ->delete();
+                } else {
+                    CustomStructuredData::updateOrCreate(
+                        ['subject_type' => $subject::class, 'subject_id' => $subject->getKey(), 'schema_type' => $schema],
+                        ['json_ld' => $previous]
+                    );
+                }
+            }
+
+            $log->update(['reverted_at' => now()]);
+        });
     }
 
     protected function ensureApplyable(SeoAudit $audit): void
