@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing\Services;
 
 use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -29,7 +30,11 @@ class SeoAuditApplier
             $this->applyMeta($audit, $subject, (int) $id, $userId, $result);
         }
 
-        // Block, FAQ, and structured data appliers land in Tasks 4.3-4.5.
+        foreach ((array) ($selectedIds['blocks'] ?? []) as $id) {
+            $this->applyBlock($audit, $subject, (int) $id, $userId, $result);
+        }
+
+        // FAQ and structured data appliers land in Tasks 4.4-4.5.
 
         $this->updateAuditStatus($audit, $userId, $result);
 
@@ -127,6 +132,90 @@ class SeoAuditApplier
             $result->recordApplied();
         } catch (Throwable $e) {
             $result->recordFailure('meta.'.$sug->field, $e->getMessage());
+        }
+    }
+
+    protected function applyBlock(SeoAudit $audit, Model $subject, int $id, ?int $userId, SeoAuditApplyResult $result): void
+    {
+        $sug = $audit->blockSuggestions()->find($id);
+        if (! $sug) {
+            return;
+        }
+        if ($sug->status !== 'pending' && $sug->status !== 'edited') {
+            $result->recordSkipped();
+
+            return;
+        }
+
+        try {
+            if (! method_exists($subject, 'customBlocks')) {
+                throw new RuntimeException('Subject heeft geen customBlocks relatie');
+            }
+
+            $customBlocks = $subject->customBlocks()->firstOrNew([
+                'blockable_type' => $subject::class,
+                'blockable_id' => $subject->getKey(),
+            ]);
+            $blocks = [];
+            try {
+                $blocks = (array) ($customBlocks->getTranslation('blocks', $audit->locale) ?? []);
+            } catch (Throwable) {
+                $blocks = [];
+            }
+
+            $previous = null;
+            $newValue = null;
+            $logKey = '';
+
+            if ($sug->is_new_block) {
+                $data = json_decode($sug->suggested_value, true) ?: [];
+                $data = array_merge([
+                    'in_container' => true,
+                    'top_margin' => true,
+                    'bottom_margin' => true,
+                ], $data);
+
+                $envelope = ['type' => $sug->block_type, 'data' => $data];
+                $blocks[] = $envelope;
+                $newValue = $envelope;
+                $logKey = 'block.new.'.$sug->block_type;
+            } else {
+                $idx = $sug->block_index;
+                if ($idx === null || ! isset($blocks[$idx])) {
+                    $sug->update(['status' => 'failed']);
+                    $result->recordFailure("block.{$idx}.{$sug->field_key}", 'Blok niet meer gevonden');
+
+                    return;
+                }
+                $previous = $blocks[$idx]['data'][$sug->field_key] ?? null;
+                $blocks[$idx]['data'][$sug->field_key] = $sug->suggested_value;
+                $newValue = $sug->suggested_value;
+                $logKey = "block.{$idx}.{$sug->field_key}";
+            }
+
+            DB::transaction(function () use ($customBlocks, $audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey) {
+                $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
+                $customBlocks->save();
+
+                ContentApplyLog::create([
+                    'seo_improvement_id' => null,
+                    'audit_id' => $audit->id,
+                    'subject_type' => $subject::class,
+                    'subject_id' => $subject->getKey(),
+                    'field_key' => $logKey,
+                    'previous_value' => json_encode($previous),
+                    'new_value' => json_encode($newValue),
+                    'applied_by' => $userId,
+                    'applied_at' => now(),
+                ]);
+
+                $sug->update(['status' => 'applied', 'applied_at' => now()]);
+            });
+
+            $result->recordApplied();
+        } catch (Throwable $e) {
+            $sug->update(['status' => 'failed']);
+            $result->recordFailure('block.'.($sug->block_index ?? 'new').'.'.$sug->field_key, $e->getMessage());
         }
     }
 
