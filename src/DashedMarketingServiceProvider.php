@@ -21,7 +21,6 @@ use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
@@ -145,32 +144,6 @@ MARKDOWN,
                 'Focus op keywords met een lage moeilijkheid en een duidelijke intentie.',
                 'Combineer brede en specifieke zoektermen voor een gezonde mix.',
                 'Een lager zoekvolume met hoge intentie is vaak waardevoller dan een populair keyword.',
-            ],
-        );
-
-        cms()->registerResourceDocs(
-            resource: SeoImprovementResource::class,
-            title: 'SEO verbeteringen',
-            intro: 'Hier zie je AI-gegenereerde verbetervoorstellen voor bestaande content. Per voorstel krijg je een heldere vergelijking tussen de huidige tekst en de voorgestelde versie. Je kunt elk voorstel accepteren, weigeren of later alsnog terugdraaien.',
-            sections: [
-                [
-                    'heading' => 'Wat kun je hier doen?',
-                    'body' => <<<'MARKDOWN'
-- Voorgestelde SEO verbeteringen inzien per pagina of artikel.
-- Een vergelijking bekijken tussen de huidige en de nieuwe tekst.
-- Voorstellen accepteren en direct doorvoeren.
-- Voorstellen weigeren als ze niet passen.
-- Een eerder doorgevoerde verbetering terugdraaien.
-MARKDOWN,
-                ],
-                [
-                    'heading' => 'Wat is er bijzonder?',
-                    'body' => 'Deze module heeft een eigen reviewpagina met een diff-weergave en een veiligheidscheck die voorkomt dat twee mensen tegelijk hetzelfde voorstel bewerken.',
-                ],
-            ],
-            tips: [
-                'Beoordeel elk voorstel op toon en merkgevoel, niet alleen op SEO-winst.',
-                'Draai een verbetering gerust terug als een voorstel toch niet werkt.',
             ],
         );
 

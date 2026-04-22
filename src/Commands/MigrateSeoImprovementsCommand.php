@@ -3,27 +3,35 @@
 namespace Dashed\DashedMarketing\Commands;
 
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoImprovement;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class MigrateSeoImprovementsCommand extends Command
 {
     protected $signature = 'dashed-marketing:migrate-seo-improvements';
 
-    protected $description = 'Convert legacy SeoImprovement records into the new SeoAudit model';
+    protected $description = 'Convert legacy SeoImprovement records into the new SeoAudit model (reads from dashed__seo_improvements directly, the Eloquent model has been removed).';
 
     public function handle(): int
     {
-        $total = SeoImprovement::query()->count();
+        if (! Schema::hasTable('dashed__seo_improvements')) {
+            $this->info('Legacy table dashed__seo_improvements not present. Nothing to migrate.');
+
+            return self::SUCCESS;
+        }
+
+        $total = DB::table('dashed__seo_improvements')->count();
         $this->info("Converting {$total} SeoImprovement records to SeoAudit...");
 
         $allowed = ['name', 'slug', 'excerpt', 'meta_title', 'meta_description'];
+        $metaStatuses = ['pending', 'applied', 'rejected', 'edited'];
+        $blockStatuses = ['pending', 'applied', 'rejected', 'edited', 'failed'];
         $bar = $this->output->createProgressBar($total);
         $bar->start();
 
-        SeoImprovement::query()->chunk(100, function ($imps) use ($allowed, $bar) {
+        DB::table('dashed__seo_improvements')->orderBy('id')->chunk(100, function ($imps) use ($allowed, $metaStatuses, $blockStatuses, $bar) {
             foreach ($imps as $imp) {
                 $exists = SeoAudit::where('subject_type', $imp->subject_type)
                     ->where('subject_id', $imp->subject_id)
@@ -34,7 +42,11 @@ class MigrateSeoImprovementsCommand extends Command
                     continue;
                 }
 
-                DB::transaction(function () use ($imp, $allowed) {
+                $fieldProposals = json_decode($imp->field_proposals ?? 'null', true) ?: [];
+                $blockProposals = json_decode($imp->block_proposals ?? 'null', true) ?: [];
+                $statusMap = json_decode($imp->block_proposals_status ?? 'null', true) ?: [];
+
+                DB::transaction(function () use ($imp, $allowed, $metaStatuses, $blockStatuses, $fieldProposals, $blockProposals, $statusMap) {
                     $audit = SeoAudit::create([
                         'subject_type' => $imp->subject_type,
                         'subject_id' => $imp->subject_id,
@@ -46,9 +58,7 @@ class MigrateSeoImprovementsCommand extends Command
                         'archived_at' => now(),
                     ]);
 
-                    $statusMap = (array) ($imp->block_proposals_status ?? []);
-
-                    foreach ((array) $imp->field_proposals as $k => $v) {
+                    foreach ((array) $fieldProposals as $k => $v) {
                         if (! in_array($k, $allowed, true)) {
                             Log::warning('MigrateSeoImprovements: skipping unknown field_proposal key', [
                                 'improvement_id' => $imp->id,
@@ -63,14 +73,12 @@ class MigrateSeoImprovementsCommand extends Command
                         $audit->metaSuggestions()->create([
                             'field' => $k,
                             'suggested_value' => $v,
-                            'status' => in_array($statusMap[$k] ?? null, ['pending', 'applied', 'rejected', 'edited'], true)
-                                ? $statusMap[$k]
-                                : 'pending',
+                            'status' => in_array($statusMap[$k] ?? null, $metaStatuses, true) ? $statusMap[$k] : 'pending',
                             'priority' => 'medium',
                         ]);
                     }
 
-                    foreach ((array) $imp->block_proposals as $key => $val) {
+                    foreach ((array) $blockProposals as $key => $val) {
                         $audit->blockSuggestions()->create([
                             'block_index' => null,
                             'block_key' => (string) $key,
@@ -78,9 +86,7 @@ class MigrateSeoImprovementsCommand extends Command
                             'field_key' => '_legacy',
                             'is_new_block' => false,
                             'suggested_value' => is_string($val) ? $val : json_encode($val, JSON_UNESCAPED_UNICODE),
-                            'status' => in_array($statusMap["block.{$key}"] ?? null, ['pending', 'applied', 'rejected', 'edited', 'failed'], true)
-                                ? $statusMap["block.{$key}"]
-                                : 'pending',
+                            'status' => in_array($statusMap["block.{$key}"] ?? null, $blockStatuses, true) ? $statusMap["block.{$key}"] : 'pending',
                             'priority' => 'medium',
                         ]);
                     }

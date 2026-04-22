@@ -109,26 +109,21 @@ class ContentDraftResource extends Resource
                         ->live(),
                     Select::make('subject_id')
                         ->label('Target record')
-                        ->placeholder('Nieuw record aanmaken')
-                        ->options(function ($get) {
+                        ->placeholder('Zoek of laat leeg voor nieuw record')
+                        ->searchable()
+                        ->preload()
+                        ->nullable()
+                        ->options(fn ($get) => self::searchTargetRecords($get('subject_type')))
+                        ->getSearchResultsUsing(fn (string $search, $get) => self::searchTargetRecords($get('subject_type'), $search))
+                        ->getOptionLabelUsing(function ($value, $get) {
                             $class = $get('subject_type');
-                            if (! $class || ! class_exists($class)) {
-                                return [];
+                            if (! $class || ! class_exists($class) || ! $value) {
+                                return null;
                             }
-                            try {
-                                return $class::query()->limit(50)->get()->mapWithKeys(function ($m) {
-                                    $name = $m->name ?? $m->title ?? 'Record #'.$m->getKey();
-                                    if (is_array($name)) {
-                                        $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #'.$m->getKey());
-                                    }
+                            $record = $class::find($value);
 
-                                    return [$m->getKey() => $name];
-                                })->all();
-                            } catch (\Throwable) {
-                                return [];
-                            }
-                        })
-                        ->nullable(),
+                            return $record ? self::recordLabel($record) : null;
+                        }),
                     Select::make('locale')
                         ->label('Taal')
                         ->options([
@@ -413,17 +408,8 @@ TXT;
                                 ->preload()
                                 ->nullable()
                                 ->visible(fn ($get) => ! empty($get('subject_type')))
-                                ->getSearchResultsUsing(function (string $search, $get) {
-                                    $class = $get('subject_type');
-                                    if (! $class || ! class_exists($class)) {
-                                        return [];
-                                    }
-
-                                    return $class::query()->limit(50)->get()
-                                        ->filter(fn ($m) => stripos(self::recordLabel($m), $search) !== false)
-                                        ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
-                                        ->all();
-                                })
+                                ->options(fn ($get) => self::searchTargetRecords($get('subject_type')))
+                                ->getSearchResultsUsing(fn (string $search, $get) => self::searchTargetRecords($get('subject_type'), $search))
                                 ->getOptionLabelUsing(function ($value, $get) {
                                     $class = $get('subject_type');
                                     if (! $class || ! class_exists($class) || ! $value) {
@@ -662,6 +648,78 @@ TXT;
         }
 
         return (string) $name;
+    }
+
+    /**
+     * Search records of $class across every text-like column we can find.
+     * DB-level LIKE so records beyond the first 50 are also reachable.
+     *
+     * @return array<int|string, string>
+     */
+    public static function searchTargetRecords(?string $class, string $search = '', int $limit = 50): array
+    {
+        if (! $class || ! class_exists($class)) {
+            return [];
+        }
+
+        try {
+            $query = $class::query();
+
+            if ($search !== '') {
+                $columns = self::textSearchColumnsFor($class);
+
+                if (! empty($columns)) {
+                    $query->where(function ($sub) use ($columns, $search) {
+                        foreach ($columns as $col) {
+                            $sub->orWhere($col, 'like', "%{$search}%");
+                        }
+                    });
+                }
+            }
+
+            return $query
+                ->limit($limit)
+                ->get()
+                ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Which text-like columns exist on $class's table? Result is cached per
+     * request so repeated searches don't re-hit information_schema.
+     *
+     * @return array<int, string>
+     */
+    private static function textSearchColumnsFor(string $class): array
+    {
+        static $cache = [];
+        if (isset($cache[$class])) {
+            return $cache[$class];
+        }
+
+        try {
+            $model = new $class;
+            $table = $model->getTable();
+        } catch (\Throwable) {
+            return $cache[$class] = [];
+        }
+
+        $candidates = ['name', 'title', 'slug', 'meta_title', 'seo_title', 'invoice_id', 'sku'];
+        $found = [];
+        foreach ($candidates as $col) {
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasColumn($table, $col)) {
+                    $found[] = $col;
+                }
+            } catch (\Throwable) {
+                //
+            }
+        }
+
+        return $cache[$class] = $found;
     }
 
     public static function getRelations(): array

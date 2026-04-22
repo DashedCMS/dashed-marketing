@@ -36,11 +36,6 @@ class ContentApplyLog extends Model
         return $this->morphTo();
     }
 
-    public function improvement(): BelongsTo
-    {
-        return $this->belongsTo(SeoImprovement::class, 'seo_improvement_id');
-    }
-
     public function draft(): BelongsTo
     {
         return $this->belongsTo(ContentDraft::class, 'content_draft_id');

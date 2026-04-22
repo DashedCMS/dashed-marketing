@@ -10,7 +10,6 @@ use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
-use Dashed\DashedMarketing\Filament\Resources\SeoImprovementResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
@@ -41,7 +40,6 @@ class DashedMarketingPlugin implements Plugin
                 KeywordResource::class,
                 ContentDraftResource::class,
                 ContentClusterResource::class,
-                SeoImprovementResource::class,
                 SeoAuditResource::class,
             ])
             ->pages([

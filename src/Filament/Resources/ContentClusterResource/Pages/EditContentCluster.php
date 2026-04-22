@@ -6,6 +6,7 @@ use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
 use Dashed\DashedMarketing\Jobs\GenerateDraftFaqsJob;
+use Dashed\DashedMarketing\Jobs\GenerateDraftMetaJob;
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftSection;
@@ -109,6 +110,7 @@ class EditContentCluster extends EditRecord
                             $createdSections,
                         );
                         $sectionJobs[] = new GenerateDraftFaqsJob($draft->id);
+                        $sectionJobs[] = new GenerateDraftMetaJob($draft->id, overwrite: true);
                         Bus::chain($sectionJobs)->dispatch();
 
                         $created++;

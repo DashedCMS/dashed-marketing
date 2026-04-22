@@ -7,7 +7,6 @@ use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\Keyword;
-use Dashed\DashedMarketing\Models\SeoImprovement;
 use Dashed\DashedMarketing\Services\ArticleSanitizer;
 use Dashed\DashedMarketing\Services\ContentMatcher;
 use Dashed\DashedMarketing\Services\EmbeddingService;
@@ -75,19 +74,7 @@ class GenerateContentDraftJob implements ShouldQueue
 
         $content = $this->sanitizeContent($content, $sanitizer);
 
-        if ($match !== null && ($this->overrideAction['force_create'] ?? false) !== true) {
-            SeoImprovement::create([
-                'subject_type' => $match['subject_type'],
-                'subject_id' => $match['subject_id'],
-                'status' => 'ready',
-                'field_proposals' => $content['fields'] ?? null,
-                'block_proposals' => $content['blocks'] ?? null,
-                'analysis_summary' => $content['summary'] ?? null,
-            ]);
-
-            return;
-        }
-
+        // (legacy branch that created improvement rows was dropped in v4.12 — use SeoAudit flow for existing entities)
         ContentDraft::create([
             'content_cluster_id' => $cluster->id,
             'keyword' => $keyword->keyword,

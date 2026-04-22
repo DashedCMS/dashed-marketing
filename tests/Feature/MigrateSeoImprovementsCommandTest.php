@@ -2,10 +2,10 @@
 
 use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoImprovement;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -29,17 +29,19 @@ beforeEach(function () {
 it('converts legacy SeoImprovement into SeoAudit with meta + block suggestions + back-fills apply logs', function () {
     $subject = FakeMigrateSeoSubject::create([]);
 
-    $imp = SeoImprovement::create([
+    $impId = DB::table('dashed__seo_improvements')->insertGetId([
         'subject_type' => FakeMigrateSeoSubject::class,
         'subject_id' => $subject->id,
         'status' => 'applied',
         'analysis_summary' => 'oud',
-        'field_proposals' => ['meta_title' => 'Old title', 'unknown_field' => 'skip'],
-        'block_proposals' => ['blockA' => ['content' => 'old block']],
+        'field_proposals' => json_encode(['meta_title' => 'Old title', 'unknown_field' => 'skip']),
+        'block_proposals' => json_encode(['blockA' => ['content' => 'old block']]),
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 
     ContentApplyLog::create([
-        'seo_improvement_id' => $imp->id,
+        'seo_improvement_id' => $impId,
         'subject_type' => FakeMigrateSeoSubject::class,
         'subject_id' => $subject->id,
         'field_key' => 'meta.meta_title',
@@ -61,17 +63,20 @@ it('converts legacy SeoImprovement into SeoAudit with meta + block suggestions +
     expect($audit->metaSuggestions()->where('field', 'unknown_field')->count())->toBe(0);
     expect($audit->blockSuggestions()->count())->toBe(1);
 
-    $log = ContentApplyLog::where('seo_improvement_id', $imp->id)->first();
+    $log = ContentApplyLog::where('seo_improvement_id', $impId)->first();
     expect($log->audit_id)->toBe($audit->id);
 });
 
 it('is idempotent — rerunning does not create duplicates', function () {
     $subject = FakeMigrateSeoSubject::create([]);
-    SeoImprovement::create([
+
+    DB::table('dashed__seo_improvements')->insert([
         'subject_type' => FakeMigrateSeoSubject::class,
         'subject_id' => $subject->id,
         'status' => 'ready',
-        'field_proposals' => ['meta_title' => 'X'],
+        'field_proposals' => json_encode(['meta_title' => 'X']),
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 
     $this->artisan('dashed-marketing:migrate-seo-improvements')->assertSuccessful();

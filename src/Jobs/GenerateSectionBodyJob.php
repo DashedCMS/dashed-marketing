@@ -40,8 +40,9 @@ class GenerateSectionBodyJob implements ShouldQueue
             return;
         }
 
-        $candidates = $this->resolveCandidates($draft, $links);
         $allSections = $draft->sections()->orderBy('sort_order')->get();
+        $candidates = $this->resolveCandidates($draft, $links);
+        $candidates = $this->filterAlreadyUsed($candidates, $allSections, $section->id);
 
         $response = Ai::json($this->buildPrompt($draft, $section, $allSections, $candidates));
 
@@ -142,6 +143,60 @@ class GenerateSectionBodyJob implements ShouldQueue
         return $links->forLocale($draft->locale ?? 'nl', 20);
     }
 
+    /**
+     * Drop link-candidates whose URL already appears in another section's
+     * body — ensures each internal link is used at most once across the
+     * whole article. Retries on the same section still allow its own
+     * previous URL so a regenerated section can keep (or swap) its link.
+     *
+     * @param  array<int, array{type: string, title: string, url: string}>  $candidates
+     * @param  \Illuminate\Support\Collection<int, ContentDraftSection>     $allSections
+     * @return array<int, array{type: string, title: string, url: string}>
+     */
+    private function filterAlreadyUsed(array $candidates, $allSections, int $currentSectionId): array
+    {
+        $used = [];
+        foreach ($allSections as $s) {
+            if ($s->id === $currentSectionId) {
+                continue;
+            }
+            $body = (string) ($s->body ?? '');
+            if ($body === '') {
+                continue;
+            }
+            if (preg_match_all('/<a[^>]+href\s*=\s*(?:\"([^\"]*)\"|\'([^\']*)\')/i', $body, $m)) {
+                foreach ($m[1] as $i => $url) {
+                    $url = $url !== '' ? $url : ($m[2][$i] ?? '');
+                    if ($url !== '') {
+                        $used[$this->normalizeUrl($url)] = true;
+                    }
+                }
+            }
+        }
+
+        if (empty($used)) {
+            return $candidates;
+        }
+
+        return array_values(array_filter(
+            $candidates,
+            fn (array $c) => ! isset($used[$this->normalizeUrl((string) ($c['url'] ?? ''))]),
+        ));
+    }
+
+    private function normalizeUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+        // Strip trailing slash and fragment so minor formatting differences
+        // don't cause duplicate-link logic to miss a previously-used URL.
+        $url = preg_replace('/#.*$/', '', $url) ?? $url;
+
+        return rtrim($url, '/');
+    }
+
     private function extractBody(array $response): string
     {
         foreach (['body', 'html', 'content', 'text'] as $key) {
@@ -204,14 +259,16 @@ Huidige sectie:
 Keywords om thematisch te gebruiken (primaire keywords zwaarder):
 {$keywords}
 
-Interne link-kandidaten (gebruik 1 tot 3 die thematisch passen):
+Interne link-kandidaten (beschikbaar voor DEZE sectie — al gebruikt in eerdere secties is eruit gefilterd):
 {$candidatesJson}
 
 Regels (hard):
 - Retourneer HTML-string in veld "body".
 - Alleen deze tags: p, ul, ol, li, strong, em, a.
 - Geen img, geen script, geen style, geen heading tags (h1-h6).
-- 1 tot 3 interne links als <a href='...'>anchor</a> naar URLs uit de link-kandidaten. Gebruik alleen URLs die exact in de lijst staan.
+- Maximaal 2 interne links als <a href='...'>anchor</a>, en alleen als ze thematisch écht passen. Gebruik alleen URLs die exact in bovenstaande lijst staan.
+- Is de lijst leeg of past er niks, dan geen enkele interne link (liever geen dan een geforceerde).
+- Gebruik elke URL maximaal één keer in deze sectie.
 - Laat andere secties ongemoeid, schrijf alleen deze sectie.
 
 Retourneer JSON: {"body": "<p>...</p>"}

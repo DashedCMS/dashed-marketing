@@ -67,9 +67,62 @@ class ContentMatcher
         }
 
         usort($candidates, fn ($a, $b) => $b['score'] <=> $a['score']);
-        $top = array_slice($candidates, 0, config('dashed-marketing-content.matcher.top_n_ai_candidates', 5));
+
+        // Sanity filter: drop candidates that share zero non-stopword tokens
+        // with the keyword in name/slug/meta fields. This prevents the AI
+        // from confirming a semantically-adjacent-but-lexically-unrelated
+        // record (e.g. "familie beeldjes" matching an unrelated vase because
+        // both live in the same 3D-print domain).
+        $filtered = array_values(array_filter(
+            $candidates,
+            fn (array $c) => $this->hasTokenOverlap($keyword, $c['entity']),
+        ));
+
+        if (empty($filtered)) {
+            return null;
+        }
+
+        $top = array_slice($filtered, 0, config('dashed-marketing-content.matcher.top_n_ai_candidates', 5));
 
         return $this->aiConfirm($keyword, $top);
+    }
+
+    /**
+     * Does any non-stopword keyword-token appear in the entity's name,
+     * slug, meta title or meta description?
+     */
+    protected function hasTokenOverlap(Keyword $keyword, Model $entity): bool
+    {
+        $locale = $keyword->locale ?? 'nl';
+        $keywordTokens = $this->normalizer->tokens($keyword->keyword, $locale);
+
+        if (empty($keywordTokens)) {
+            return true; // keyword itself is all stopwords — don't over-filter
+        }
+
+        $haystack = implode(' ', array_filter([
+            $this->stringify($entity->name ?? $entity->title ?? '', $locale),
+            $this->stringify($entity->slug ?? '', $locale),
+            $this->stringify($entity->meta_title ?? $entity->seo_title ?? '', $locale),
+            $this->stringify($entity->meta_description ?? $entity->short_description ?? '', $locale),
+        ]));
+
+        if ($haystack === '') {
+            return false;
+        }
+
+        $haystackTokens = $this->normalizer->tokens($haystack, $locale);
+
+        return ! empty(array_intersect($keywordTokens, $haystackTokens));
+    }
+
+    private function stringify(mixed $value, string $locale): string
+    {
+        if (is_array($value)) {
+            $value = $value[$locale] ?? reset($value) ?? '';
+        }
+
+        return (string) $value;
     }
 
     /**

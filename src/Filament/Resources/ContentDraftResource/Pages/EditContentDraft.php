@@ -190,24 +190,7 @@ class EditContentDraft extends EditRecord
                         ->placeholder('Nieuw record aanmaken')
                         ->searchable()
                         ->preload()
-                        ->getSearchResultsUsing(function (string $search, $get) {
-                            $class = self::resolveTargetClass($get('target_type'));
-                            if (! $class) {
-                                return [];
-                            }
-
-                            $locale = app()->getLocale();
-
-                            return $class::query()
-                                ->where(function ($q) use ($search, $locale) {
-                                    $q->where('name', 'like', "%{$search}%")
-                                        ->orWhere('name->'.$locale, 'like', "%{$search}%");
-                                })
-                                ->limit(50)
-                                ->get()
-                                ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
-                                ->all();
-                        })
+                        ->getSearchResultsUsing(fn (string $search, $get) => ContentDraftResource::searchTargetRecords(self::resolveTargetClass($get('target_type')), $search))
                         ->getOptionLabelUsing(function ($value, $get) {
                             $class = self::resolveTargetClass($get('target_type'));
                             if (! $class || ! $value) {
@@ -218,18 +201,7 @@ class EditContentDraft extends EditRecord
 
                             return $record ? self::recordLabel($record) : null;
                         })
-                        ->options(function ($get) {
-                            $class = self::resolveTargetClass($get('target_type'));
-                            if (! $class) {
-                                return [];
-                            }
-
-                            return $class::query()
-                                ->limit(50)
-                                ->get()
-                                ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
-                                ->all();
-                        })
+                        ->options(fn ($get) => ContentDraftResource::searchTargetRecords(self::resolveTargetClass($get('target_type'))))
                         ->nullable(),
                     ...self::blockChoiceSchema(),
                 ])
