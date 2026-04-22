@@ -97,11 +97,44 @@ class GenerateSectionBodyJob implements ShouldQueue
 
         if ($drafted->isNotEmpty()) {
             return $drafted
-                ->map(fn ($c) => [
-                    'type' => (string) ($c->type ?? ''),
-                    'title' => (string) $c->title,
-                    'url' => (string) $c->url,
-                ])
+                ->map(function ($c) {
+                    $title = (string) $c->title;
+                    $url = (string) $c->url;
+                    $type = (string) ($c->type ?? '');
+
+                    // If linked to a live CMS model, prefer its current title/url
+                    // so renames/URL changes propagate without manual edits.
+                    if ($c->subject_type && $c->subject_id && class_exists($c->subject_type)) {
+                        $subject = ($c->subject_type)::find($c->subject_id);
+                        if ($subject) {
+                            if (method_exists($subject, 'getUrl')) {
+                                try {
+                                    $live = (string) $subject->getUrl();
+                                    if ($live !== '') {
+                                        $url = $live;
+                                    }
+                                } catch (\Throwable) {
+                                    //
+                                }
+                            }
+
+                            $name = $subject->name ?? $subject->title ?? null;
+                            if (is_array($name)) {
+                                $name = $name[app()->getLocale()] ?? reset($name) ?? null;
+                            }
+                            if (is_string($name) && $name !== '') {
+                                $title = $name;
+                            }
+
+                            if ($type === '') {
+                                $type = class_basename($c->subject_type);
+                            }
+                        }
+                    }
+
+                    return ['type' => $type, 'title' => $title, 'url' => $url];
+                })
+                ->filter(fn (array $c) => $c['url'] !== '' && $c['title'] !== '')
                 ->values()
                 ->all();
         }

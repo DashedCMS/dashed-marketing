@@ -171,7 +171,7 @@ class ContentDraftResource extends Resource
                 ->columnSpanFull(),
 
             Section::make('Interne link-kandidaten')
-                ->description('Deze links gebruikt de AI in de bodies. Voeg toe, bewerk of verwijder om te sturen welke internal links de tekstgeneratie mag gebruiken.')
+                ->description('Deze links gebruikt de AI in de bodies. Koppel een model uit het CMS (title en url komen dan live mee), of vul een losse URL in.')
                 ->collapsible()
                 ->collapsed()
                 ->headerActions([
@@ -183,7 +183,7 @@ class ContentDraftResource extends Resource
                         ->modalHeading('Vul link-kandidaten uit routes')
                         ->modalDescription('Dit leest alle route-modellen voor de locale van deze draft en vervangt de huidige lijst.')
                         ->visible(fn ($record) => $record !== null)
-                        ->action(function ($record, $livewire) {
+                        ->action(function ($record) {
                             $locale = $record->locale ?? app()->getLocale();
                             $candidates = app(LinkCandidatesService::class)->forLocale($locale, 30);
 
@@ -195,15 +195,17 @@ class ContentDraftResource extends Resource
                                     'type' => $c['type'] ?? null,
                                     'title' => (string) ($c['title'] ?? ''),
                                     'url' => (string) ($c['url'] ?? ''),
+                                    'subject_type' => $c['subject_type'] ?? null,
+                                    'subject_id' => $c['subject_id'] ?? null,
                                 ]);
                             }
-
-                            $livewire->fillForm();
 
                             Notification::make()
                                 ->title(count($candidates).' link-kandidaten geladen uit routes')
                                 ->success()
                                 ->send();
+
+                            return redirect(request()->header('Referer') ?: url()->current());
                         }),
                 ])
                 ->schema([
@@ -213,6 +215,90 @@ class ContentDraftResource extends Resource
                         ->label('')
                         ->columns(6)
                         ->schema([
+                            Select::make('subject_type')
+                                ->label('Koppel aan model (optioneel)')
+                                ->helperText('Laat leeg voor een losse URL.')
+                                ->options(function () {
+                                    $options = [];
+                                    try {
+                                        foreach ((array) cms()->builder('routeModels') as $key => $entry) {
+                                            $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
+                                            $class = is_array($entry) ? ($entry['class'] ?? null) : null;
+                                            if ($class) {
+                                                $options[$class] = $name;
+                                            }
+                                        }
+                                    } catch (\Throwable) {
+                                        //
+                                    }
+
+                                    return $options;
+                                })
+                                ->nullable()
+                                ->searchable()
+                                ->preload()
+                                ->live()
+                                ->afterStateUpdated(fn ($set) => $set('subject_id', null))
+                                ->columnSpan(2),
+                            Select::make('subject_id')
+                                ->label('Specifiek record')
+                                ->placeholder('Zoek record...')
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->visible(fn ($get) => ! empty($get('subject_type')))
+                                ->getSearchResultsUsing(function (string $search, $get) {
+                                    $class = $get('subject_type');
+                                    if (! $class || ! class_exists($class)) {
+                                        return [];
+                                    }
+
+                                    return $class::query()->limit(50)->get()
+                                        ->filter(fn ($m) => stripos(self::recordLabel($m), $search) !== false)
+                                        ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
+                                        ->all();
+                                })
+                                ->getOptionLabelUsing(function ($value, $get) {
+                                    $class = $get('subject_type');
+                                    if (! $class || ! class_exists($class) || ! $value) {
+                                        return null;
+                                    }
+                                    $record = $class::find($value);
+
+                                    return $record ? self::recordLabel($record) : null;
+                                })
+                                ->options(function ($get) {
+                                    $class = $get('subject_type');
+                                    if (! $class || ! class_exists($class)) {
+                                        return [];
+                                    }
+
+                                    return $class::query()->limit(50)->get()
+                                        ->mapWithKeys(fn ($m) => [$m->getKey() => self::recordLabel($m)])
+                                        ->all();
+                                })
+                                ->live()
+                                ->afterStateUpdated(function ($state, $get, $set) {
+                                    $class = $get('subject_type');
+                                    if (! $state || ! $class || ! class_exists($class)) {
+                                        return;
+                                    }
+                                    $record = $class::find($state);
+                                    if (! $record) {
+                                        return;
+                                    }
+
+                                    $set('title', self::recordLabel($record));
+                                    if (method_exists($record, 'getUrl')) {
+                                        try {
+                                            $set('url', (string) $record->getUrl());
+                                        } catch (\Throwable) {
+                                            //
+                                        }
+                                    }
+                                    $set('type', class_basename($class));
+                                })
+                                ->columnSpan(2),
                             TextInput::make('title')
                                 ->label('Titel')
                                 ->required()
@@ -221,11 +307,11 @@ class ContentDraftResource extends Resource
                                 ->label('URL')
                                 ->required()
                                 ->maxLength(2048)
-                                ->columnSpan(3),
+                                ->columnSpan(4),
                             TextInput::make('type')
                                 ->label('Type')
                                 ->placeholder('Page, Product, ...')
-                                ->columnSpan(1),
+                                ->columnSpan(2),
                         ])
                         ->reorderableWithButtons()
                         ->collapsible()
@@ -400,6 +486,16 @@ class ContentDraftResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    private static function recordLabel($record): string
+    {
+        $name = $record->name ?? $record->title ?? ('Record #'.$record->getKey());
+        if (is_array($name)) {
+            $name = $name[app()->getLocale()] ?? reset($name) ?? ('Record #'.$record->getKey());
+        }
+
+        return (string) $name;
     }
 
     public static function getRelations(): array

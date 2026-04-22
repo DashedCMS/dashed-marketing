@@ -46,6 +46,8 @@ class LinkCandidatesService
                     'type' => class_basename($class),
                     'title' => (string) $name,
                     'url' => (string) $url,
+                    'subject_type' => $class,
+                    'subject_id' => (int) $entity->getKey(),
                 ];
 
                 if (count($pool) >= $limit) {
