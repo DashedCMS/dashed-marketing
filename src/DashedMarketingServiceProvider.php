@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing;
 
 use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
+use Dashed\DashedMarketing\Commands\MigrateSeoImprovementsCommand;
 use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
 use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
 use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
@@ -436,6 +437,7 @@ MARKDOWN,
             ->hasConfigFile(['dashed-marketing', 'dashed-marketing-content'])
             ->hasViews('dashed-marketing')
             ->hasCommands([
+                MigrateSeoImprovementsCommand::class,
                 PublishDueSocialPostsCommand::class,
                 SocialNotifyDueCommand::class,
                 SocialNotifyMissedCommand::class,
