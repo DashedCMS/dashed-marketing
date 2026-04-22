@@ -71,9 +71,34 @@ class SeoImprovementResource extends Resource
                     ->label('Type')
                     ->formatStateUsing(fn ($state) => class_basename($state))
                     ->sortable(),
-                TextColumn::make('subject_id')
-                    ->label('ID')
-                    ->sortable(),
+                TextColumn::make('subject_name')
+                    ->label('Record')
+                    ->state(function ($record) {
+                        $subject = $record->subject;
+                        if (! $subject) {
+                            return '—';
+                        }
+
+                        $name = $subject->name ?? $subject->title ?? null;
+                        if (is_array($name)) {
+                            $name = $name[app()->getLocale()] ?? reset($name) ?? null;
+                        }
+
+                        return $name ?: 'Record #'.$subject->getKey();
+                    })
+                    ->description(fn ($record) => $record->subject_id ? 'ID '.$record->subject_id : null)
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHasMorph(
+                            'subject',
+                            '*',
+                            function ($q) use ($search) {
+                                $q->where('name', 'like', "%{$search}%")
+                                    ->orWhere('name->nl', 'like', "%{$search}%")
+                                    ->orWhere('name->en', 'like', "%{$search}%");
+                            }
+                        );
+                    })
+                    ->wrap(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()

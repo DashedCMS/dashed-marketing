@@ -25,6 +25,17 @@ class ReviewSeoImprovement extends Page
     {
         $this->record = $record;
         $this->subjectUpdatedAtSnapshot = $record->subject?->updated_at?->toIso8601String() ?? '';
+
+        // Seed editedValues zodat de wire:model textarea's de voorstellen tonen.
+        // Zonder dit blijven de velden leeg omdat Livewire de state aanhoudt
+        // en de default content tussen de textarea-tags negeert.
+        $seeded = [];
+        foreach ((array) $record->field_proposals as $key => $value) {
+            $seeded[$key] = is_array($value)
+                ? json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                : (string) $value;
+        }
+        $this->editedValues = $seeded;
     }
 
     public function applyProposal(string $key): void
