@@ -49,7 +49,40 @@
                         @endif
                     @endif
                 </div>
+                @php
+                    $subjectEditUrl = null;
+                    $subjectFrontendUrl = null;
+                    if ($subject) {
+                        try {
+                            $panel = \Filament\Facades\Filament::getCurrentOrDefaultPanel();
+                            $resourceClass = $panel?->getModelResource($record->subject_type);
+                            if ($resourceClass && method_exists($resourceClass, 'getUrl')) {
+                                $subjectEditUrl = $resourceClass::getUrl('edit', ['record' => $subject->getKey()]);
+                            }
+                        } catch (\Throwable) {
+                            //
+                        }
+                        if (method_exists($subject, 'getUrl')) {
+                            try {
+                                $subjectFrontendUrl = (string) $subject->getUrl();
+                            } catch (\Throwable) {
+                                $subjectFrontendUrl = null;
+                            }
+                        }
+                    }
+                @endphp
+
                 <div class="flex flex-wrap gap-2">
+                    @if($subjectEditUrl)
+                        <x-filament::button tag="a" href="{{ $subjectEditUrl }}" color="gray" icon="heroicon-o-pencil-square">
+                            Bewerk record
+                        </x-filament::button>
+                    @endif
+                    @if($subjectFrontendUrl)
+                        <x-filament::button tag="a" href="{{ $subjectFrontendUrl }}" target="_blank" color="gray" icon="heroicon-o-eye">
+                            Bekijk op site
+                        </x-filament::button>
+                    @endif
                     <x-filament::button wire:click="applySelected" icon="heroicon-o-check-circle">
                         Geselecteerde toepassen
                     </x-filament::button>
