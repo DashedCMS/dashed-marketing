@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Jobs;
 
 use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
 use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
@@ -294,12 +295,47 @@ class GenerateSeoAuditJob implements ShouldQueue
 
     protected function suggestKeywords(SeoAudit $audit, array $context): void
     {
-        $response = Ai::json(SeoAuditPromptBuilder::keywords($context)) ?? [];
-        $types = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
-        $intents = ['informational', 'commercial', 'transactional', 'navigational'];
-        $volumes = ['high', 'medium', 'low'];
-
         $audit->keywords()->delete();
+        $types = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
+        $volumes = ['high', 'medium', 'low'];
+        $intents = ['informational', 'commercial', 'transactional', 'navigational'];
+        $seeded = [];
+
+        // Primary source: non-rejected keywords from the keyword-research table for this locale.
+        // These are manually curated, so we trust them over AI invention.
+        try {
+            $research = Keyword::query()
+                ->where('locale', $audit->locale)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'rejected');
+                })
+                ->get();
+
+            foreach ($research as $kw) {
+                $type = in_array($kw->type, $types, true) ? $kw->type : 'secondary';
+                $volume = in_array($kw->volume_indication, $volumes, true) ? $kw->volume_indication : null;
+                $notes = $kw->volume_exact ? "Uit zoekwoordonderzoek, {$kw->volume_exact}/mnd" : 'Uit zoekwoordonderzoek';
+
+                $audit->keywords()->create([
+                    'keyword' => (string) $kw->keyword,
+                    'type' => $type,
+                    'intent' => null,
+                    'volume_indication' => $volume,
+                    'priority' => 'medium',
+                    'notes' => $notes,
+                ]);
+
+                $seeded[mb_strtolower(trim((string) $kw->keyword))] = true;
+            }
+        } catch (\Throwable) {
+            //
+        }
+
+        // Secondary: AI augments with LSI + gap keywords that aren't in the research.
+        // The prompt knows which keywords are already seeded so it can focus on gaps.
+        $response = Ai::json(SeoAuditPromptBuilder::keywords(array_merge($context, [
+            'seeded_keywords' => array_values(array_map('trim', array_keys($seeded))),
+        ]))) ?? [];
 
         foreach ((array) ($response['suggestions'] ?? []) as $k) {
             if (! is_array($k)) {
@@ -308,6 +344,15 @@ class GenerateSeoAuditJob implements ShouldQueue
             $keyword = trim((string) ($k['keyword'] ?? ''));
             $type = $k['type'] ?? null;
             if ($keyword === '' || ! in_array($type, $types, true)) {
+                continue;
+            }
+            // Skip duplicates of the seeded keywords.
+            if (isset($seeded[mb_strtolower($keyword)])) {
+                continue;
+            }
+            // Only accept AI augmentation for LSI + gap types. Primary/secondary/longtail
+            // come from the curated research and should not be inflated by AI.
+            if (! in_array($type, ['lsi', 'gap'], true)) {
                 continue;
             }
 

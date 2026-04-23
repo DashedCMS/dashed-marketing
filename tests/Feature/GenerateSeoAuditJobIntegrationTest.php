@@ -54,9 +54,9 @@ it('runs all 7 steps and finalises audit to ready with populated relations', fun
                 'notes' => 'looks good',
             ];
         }
-        if (str_contains($prompt, 'keyword research')) {
+        if (str_contains($prompt, 'keyword-research') || str_contains($prompt, 'keyword research')) {
             return ['summary' => 'kw', 'suggestions' => [
-                ['keyword' => 'test', 'type' => 'primary', 'priority' => 'high'],
+                ['keyword' => 'test-lsi', 'type' => 'lsi', 'priority' => 'high'],
             ]];
         }
         if (str_contains($prompt, 'meta-verbeteringen voor voor')) {

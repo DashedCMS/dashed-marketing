@@ -74,7 +74,7 @@
 
                 <div class="flex flex-wrap gap-2">
                     @if($subjectEditUrl)
-                        <x-filament::button tag="a" href="{{ $subjectEditUrl }}" color="gray" icon="heroicon-o-pencil-square">
+                        <x-filament::button tag="a" href="{{ $subjectEditUrl }}" target="_blank" color="gray" icon="heroicon-o-pencil-square">
                             Bewerk record
                         </x-filament::button>
                     @endif

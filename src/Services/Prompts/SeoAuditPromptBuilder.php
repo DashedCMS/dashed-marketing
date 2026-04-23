@@ -43,21 +43,29 @@ TXT;
         $subject = $context['subject'];
         $instruction = $context['user_instruction'] ? "Instructie: {$context['user_instruction']}\n\n" : '';
         $brand = $context['brand'];
+        $seeded = array_values(array_unique(array_map('trim', (array) ($context['seeded_keywords'] ?? []))));
+        $seededJson = json_encode($seeded, JSON_UNESCAPED_UNICODE);
 
         return <<<TXT
-{$instruction}Doe keyword research voor "{$subject['name']}" (locale: {$context['locale']}).
+{$instruction}Vul aan op de curated keyword-research voor "{$subject['name']}" (locale: {$context['locale']}).
 
 Merk-context:
 {$brand}
 
+Al beschikbare keywords uit de zoekwoord-research (niet herhalen):
+{$seededJson}
+
 Regels:
-- Geef 1 primair keyword, 2-4 secundair, 3-6 longtail, 3-5 LSI/semantic, 2-3 gap (niet gedekt maar relevant).
+- Geef UITSLUITEND LSI/semantic en gap keywords. Primary/secondary/longtail komen uit de research, niet uit AI.
+- LSI: semantisch verwant aan de bestaande keywords; voeg 3-5 toe.
+- Gap: relevante keywords die de research mist; voeg 2-3 toe.
+- Vermijd duplicates van de lijst hierboven, ook niet in vervoegingen/meervouden die hetzelfde bedoelen.
 - intent per keyword: informational | commercial | transactional | navigational.
 - volume_indication: high | medium | low (qualitatief, geen verzonnen cijfers).
 - priority: high | medium | low.
 - Geen em-dashes, geen AI-clichés.
 
-Retourneer JSON: {"summary": "...", "suggestions": [{"keyword": "...", "type": "primary|secondary|longtail|lsi|gap", "intent": "...", "volume_indication": "...", "priority": "...", "notes": "..."}]}
+Retourneer JSON: {"summary": "...", "suggestions": [{"keyword": "...", "type": "lsi|gap", "intent": "...", "volume_indication": "...", "priority": "...", "notes": "..."}]}
 TXT;
     }
 
