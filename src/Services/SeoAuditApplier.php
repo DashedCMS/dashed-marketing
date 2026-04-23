@@ -270,12 +270,33 @@ class SeoAuditApplier
             $logKey = '';
 
             if ($sug->is_new_block) {
-                $data = json_decode($sug->suggested_value, true) ?: [];
-                $data = array_merge([
-                    'in_container' => true,
-                    'top_margin' => true,
-                    'bottom_margin' => true,
-                ], $data);
+                $isOutline = is_string($sug->block_key) && str_starts_with($sug->block_key, 'outline.');
+
+                if ($isOutline) {
+                    $sort = (int) substr($sug->block_key, strlen('outline.'));
+                    $data = [
+                        'in_container' => true,
+                        'top_margin' => $sort === 0,
+                        'bottom_margin' => true,
+                        'content' => (string) $sug->suggested_value,
+                    ];
+                } else {
+                    $decoded = json_decode((string) $sug->suggested_value, true);
+                    if (is_array($decoded)) {
+                        $data = array_merge([
+                            'in_container' => true,
+                            'top_margin' => true,
+                            'bottom_margin' => true,
+                        ], $decoded);
+                    } else {
+                        $data = [
+                            'in_container' => true,
+                            'top_margin' => true,
+                            'bottom_margin' => true,
+                            'content' => (string) $sug->suggested_value,
+                        ];
+                    }
+                }
 
                 $envelope = ['type' => $sug->block_type, 'data' => $data];
                 $blocks[] = $envelope;

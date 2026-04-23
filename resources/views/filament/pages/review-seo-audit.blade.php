@@ -83,6 +83,12 @@
                             Bekijk op site
                         </x-filament::button>
                     @endif
+                    <x-filament::button color="gray" wire:click="selectAll" icon="heroicon-o-check-circle">
+                        Alles selecteren
+                    </x-filament::button>
+                    <x-filament::button color="gray" wire:click="deselectAll" icon="heroicon-o-x-circle">
+                        Alles deselecteren
+                    </x-filament::button>
                     <x-filament::button wire:click="applySelected" icon="heroicon-o-check-circle">
                         Geselecteerde toepassen
                     </x-filament::button>

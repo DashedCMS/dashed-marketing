@@ -2,6 +2,31 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.1 - 2026-04-23
+
+### Added
+
+- SEO Audit review: "Alles selecteren" en "Alles deselecteren" knoppen in de header
+  om in een klik alle pending/edited suggesties over meta, blokken, FAQ's en
+  structured data te (de)selecteren.
+- Alle pending/edited suggesties zijn standaard aangevinkt bij openen van de
+  review-pagina, na een status-update via polling, en na het toepassen.
+
+### Changed
+
+- Outline content generatie maakt nu een blokvoorstel voor elke heading, ook als
+  de AI geen body teruggeeft (valt dan terug op de heading-HTML alleen).
+- Outline blokvoorstellen tonen in de review-UI alleen de content-HTML, niet meer
+  de volledige block-JSON. De container/margin-instellingen worden bij toepassen
+  opgebouwd door de applier.
+- Outline blokken krijgen top_margin alleen op het eerste blok; volgende outline
+  blokken krijgen top_margin false (bottom_margin blijft true).
+
+### Fixed
+
+- `content_draft_link_candidates` migratie: expliciete index-naam om MySQL
+  64-karakter limiet te omzeilen (voorkomt migratie-fouten op live DB's).
+
 ## v4.12.0 - 2026-04-22
 
 ### BREAKING

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('url', 2048);
             $table->timestamps();
 
-            $table->index(['content_draft_id', 'sort_order']);
+            $table->index(['content_draft_id', 'sort_order'], 'dashed__cd_link_candidates_draft_sort_idx');
         });
     }
 

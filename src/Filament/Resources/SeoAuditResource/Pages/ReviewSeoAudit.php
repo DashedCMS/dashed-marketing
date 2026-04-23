@@ -74,6 +74,7 @@ class ReviewSeoAudit extends Page
         $this->faqApplyTarget = $this->detectExistingFaqBlock($record) ? 'existing' : 'new';
 
         $this->seedEditedValues();
+        $this->defaultSelectAll();
     }
 
     protected function detectExistingFaqBlock(SeoAudit $record): bool
@@ -141,7 +142,28 @@ class ReviewSeoAudit extends Page
         if ($freshStatus !== null && $freshStatus !== $this->record->status) {
             $this->record->refresh();
             $this->seedEditedValues();
+            $this->defaultSelectAll();
         }
+    }
+
+    protected function defaultSelectAll(): void
+    {
+        $this->selected = [
+            'meta' => $this->record->metaSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
+            'blocks' => $this->record->blockSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
+            'faqs' => $this->record->faqSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
+            'structured_data' => $this->record->structuredDataSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
+        ];
+    }
+
+    public function selectAll(): void
+    {
+        $this->defaultSelectAll();
+    }
+
+    public function deselectAll(): void
+    {
+        $this->selected = ['meta' => [], 'blocks' => [], 'faqs' => [], 'structured_data' => []];
     }
 
     public function applySelected(): void
@@ -170,8 +192,8 @@ class ReviewSeoAudit extends Page
             ->send();
 
         $this->record->refresh();
-        $this->selected = ['meta' => [], 'blocks' => [], 'faqs' => [], 'structured_data' => []];
         $this->seedEditedValues();
+        $this->defaultSelectAll();
     }
 
     public function applyAllPendingInTab(string $tab): void
@@ -286,6 +308,7 @@ class ReviewSeoAudit extends Page
                     continue;
                 }
 
+                $response = [];
                 try {
                     $response = \Dashed\DashedAi\Facades\Ai::json(
                         \Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder::outlineContent(
@@ -297,7 +320,7 @@ class ReviewSeoAudit extends Page
                         )
                     ) ?? [];
                 } catch (\Throwable $e) {
-                    continue;
+                    $response = [];
                 }
 
                 $body = '';
@@ -308,19 +331,9 @@ class ReviewSeoAudit extends Page
                         break;
                     }
                 }
-                if ($body === '') {
-                    continue;
-                }
 
                 $tag = 'h'.$level;
                 $html = "<{$tag}>".e($text)."</{$tag}>".$body;
-
-                $blockData = [
-                    'in_container' => true,
-                    'top_margin' => true,
-                    'bottom_margin' => true,
-                    'content' => $html,
-                ];
 
                 $this->record->blockSuggestions()->create([
                     'block_index' => null,
@@ -328,7 +341,7 @@ class ReviewSeoAudit extends Page
                     'block_type' => 'content',
                     'field_key' => '_new',
                     'is_new_block' => true,
-                    'suggested_value' => json_encode($blockData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'suggested_value' => $html,
                     'reason' => 'Op basis van outline heading: '.$text,
                     'priority' => 'medium',
                     'status' => 'pending',
