@@ -74,7 +74,7 @@ class RequestSeoAuditAction
                     ->body('Zodra klaar verschijnt het voorstel onder Marketing → SEO audits.')
                     ->success()
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('goto_list')
+                        \Filament\Actions\Action::make('goto_list')
                             ->label('Naar SEO audits')
                             ->url(SeoAuditResource::getUrl('index')),
                     ])
