@@ -46,6 +46,17 @@ class ReviewSeoAudit extends Page
 
     public string $faqApplyTarget = 'existing';
 
+    public ?string $outlineH1 = null;
+
+    public ?string $outlineSummary = null;
+
+    /**
+     * @var array<int, array{level: int, text: string}>
+     */
+    public array $outlineHeadings = [];
+
+    public bool $outlineGenerating = false;
+
     public string $subjectUpdatedAtSnapshot = '';
 
     public string $newLinkAnchor = '';
@@ -107,6 +118,18 @@ class ReviewSeoAudit extends Page
                 'answer' => (string) $s->answer,
             ];
         }
+
+        $outline = $this->record->outline;
+        $this->outlineH1 = $outline?->h1;
+        $this->outlineSummary = $outline?->summary;
+        $this->outlineHeadings = collect($outline?->headings ?? [])
+            ->map(fn ($h) => [
+                'level' => in_array((int) ($h['level'] ?? 2), [2, 3], true) ? (int) $h['level'] : 2,
+                'text' => (string) ($h['text'] ?? ''),
+            ])
+            ->filter(fn ($h) => $h['text'] !== '')
+            ->values()
+            ->all();
     }
 
     public function pollAudit(): void
@@ -197,6 +220,195 @@ class ReviewSeoAudit extends Page
     {
         $this->record->internalLinkSuggestions()->where('id', $id)->update(['status' => 'rejected']);
         Notification::make()->title('Link afgewezen')->send();
+    }
+
+    public function saveOutline(): void
+    {
+        $headings = array_values(array_filter(array_map(fn ($h) => [
+            'level' => in_array((int) ($h['level'] ?? 2), [2, 3], true) ? (int) $h['level'] : 2,
+            'text' => trim((string) ($h['text'] ?? '')),
+        ], $this->outlineHeadings), fn ($h) => $h['text'] !== ''));
+
+        $this->record->outline()->updateOrCreate(
+            ['audit_id' => $this->record->id],
+            [
+                'h1' => $this->outlineH1 !== null && trim($this->outlineH1) !== '' ? trim($this->outlineH1) : null,
+                'summary' => $this->outlineSummary !== null && trim($this->outlineSummary) !== '' ? trim($this->outlineSummary) : null,
+                'headings' => $headings,
+            ]
+        );
+
+        Notification::make()->title('Outline opgeslagen')->success()->send();
+    }
+
+    public function addOutlineHeading(): void
+    {
+        $this->outlineHeadings[] = ['level' => 2, 'text' => ''];
+    }
+
+    public function removeOutlineHeading(int $index): void
+    {
+        if (isset($this->outlineHeadings[$index])) {
+            unset($this->outlineHeadings[$index]);
+            $this->outlineHeadings = array_values($this->outlineHeadings);
+        }
+    }
+
+    public function generateOutlineContent(): void
+    {
+        $this->saveOutline();
+        $this->record->refresh();
+        $outline = $this->record->outline;
+        if (! $outline || empty($outline->headings)) {
+            Notification::make()
+                ->title('Geen headings om content voor te genereren')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->outlineGenerating = true;
+
+        try {
+            $ctx = $this->buildOutlineContext();
+            $created = 0;
+
+            // Wipe previous is_new_block=true suggestions for this audit so re-generation
+            // replaces rather than accumulates. Keep non-new block suggestions untouched.
+            $this->record->blockSuggestions()->where('is_new_block', true)->delete();
+
+            $sort = 0;
+            foreach ($outline->headings as $heading) {
+                $level = (int) ($heading['level'] ?? 2);
+                $text = trim((string) ($heading['text'] ?? ''));
+                if ($text === '') {
+                    continue;
+                }
+
+                try {
+                    $response = \Dashed\DashedAi\Facades\Ai::json(
+                        \Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder::outlineContent(
+                            $ctx,
+                            $text,
+                            $level,
+                            (string) ($outline->h1 ?? ''),
+                            (string) ($outline->summary ?? ''),
+                        )
+                    ) ?? [];
+                } catch (\Throwable $e) {
+                    continue;
+                }
+
+                $body = '';
+                foreach (['body', 'html', 'content', 'text'] as $key) {
+                    if (! empty($response[$key]) && is_string($response[$key])) {
+                        $body = trim($response[$key]);
+
+                        break;
+                    }
+                }
+                if ($body === '') {
+                    continue;
+                }
+
+                $tag = 'h'.$level;
+                $html = "<{$tag}>".e($text)."</{$tag}>".$body;
+
+                $blockData = [
+                    'in_container' => true,
+                    'top_margin' => true,
+                    'bottom_margin' => true,
+                    'content' => $html,
+                ];
+
+                $this->record->blockSuggestions()->create([
+                    'block_index' => null,
+                    'block_key' => 'outline.'.$sort,
+                    'block_type' => 'content',
+                    'field_key' => '_new',
+                    'is_new_block' => true,
+                    'suggested_value' => json_encode($blockData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'reason' => 'Op basis van outline heading: '.$text,
+                    'priority' => 'medium',
+                    'status' => 'pending',
+                ]);
+
+                $sort++;
+                $created++;
+            }
+
+            $outline->update(['content_generated_at' => now()]);
+
+            Notification::make()
+                ->title("{$created} content-blok voorstellen gegenereerd")
+                ->body('Vink ze aan in de Blokken-tab en klik "Toepassen" om ze als blokken toe te voegen aan de pagina.')
+                ->success()
+                ->send();
+        } finally {
+            $this->outlineGenerating = false;
+            $this->record->refresh();
+            $this->seedEditedValues();
+        }
+    }
+
+    protected function buildOutlineContext(): array
+    {
+        $subject = $this->record->subject;
+        $locale = $this->record->locale;
+
+        $name = '';
+        if ($subject) {
+            $raw = $subject->name ?? $subject->title ?? null;
+            if (is_array($raw)) {
+                $name = (string) ($raw[$locale] ?? reset($raw) ?? '');
+            } else {
+                $name = (string) $raw;
+            }
+        }
+
+        $url = '';
+        if ($subject && method_exists($subject, 'getUrl')) {
+            try {
+                $url = (string) $subject->getUrl();
+            } catch (\Throwable) {
+                //
+            }
+        }
+
+        $brand = '';
+        try {
+            $brand = app(\Dashed\DashedMarketing\Services\SocialContextBuilder::class)->build('seo');
+        } catch (\Throwable) {
+            //
+        }
+
+        $seededKeywords = [];
+        try {
+            $seededKeywords = \Dashed\DashedMarketing\Models\Keyword::query()
+                ->where('locale', $locale)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'rejected');
+                })
+                ->pluck('keyword')
+                ->map(fn ($k) => (string) $k)
+                ->all();
+        } catch (\Throwable) {
+            //
+        }
+
+        return [
+            'subject' => [
+                'type' => class_basename($this->record->subject_type),
+                'id' => $this->record->subject_id,
+                'name' => $name,
+                'url' => $url,
+            ],
+            'locale' => $locale,
+            'brand' => $brand,
+            'user_instruction' => $this->record->instruction,
+            'seeded_keywords' => $seededKeywords,
+        ];
     }
 
     public function addInternalLink(): void
