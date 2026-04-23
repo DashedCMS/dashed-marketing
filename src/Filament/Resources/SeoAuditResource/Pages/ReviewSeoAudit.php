@@ -48,12 +48,44 @@ class ReviewSeoAudit extends Page
 
     public string $subjectUpdatedAtSnapshot = '';
 
+    public string $newLinkAnchor = '';
+
+    public string $newLinkUrl = '';
+
+    public string $newLinkContext = '';
+
+    public string $newLinkPriority = 'medium';
+
     public function mount(SeoAudit $record): void
     {
         $this->record = $record;
         $this->subjectUpdatedAtSnapshot = $record->subject?->updated_at?->toIso8601String() ?? '';
+        $this->faqApplyTarget = $this->detectExistingFaqBlock($record) ? 'existing' : 'new';
 
         $this->seedEditedValues();
+    }
+
+    protected function detectExistingFaqBlock(SeoAudit $record): bool
+    {
+        $subject = $record->subject;
+        if (! $subject || ! method_exists($subject, 'customBlocks') || ! $subject->customBlocks) {
+            return false;
+        }
+
+        try {
+            $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $record->locale) ?? []);
+        } catch (\Throwable) {
+            return false;
+        }
+
+        $faqTypes = (array) config('dashed-marketing.seo_faq_block_types', ['faq']);
+        foreach ($blocks as $b) {
+            if (in_array($b['type'] ?? null, $faqTypes, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function seedEditedValues(): void
@@ -165,6 +197,46 @@ class ReviewSeoAudit extends Page
     {
         $this->record->internalLinkSuggestions()->where('id', $id)->update(['status' => 'rejected']);
         Notification::make()->title('Link afgewezen')->send();
+    }
+
+    public function addInternalLink(): void
+    {
+        $anchor = trim($this->newLinkAnchor);
+        $url = trim($this->newLinkUrl);
+        $context = trim($this->newLinkContext);
+
+        if ($anchor === '' || $url === '' || $context === '') {
+            Notification::make()
+                ->title('Vul anker, URL en context in')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $priority = in_array($this->newLinkPriority, ['high', 'medium', 'low'], true)
+            ? $this->newLinkPriority
+            : 'medium';
+
+        $this->record->internalLinkSuggestions()->create([
+            'anchor_text' => mb_substr($anchor, 0, 500),
+            'target_url' => mb_substr($url, 0, 2048),
+            'context_description' => $context,
+            'priority' => $priority,
+            'status' => 'pending',
+        ]);
+
+        $this->newLinkAnchor = '';
+        $this->newLinkUrl = '';
+        $this->newLinkContext = '';
+        $this->newLinkPriority = 'medium';
+
+        $this->record->refresh();
+
+        Notification::make()
+            ->title('Interne link toegevoegd')
+            ->success()
+            ->send();
     }
 
     public function rollbackAudit(): void

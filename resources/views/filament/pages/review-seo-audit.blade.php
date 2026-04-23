@@ -323,6 +323,38 @@
 
         {{-- Internal links tab --}}
         <div x-show="tab === 'internal_links'" class="space-y-4">
+            {{-- Add a link manually --}}
+            <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                <h3 class="mb-3 text-sm font-semibold text-gray-950 dark:text-white">Link handmatig toevoegen</h3>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">Anchor text</label>
+                        <input wire:model="newLinkAnchor" placeholder="Bijv. onze tassen" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">Target URL</label>
+                        <input wire:model="newLinkUrl" placeholder="/producten/leren-tas" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-medium uppercase text-gray-500">Context / waar te plaatsen</label>
+                        <textarea wire:model="newLinkContext" rows="2" placeholder="In de intro-paragraaf, bij het woord tassen" class="mt-1 block w-full resize-y rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white"></textarea>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <label class="text-xs font-medium uppercase text-gray-500">Prioriteit</label>
+                            <select wire:model="newLinkPriority" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white">
+                                <option value="high">Hoog</option>
+                                <option value="medium">Middel</option>
+                                <option value="low">Laag</option>
+                            </select>
+                        </div>
+                        <x-filament::button wire:click="addInternalLink" icon="heroicon-o-plus">
+                            Toevoegen
+                        </x-filament::button>
+                    </div>
+                </div>
+            </div>
+
             @foreach($record->internalLinkSuggestions as $link)
                 <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
                     <div class="flex items-start justify-between">
