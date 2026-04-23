@@ -68,7 +68,7 @@ class SeoAuditResource extends Resource
                 TextColumn::make('applied_at')
                     ->label('Toegepast')
                     ->dateTime('d-m-Y H:i')
-                    ->default('-'),
+                    ->placeholder('-'),
             ])
             ->filters([
                 SelectFilter::make('status')->options([
