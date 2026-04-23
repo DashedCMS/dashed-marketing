@@ -101,36 +101,83 @@ TXT;
     }
 
     /**
+     * Outline prompt: ask AI for H1 + short page summary + H2/H3 headings only.
+     * Actual per-heading content is generated in a later step after the user
+     * reviews (and edits) the outline.
+     *
      * @param  array<string, mixed>  $context
      */
-    public static function blocks(array $context): string
+    public static function outline(array $context): string
     {
-        $blocks = json_encode($context['current_blocks'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $whitelist = json_encode($context['block_whitelist'], JSON_UNESCAPED_UNICODE);
+        $subject = $context['subject'];
         $instruction = $context['user_instruction'] ? "Instructie: {$context['user_instruction']}\n\n" : '';
         $brand = $context['brand'];
-        $subject = $context['subject'];
+        $existingBlocks = json_encode($context['current_blocks'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $seededKeywords = array_values(array_unique(array_map('trim', (array) ($context['seeded_keywords'] ?? []))));
+        $seededJson = json_encode($seededKeywords, JSON_UNESCAPED_UNICODE);
 
         return <<<TXT
-{$instruction}Herschrijf content-blokken voor betere SEO op "{$subject['name']}".
-
-Huidige blokken (met index, type, data):
-{$blocks}
-
-Whitelist per block-type, alleen deze field_keys mogen voorgesteld worden:
-{$whitelist}
+{$instruction}Ontwerp een content-outline voor "{$subject['name']}" (type: {$subject['type']}, locale: {$context['locale']}).
 
 Merk-context:
 {$brand}
 
-Regels (hard):
-- Per suggestion: {block_index, block_type, field_key, suggested_value, reason, priority}. field_key moet in de whitelist staan voor dat block-type.
-- Laat blokken die al goed zijn WEG.
-- is_new_block=true is toegestaan voor ontbrekende blokken: block_index=null, block_type uit de whitelist, suggested_value is een JSON-string met de volledige `data` van het nieuwe blok (toggles in_container/top_margin/bottom_margin op true).
-- Behoud HTML in content-velden (p, ul, ol, li, strong, em, a). Geen headings in content-velden (h1-h6).
-- Geen em-dashes, geen emoji, geen AI-clichés.
+Huidige blokken (ter referentie, om doublures te vermijden):
+{$existingBlocks}
 
-Retourneer JSON: {"summary": "...", "suggestions": [{"block_index": 0, "block_type": "content", "field_key": "content", "suggested_value": "<p>...</p>", "reason": "...", "priority": "high|medium|low", "is_new_block": false}]}
+Relevante keywords voor de pagina:
+{$seededJson}
+
+Regels (hard):
+- h1: 1 pakkende H1, 50-70 tekens, bevat primair keyword natuurlijk.
+- summary: 2-3 zinnen Nederlands die vertellen wat de pagina behandelt. Dit is context voor de volgende content-generatie-stap, geen user-facing tekst.
+- headings: array van H2 (en optioneel H3) secties die de pagina logisch opdelen. Minimaal 3, maximaal 8 H2's. H3 alleen waar semantisch nodig.
+- Geen em-dashes, geen emoji, geen AI-clichés.
+- Geen content nu. Alleen de outline.
+
+Retourneer JSON:
+{"h1": "...", "summary": "...", "headings": [{"level": 2, "text": "..."}, {"level": 3, "text": "..."}]}
+TXT;
+    }
+
+    /**
+     * Per-heading content prompt, called after the user confirms (and possibly
+     * edits) the outline. Produces the body HTML for a single section.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public static function outlineContent(array $context, string $heading, int $headingLevel, string $h1, string $summary): string
+    {
+        $instruction = $context['user_instruction'] ? "Instructie: {$context['user_instruction']}\n\n" : '';
+        $brand = $context['brand'];
+        $seededKeywords = array_values(array_unique(array_map('trim', (array) ($context['seeded_keywords'] ?? []))));
+        $seededJson = json_encode($seededKeywords, JSON_UNESCAPED_UNICODE);
+
+        return <<<TXT
+{$instruction}Schrijf body HTML voor één sectie van een pagina.
+
+Pagina-context:
+- H1: {$h1}
+- Samenvatting: {$summary}
+
+Sectie:
+- Heading (H{$headingLevel}): {$heading}
+
+Merk-context:
+{$brand}
+
+Keywords om natuurlijk in te verwerken:
+{$seededJson}
+
+Regels (hard):
+- Retourneer HTML body in veld "body".
+- Alleen deze tags: p, ul, ol, li, strong, em, a.
+- GEEN heading tags (h1-h6), GEEN script/style/img.
+- 2-5 alinea's, varierend, actieve vorm, "je"-vorm waar passend.
+- Geen em-dashes, geen emoji, geen AI-clichés.
+- Interne links mag, maar alleen als de keyword-anchor natuurlijk past.
+
+Retourneer JSON: {"body": "<p>...</p>"}
 TXT;
     }
 
