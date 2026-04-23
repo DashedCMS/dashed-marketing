@@ -67,6 +67,11 @@ class SeoAudit extends Model
         return $this->hasOne(SeoAuditPageAnalysis::class, 'audit_id');
     }
 
+    public function outline(): HasOne
+    {
+        return $this->hasOne(SeoAuditOutline::class, 'audit_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->whereNotIn('status', ['archived', 'failed']);
