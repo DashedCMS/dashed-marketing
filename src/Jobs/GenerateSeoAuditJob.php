@@ -57,7 +57,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         $this->runStep($audit, 'page_analysis', fn () => $this->analysePage($audit, $context));
         $this->runStep($audit, 'keywords', fn () => $this->suggestKeywords($audit, $context));
         $this->runStep($audit, 'meta', fn () => $this->suggestMeta($audit, $context));
-        $this->runStep($audit, 'blocks', fn () => $this->suggestBlockRewrites($audit, $context));
+        $this->runStep($audit, 'outline', fn () => $this->generateOutline($audit, $context));
         $this->runStep($audit, 'faqs', fn () => $this->suggestFaqs($audit, $context));
         $this->runStep($audit, 'structured_data', fn () => $this->suggestStructuredData($audit, $context));
         $this->runStep($audit, 'internal_links', fn () => $this->suggestInternalLinks($audit, $context));
@@ -422,69 +422,43 @@ class GenerateSeoAuditJob implements ShouldQueue
         return in_array($p, ['high', 'medium', 'low'], true) ? $p : 'medium';
     }
 
-    protected function suggestBlockRewrites(SeoAudit $audit, array $context): void
+    protected function generateOutline(SeoAudit $audit, array $context): void
     {
-        $response = Ai::json(SeoAuditPromptBuilder::blocks($context)) ?? [];
-        $whitelist = $context['block_whitelist'];
-        $blocksByIndex = [];
-        foreach ($context['current_blocks'] as $b) {
-            $blocksByIndex[$b['index']] = $b;
+        $response = Ai::json(SeoAuditPromptBuilder::outline($context)) ?? [];
+
+        $h1 = is_string($response['h1'] ?? null) ? trim($response['h1']) : '';
+        $summary = is_string($response['summary'] ?? null) ? trim($response['summary']) : '';
+
+        $headings = [];
+        foreach ((array) ($response['headings'] ?? []) as $h) {
+            if (! is_array($h)) {
+                continue;
+            }
+            $level = (int) ($h['level'] ?? 2);
+            if (! in_array($level, [2, 3], true)) {
+                $level = 2;
+            }
+            $text = is_string($h['text'] ?? null) ? trim($h['text']) : '';
+            if ($text === '') {
+                continue;
+            }
+            $headings[] = ['level' => $level, 'text' => $text];
         }
 
-        $audit->blockSuggestions()->delete();
-
-        foreach ((array) ($response['suggestions'] ?? []) as $s) {
-            if (! is_array($s)) {
-                continue;
-            }
-
-            $isNew = (bool) ($s['is_new_block'] ?? false);
-            $blockType = (string) ($s['block_type'] ?? '');
-            $fieldKey = (string) ($s['field_key'] ?? '');
-            $suggested = $s['suggested_value'] ?? null;
-
-            if ($blockType === '' || $suggested === null) {
-                continue;
-            }
-
-            $allowed = (array) ($whitelist[$blockType] ?? []);
-            if (! $isNew && ! in_array($fieldKey, $allowed, true)) {
-                continue;
-            }
-
-            $blockIndex = $s['block_index'] ?? null;
-            $current = null;
-            if (! $isNew) {
-                if (! is_numeric($blockIndex) || ! isset($blocksByIndex[(int) $blockIndex])) {
-                    continue;
-                }
-                $blockIndex = (int) $blockIndex;
-                $existingBlock = $blocksByIndex[$blockIndex];
-                $current = $existingBlock['data'][$fieldKey] ?? null;
-                if (is_array($current)) {
-                    $current = json_encode($current, JSON_UNESCAPED_UNICODE);
-                }
-            } else {
-                $blockIndex = null;
-                if (! is_string($suggested) || json_decode($suggested, true) === null) {
-                    continue;
-                }
-                $fieldKey = $fieldKey !== '' ? $fieldKey : '_new';
-            }
-
-            $audit->blockSuggestions()->create([
-                'block_index' => $blockIndex,
-                'block_key' => null,
-                'block_type' => $blockType,
-                'field_key' => $fieldKey,
-                'is_new_block' => $isNew,
-                'current_value' => $current !== null ? (string) $current : null,
-                'suggested_value' => is_string($suggested) ? $suggested : json_encode($suggested, JSON_UNESCAPED_UNICODE),
-                'reason' => is_string($s['reason'] ?? null) ? $s['reason'] : null,
-                'priority' => $this->normalisePriority($s['priority'] ?? null),
-                'status' => 'pending',
-            ]);
+        if ($h1 === '' && $summary === '' && empty($headings)) {
+            // AI returned nothing usable; leave the outline untouched.
+            return;
         }
+
+        $audit->outline()->updateOrCreate(
+            ['audit_id' => $audit->id],
+            [
+                'h1' => $h1 !== '' ? $h1 : null,
+                'summary' => $summary !== '' ? $summary : null,
+                'headings' => $headings,
+                'content_generated_at' => null,
+            ]
+        );
     }
 
     protected function suggestFaqs(SeoAudit $audit, array $context): void
