@@ -214,6 +214,62 @@
 
         {{-- Blocks tab --}}
         <div x-show="tab === 'blocks'" class="space-y-4">
+            {{-- Outline editor --}}
+            <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-950 dark:text-white">Outline</h3>
+                    <div class="flex items-center gap-2">
+                        <x-filament::button size="sm" color="gray" wire:click="saveOutline" icon="heroicon-o-check">
+                            Outline opslaan
+                        </x-filament::button>
+                        <x-filament::button
+                            size="sm"
+                            color="primary"
+                            icon="heroicon-o-sparkles"
+                            wire:click="generateOutlineContent"
+                            wire:loading.attr="disabled"
+                            wire:target="generateOutlineContent"
+                        >
+                            <span wire:loading.remove wire:target="generateOutlineContent">Genereer content op basis van outline</span>
+                            <span wire:loading wire:target="generateOutlineContent">Bezig...</span>
+                        </x-filament::button>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">H1</label>
+                        <input wire:model="outlineH1" placeholder="De hoofd-H1 van de pagina" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">Samenvatting</label>
+                        <textarea wire:model="outlineSummary" rows="2" placeholder="Korte context voor de content-generatie, geen user-facing tekst" class="mt-1 block w-full resize-y rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white"></textarea>
+                    </div>
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <label class="text-xs font-medium uppercase text-gray-500">Headings (H2/H3)</label>
+                            <x-filament::button size="xs" color="gray" wire:click="addOutlineHeading" icon="heroicon-o-plus">
+                                Voeg heading toe
+                            </x-filament::button>
+                        </div>
+                        @forelse($outlineHeadings as $i => $h)
+                            <div class="mb-2 flex items-center gap-2">
+                                <select wire:model="outlineHeadings.{{ $i }}.level" class="rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white">
+                                    <option value="2">H2</option>
+                                    <option value="3">H3</option>
+                                </select>
+                                <input wire:model="outlineHeadings.{{ $i }}.text" placeholder="Heading tekst" class="flex-1 rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                                <x-filament::button size="xs" color="danger" wire:click="removeOutlineHeading({{ $i }})" icon="heroicon-o-trash">
+                                    Verwijder
+                                </x-filament::button>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">Nog geen headings. Klik op "Voeg heading toe" of wacht tot de audit-analyse klaar is.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            {{-- Generated content block suggestions --}}
             @php $groups = $record->blockSuggestions->groupBy('block_index'); @endphp
             @foreach($groups as $idx => $suggs)
                 <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">

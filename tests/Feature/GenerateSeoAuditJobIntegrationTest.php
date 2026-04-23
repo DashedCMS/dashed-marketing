@@ -64,8 +64,15 @@ it('runs all 7 steps and finalises audit to ready with populated relations', fun
                 ['field' => 'meta_title', 'suggested_value' => 'X', 'priority' => 'high'],
             ]];
         }
-        if (str_contains($prompt, 'content-blokken voor betere SEO')) {
-            return ['summary' => 'b', 'suggestions' => []];
+        if (str_contains($prompt, 'content-outline voor')) {
+            return [
+                'h1' => 'Test H1',
+                'summary' => 'Korte pagina-samenvatting.',
+                'headings' => [
+                    ['level' => 2, 'text' => 'Sectie 1'],
+                    ['level' => 2, 'text' => 'Sectie 2'],
+                ],
+            ];
         }
         if (str_contains($prompt, 'FAQ items voor')) {
             return ['summary' => 'f', 'suggestions' => [
