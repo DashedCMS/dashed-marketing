@@ -442,6 +442,9 @@ class GenerateSeoAuditJob implements ShouldQueue
             if ($text === '') {
                 continue;
             }
+            if (\Dashed\DashedMarketing\Support\FaqHeadingDetector::isFaq($text)) {
+                continue;
+            }
             $headings[] = ['level' => $level, 'text' => $text];
         }
 

@@ -2,6 +2,20 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.6 - 2026-04-24
+
+### Fixed
+
+- Outline-generatie in `GenerateSeoAuditJob` filtert nu FAQ-achtige headings
+  ("Veelgestelde vragen", "FAQ", "Frequently Asked Questions" etc.) uit de
+  AI-response voordat ze worden opgeslagen, en de outline-prompt instrueert
+  de AI expliciet om geen FAQ-heading voor te stellen. Eerder kwam "Veelgestelde
+  vragen" als heading in de outline te staan, waarna `GenerateOutlineContentJob`
+  die overigens al overslaat — maar de user zag hem nog wel in de outline-
+  editor. Nu komt hij er niet eens meer in.
+- FAQ-heading-detectie gedeeld tussen `GenerateSeoAuditJob` en
+  `GenerateOutlineContentJob` via nieuwe `FaqHeadingDetector`-support class.
+
 ## v4.15.5 - 2026-04-24
 
 ### Fixed

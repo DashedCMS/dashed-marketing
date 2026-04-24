@@ -132,6 +132,7 @@ Regels (hard):
 - h1: 1 pakkende H1, 50-70 tekens, bevat primair keyword natuurlijk.
 - summary: 2-3 zinnen Nederlands die vertellen wat de pagina behandelt. Dit is context voor de volgende content-generatie-stap, geen user-facing tekst.
 - headings: array van H2 (en optioneel H3) secties die de pagina logisch opdelen. Minimaal 3, maximaal 8 H2's. H3 alleen waar semantisch nodig.
+- GEEN FAQ-heading opnemen ("Veelgestelde vragen", "FAQ", "Frequently Asked Questions", etc.). Veelgestelde vragen worden in een aparte FAQ-stap afgehandeld en krijgen een eigen blok op de pagina; een outline-heading daarvoor leidt tot duplicatie.
 - Geen em-dashes, geen emoji, geen AI-clichés.
 - Geen content nu. Alleen de outline.
 
