@@ -205,7 +205,7 @@
                             ></textarea>
                         </div>
                     </div>
-                    @if(in_array($sug->status, ['pending', 'edited']))
+                    @if(in_array($sug->status, ['pending', 'edited', 'applied']))
                         <div class="mt-3 flex gap-2">
                             <x-filament::button size="sm" wire:click="applyMetaOne({{ $sug->id }})">Toepassen</x-filament::button>
                             <x-filament::button size="sm" color="danger" wire:click="rejectMetaOne({{ $sug->id }})">Afwijzen</x-filament::button>
@@ -315,7 +315,7 @@
                                     <textarea wire:model="editedBlocks.{{ $sug->id }}" rows="8" class="mt-1 block w-full resize-y rounded-lg border-gray-300 bg-white p-3 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white"></textarea>
                                 </div>
                             </div>
-                            @if(in_array($sug->status, ['pending', 'edited']))
+                            @if(in_array($sug->status, ['pending', 'edited', 'applied']))
                                 <div class="mt-2 flex gap-2">
                                     <x-filament::button size="sm" wire:click="applyBlockOne({{ $sug->id }})">Toepassen</x-filament::button>
                                     <x-filament::button size="sm" color="danger" wire:click="rejectBlockOne({{ $sug->id }})">Afwijzen</x-filament::button>

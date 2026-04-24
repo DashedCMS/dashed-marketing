@@ -246,3 +246,66 @@ it('still skips rejected status on apply', function () {
         expect($blocks)->toBeArray()->and($blocks)->toBeEmpty();
     }
 });
+
+class FakeLegacyContentSubject extends Model
+{
+    use HasCustomBlocks;
+    use HasTranslations;
+
+    protected $table = 'fake_legacy_content_subjects';
+    protected $guarded = [];
+    public $timestamps = true;
+    public $translatable = ['name', 'content'];
+    protected $casts = ['name' => 'array', 'content' => 'array'];
+}
+
+it('also mirrors applied blocks to the subjects translatable content column', function () {
+    Schema::dropIfExists('fake_legacy_content_subjects');
+    Schema::create('fake_legacy_content_subjects', function (Blueprint $table) {
+        $table->id();
+        $table->json('name')->nullable();
+        $table->json('content')->nullable();
+        $table->timestamps();
+    });
+
+    $subject = FakeLegacyContentSubject::create([]);
+    $audit = SeoAudit::create([
+        'subject_type' => FakeLegacyContentSubject::class,
+        'subject_id' => $subject->id,
+        'status' => 'ready',
+        'locale' => 'nl',
+    ]);
+
+    $sug = SeoAuditBlockSuggestion::create([
+        'audit_id' => $audit->id,
+        'block_index' => null,
+        'block_key' => 'outline.0',
+        'block_type' => 'content',
+        'field_key' => '_new',
+        'is_new_block' => true,
+        'suggested_value' => '<h2>Outline</h2><p>Body</p>',
+        'status' => 'pending',
+        'priority' => 'medium',
+    ]);
+
+    app(SeoAuditApplier::class)->applySelected($audit, ['blocks' => [$sug->id]], userId: 1);
+
+    $subject->refresh();
+
+    $customBlocksArr = $subject->customBlocks->getTranslation('blocks', 'nl');
+    $contentArr = $subject->getTranslation('content', 'nl');
+
+    expect($customBlocksArr)->toHaveCount(1);
+    expect($contentArr)->toHaveCount(1);
+    expect($contentArr[0]['type'])->toBe('content');
+    expect($contentArr[0]['data']['content'])->toBe('<h2>Outline</h2><p>Body</p>');
+
+    $sug->update(['suggested_value' => '<h2>Overschreven</h2>', 'status' => 'applied']);
+    app(SeoAuditApplier::class)->applySelected($audit, ['blocks' => [$sug->id]], userId: 1);
+
+    $subject->refresh();
+    $contentArr = $subject->getTranslation('content', 'nl');
+
+    expect($contentArr)->toHaveCount(1);
+    expect($contentArr[0]['data']['content'])->toBe('<h2>Overschreven</h2>');
+});

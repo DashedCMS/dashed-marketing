@@ -125,6 +125,7 @@ class SeoAuditApplier
                 }
                 $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
                 $subject->customBlocks->save();
+                $this->syncSubjectContent($subject, $locale, $blocks);
             } elseif (str_starts_with($key, 'faq.') && method_exists($subject, 'customBlocks') && $subject->customBlocks) {
                 $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $locale) ?? []);
                 if ($key === 'faq.new') {
@@ -144,6 +145,7 @@ class SeoAuditApplier
                 }
                 $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
                 $subject->customBlocks->save();
+                $this->syncSubjectContent($subject, $locale, $blocks);
             } elseif (str_starts_with($key, 'structured_data.')) {
                 $schema = substr($key, strlen('structured_data.'));
                 if ($previous === null) {
@@ -168,6 +170,24 @@ class SeoAuditApplier
         if (! in_array($audit->status, ['ready', 'partially_applied', 'fully_applied'], true)) {
             throw new RuntimeException("Audit is niet applyable in status: {$audit->status}");
         }
+    }
+
+    /**
+     * Mirror the blocks array to the subject's legacy translatable `content` column
+     * so the frontend (which reads `$subject->content`) shows the same blocks as
+     * the `CustomBlock.blocks` storage used by the Filament builder.
+     *
+     * @param  array<int, array<string, mixed>>  $blocks
+     */
+    protected function syncSubjectContent(Model $subject, string $locale, array $blocks): void
+    {
+        $translatable = (array) ($subject->translatable ?? []);
+        if (! in_array('content', $translatable, true) || ! method_exists($subject, 'setTranslation')) {
+            return;
+        }
+
+        $subject->setTranslation('content', $locale, $blocks);
+        $subject->save();
     }
 
     protected function applyMeta(SeoAudit $audit, Model $subject, int $id, ?int $userId, SeoAuditApplyResult $result): void
@@ -336,6 +356,7 @@ class SeoAuditApplier
             DB::transaction(function () use ($customBlocks, $audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey, $appliedIndexForClosure) {
                 $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
                 $customBlocks->save();
+                $this->syncSubjectContent($subject, $audit->locale, $blocks);
 
                 ContentApplyLog::create([
                     'seo_improvement_id' => null,
@@ -439,6 +460,7 @@ class SeoAuditApplier
 
                 $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
                 $customBlocks->save();
+                $this->syncSubjectContent($subject, $audit->locale, $blocks);
 
                 ContentApplyLog::create([
                     'seo_improvement_id' => null,

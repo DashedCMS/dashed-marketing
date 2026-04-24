@@ -33,7 +33,9 @@ class SeoAudit extends Model
 
     public function metaSuggestions(): HasMany
     {
-        return $this->hasMany(SeoAuditMetaSuggestion::class, 'audit_id');
+        return $this->hasMany(SeoAuditMetaSuggestion::class, 'audit_id')
+            ->orderByRaw("CASE field WHEN 'meta_title' THEN 0 WHEN 'meta_description' THEN 1 ELSE 2 END")
+            ->orderBy('id');
     }
 
     public function blockSuggestions(): HasMany

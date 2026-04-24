@@ -162,6 +162,18 @@ class ReviewSeoAudit extends Page
                 $this->defaultSelectAll();
             }
         }
+
+        $this->refreshFaqApplyTarget();
+    }
+
+    protected function refreshFaqApplyTarget(): void
+    {
+        $subject = $this->record->subject;
+        if ($subject && method_exists($subject, 'customBlocks')) {
+            $subject->unsetRelation('customBlocks');
+        }
+
+        $this->faqApplyTarget = $this->detectExistingFaqBlock($this->record) ? 'existing' : 'new';
     }
 
     protected function defaultSelectAll(): void
@@ -214,6 +226,7 @@ class ReviewSeoAudit extends Page
         $this->record->refresh();
         $this->seedEditedValues();
         $this->defaultSelectAll();
+        $this->refreshFaqApplyTarget();
     }
 
     public function applyAllPendingInTab(string $tab): void

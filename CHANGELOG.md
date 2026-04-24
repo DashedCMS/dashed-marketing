@@ -2,6 +2,34 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.4 - 2026-04-24
+
+### Fixed
+
+- SeoAuditApplier mirrort toegepaste blokken nu óók naar de legacy `content`
+  translatable-kolom op het subject. De frontend leest blokken uit
+  `$subject->content` (via `<x-blocks :content="$subject->content">`) maar de
+  applier schreef alleen naar `CustomBlock.blocks`. Daardoor verschenen
+  outline- en FAQ-blokken wel in de Filament "Maatwerk blokken"-tab maar niet
+  op de live pagina. Sync gebeurt automatisch voor subjects die `content` in
+  hun `$translatable` hebben staan (Page, Article, Product, ProductGroup,
+  ProductCategory).
+- SEO Audit review: per-item "Toepassen"/"Afwijzen" knoppen op meta- en
+  blok-suggesties zijn nu ook zichtbaar wanneer status `applied` is, zodat
+  re-apply mogelijk is via de per-item knoppen (niet alleen via "Alles
+  selecteren" + "Geselecteerde toepassen").
+- SEO Audit review: FAQ-apply-target (`new` vs `existing`) wordt nu
+  live opnieuw gedetecteerd in `pollAudit()` en na `applySelected()`. Eerder
+  bleef de waarde staan vanaf `mount()` wat ertoe leidde dat na een eerste
+  FAQ-apply of na handmatige verwijdering van het FAQ-blok de UI de verkeerde
+  optie koos.
+
+### Changed
+
+- `SeoAudit::metaSuggestions()` sorteert nu `meta_title` eerst, daarna
+  `meta_description`, overige velden op `id`-volgorde. De review-UI toont de
+  meta-suggesties nu in de verwachte volgorde.
+
 ## v4.15.3 - 2026-04-24
 
 ### Fixed
