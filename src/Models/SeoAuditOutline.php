@@ -15,11 +15,13 @@ class SeoAuditOutline extends Model
         'summary',
         'headings',
         'content_generated_at',
+        'content_generating_at',
     ];
 
     protected $casts = [
         'headings' => 'array',
         'content_generated_at' => 'datetime',
+        'content_generating_at' => 'datetime',
     ];
 
     public function audit(): BelongsTo

@@ -165,7 +165,7 @@ class SeoAuditApplier
 
     protected function ensureApplyable(SeoAudit $audit): void
     {
-        if (! in_array($audit->status, ['ready', 'partially_applied'], true)) {
+        if (! in_array($audit->status, ['ready', 'partially_applied', 'fully_applied'], true)) {
             throw new RuntimeException("Audit is niet applyable in status: {$audit->status}");
         }
     }
@@ -176,7 +176,7 @@ class SeoAuditApplier
         if (! $sug) {
             return;
         }
-        if ($sug->status !== 'pending' && $sug->status !== 'edited') {
+        if (in_array($sug->status, ['rejected', 'failed'], true)) {
             $result->recordSkipped();
 
             return;
@@ -243,7 +243,7 @@ class SeoAuditApplier
         if (! $sug) {
             return;
         }
-        if ($sug->status !== 'pending' && $sug->status !== 'edited') {
+        if (in_array($sug->status, ['rejected', 'failed'], true)) {
             $result->recordSkipped();
 
             return;
@@ -299,9 +299,24 @@ class SeoAuditApplier
                 }
 
                 $envelope = ['type' => $sug->block_type, 'data' => $data];
-                $blocks[] = $envelope;
+
+                $overwriteIndex = $sug->applied_block_index;
+                $canOverwrite = $overwriteIndex !== null
+                    && isset($blocks[$overwriteIndex])
+                    && ($blocks[$overwriteIndex]['type'] ?? null) === $sug->block_type;
+
+                if ($canOverwrite) {
+                    $previous = $blocks[$overwriteIndex];
+                    $blocks[$overwriteIndex] = $envelope;
+                    $appliedIndex = $overwriteIndex;
+                    $logKey = 'block.'.$appliedIndex.'.'.$sug->block_type;
+                } else {
+                    $blocks[] = $envelope;
+                    $appliedIndex = array_key_last($blocks);
+                    $logKey = 'block.new.'.$sug->block_type;
+                }
+
                 $newValue = $envelope;
-                $logKey = 'block.new.'.$sug->block_type;
             } else {
                 $idx = $sug->block_index;
                 if ($idx === null || ! isset($blocks[$idx])) {
@@ -316,7 +331,9 @@ class SeoAuditApplier
                 $logKey = "block.{$idx}.{$sug->field_key}";
             }
 
-            DB::transaction(function () use ($customBlocks, $audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey) {
+            $appliedIndexForClosure = $sug->is_new_block ? ($appliedIndex ?? null) : null;
+
+            DB::transaction(function () use ($customBlocks, $audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey, $appliedIndexForClosure) {
                 $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
                 $customBlocks->save();
 
@@ -332,7 +349,11 @@ class SeoAuditApplier
                     'applied_at' => now(),
                 ]);
 
-                $sug->update(['status' => 'applied', 'applied_at' => now()]);
+                $updates = ['status' => 'applied', 'applied_at' => now()];
+                if ($appliedIndexForClosure !== null) {
+                    $updates['applied_block_index'] = $appliedIndexForClosure;
+                }
+                $sug->update($updates);
             });
 
             $result->recordApplied();
@@ -356,7 +377,7 @@ class SeoAuditApplier
         }
 
         $sugs = $audit->faqSuggestions()->whereIn('id', $ids)
-            ->whereIn('status', ['pending', 'edited'])->get();
+            ->whereNotIn('status', ['rejected', 'failed'])->get();
 
         if ($sugs->isEmpty()) {
             foreach ($ids as $id) {
@@ -452,7 +473,7 @@ class SeoAuditApplier
         if (! $sug) {
             return;
         }
-        if ($sug->status !== 'pending' && $sug->status !== 'edited') {
+        if (in_array($sug->status, ['rejected', 'failed'], true)) {
             $result->recordSkipped();
 
             return;

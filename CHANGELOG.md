@@ -2,6 +2,35 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.3 - 2026-04-24
+
+### Fixed
+
+- SEO Audit review: "Alles selecteren" selecteert nu ook al-toegepaste suggesties
+  zodat re-apply na een eerste toepassing mogelijk is.
+- `SeoAuditApplier` staat re-apply toe: `applied` suggesties kunnen opnieuw
+  toegepast worden. Alleen `rejected` en `failed` worden nog geskipt. Audits met
+  status `fully_applied` zijn ook re-applyable.
+
+### Added
+
+- `applied_block_index` kolom op `dashed__seo_audit_block_suggestions` —
+  re-apply van `is_new_block=true` suggesties overschrijft nu het eerder
+  aangemaakte blok op dezelfde positie in plaats van een duplicaat toe te
+  voegen. Valt terug op append als het blok tussentijds is verwijderd of als
+  het type op die index niet meer matcht.
+
+## v4.15.2 - 2026-04-24
+
+### Fixed
+
+- Content-generatie op basis van outline draait nu op de achtergrond via
+  `GenerateOutlineContentJob`. Eerder liep de AI-loop synchroon in de Livewire
+  request, waardoor pagina's met veel outline-headings konden timeouten. De knop
+  keert nu direct terug, de Livewire poller ververst de UI zodra de job klaar is,
+  en dubbel-klikken wordt geblokkeerd via een nieuwe `content_generating_at`
+  kolom op `dashed__seo_audit_outlines`.
+
 ## v4.15.1 - 2026-04-23
 
 ### Added

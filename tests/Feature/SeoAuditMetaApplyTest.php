@@ -110,7 +110,7 @@ it('applies translatable subject field (name) and logs previous value', function
     expect(json_decode($log->previous_value, true))->toBe('Oude naam');
 });
 
-it('skips already-applied suggestions', function () {
+it('skips rejected and failed suggestions', function () {
     $subject = FakeMetaApplySubject::create([]);
     $audit = SeoAudit::create([
         'subject_type' => FakeMetaApplySubject::class,
@@ -118,16 +118,25 @@ it('skips already-applied suggestions', function () {
         'status' => 'ready',
         'locale' => 'nl',
     ]);
-    $meta = SeoAuditMetaSuggestion::create([
+
+    $rejected = SeoAuditMetaSuggestion::create([
         'audit_id' => $audit->id,
         'field' => 'meta_title',
         'suggested_value' => 'X',
         'priority' => 'high',
-        'status' => 'applied',
+        'status' => 'rejected',
     ]);
 
-    $result = app(SeoAuditApplier::class)->applySelected($audit, ['meta' => [$meta->id]], userId: 1);
+    $failed = SeoAuditMetaSuggestion::create([
+        'audit_id' => $audit->id,
+        'field' => 'meta_description',
+        'suggested_value' => 'Y',
+        'priority' => 'high',
+        'status' => 'failed',
+    ]);
+
+    $result = app(SeoAuditApplier::class)->applySelected($audit, ['meta' => [$rejected->id, $failed->id]], userId: 1);
 
     expect($result->applied)->toBe(0);
-    expect($result->skipped)->toBe(1);
+    expect($result->skipped)->toBe(2);
 });

@@ -235,8 +235,15 @@
                             wire:click="generateOutlineContent"
                             wire:loading.attr="disabled"
                             wire:target="generateOutlineContent"
+                            :disabled="$outlineGenerating"
                         >
-                            <span wire:loading.remove wire:target="generateOutlineContent">Genereer content op basis van outline</span>
+                            <span wire:loading.remove wire:target="generateOutlineContent">
+                                @if($outlineGenerating)
+                                    Bezig op achtergrond...
+                                @else
+                                    Genereer content op basis van outline
+                                @endif
+                            </span>
                             <span wire:loading wire:target="generateOutlineContent">Bezig...</span>
                         </x-filament::button>
                     </div>

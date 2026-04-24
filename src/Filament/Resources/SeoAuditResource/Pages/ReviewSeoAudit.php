@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages;
 
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
+use Dashed\DashedMarketing\Jobs\GenerateOutlineContentJob;
 use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Dashed\DashedMarketing\Models\SeoAudit;
@@ -75,6 +76,7 @@ class ReviewSeoAudit extends Page
 
         $this->seedEditedValues();
         $this->defaultSelectAll();
+        $this->outlineGenerating = (bool) $record->outline?->content_generating_at;
     }
 
     protected function detectExistingFaqBlock(SeoAudit $record): bool
@@ -144,15 +146,33 @@ class ReviewSeoAudit extends Page
             $this->seedEditedValues();
             $this->defaultSelectAll();
         }
+
+        $generatingAt = DB::table('dashed__seo_audit_outlines')
+            ->where('audit_id', $this->record->id)
+            ->value('content_generating_at');
+
+        $isGenerating = $generatingAt !== null;
+
+        if ($isGenerating !== $this->outlineGenerating) {
+            $this->outlineGenerating = $isGenerating;
+
+            if (! $isGenerating) {
+                $this->record->refresh();
+                $this->seedEditedValues();
+                $this->defaultSelectAll();
+            }
+        }
     }
 
     protected function defaultSelectAll(): void
     {
+        $allowed = ['pending', 'edited', 'applied'];
+
         $this->selected = [
-            'meta' => $this->record->metaSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
-            'blocks' => $this->record->blockSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
-            'faqs' => $this->record->faqSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
-            'structured_data' => $this->record->structuredDataSuggestions()->whereIn('status', ['pending', 'edited'])->pluck('id')->all(),
+            'meta' => $this->record->metaSuggestions()->whereIn('status', $allowed)->pluck('id')->all(),
+            'blocks' => $this->record->blockSuggestions()->whereIn('status', $allowed)->pluck('id')->all(),
+            'faqs' => $this->record->faqSuggestions()->whereIn('status', $allowed)->pluck('id')->all(),
+            'structured_data' => $this->record->structuredDataSuggestions()->whereIn('status', $allowed)->pluck('id')->all(),
         ];
     }
 
@@ -281,6 +301,7 @@ class ReviewSeoAudit extends Page
         $this->saveOutline();
         $this->record->refresh();
         $outline = $this->record->outline;
+
         if (! $outline || empty($outline->headings)) {
             Notification::make()
                 ->title('Geen headings om content voor te genereren')
@@ -290,138 +311,26 @@ class ReviewSeoAudit extends Page
             return;
         }
 
+        if ($outline->content_generating_at !== null) {
+            Notification::make()
+                ->title('Content-generatie loopt al')
+                ->body('Even geduld — de voorstellen verschijnen zodra de job klaar is.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $outline->update(['content_generating_at' => now()]);
+        GenerateOutlineContentJob::dispatch($this->record->id);
+
         $this->outlineGenerating = true;
 
-        try {
-            $ctx = $this->buildOutlineContext();
-            $created = 0;
-
-            // Wipe previous is_new_block=true suggestions for this audit so re-generation
-            // replaces rather than accumulates. Keep non-new block suggestions untouched.
-            $this->record->blockSuggestions()->where('is_new_block', true)->delete();
-
-            $sort = 0;
-            foreach ($outline->headings as $heading) {
-                $level = (int) ($heading['level'] ?? 2);
-                $text = trim((string) ($heading['text'] ?? ''));
-                if ($text === '') {
-                    continue;
-                }
-
-                $response = [];
-                try {
-                    $response = \Dashed\DashedAi\Facades\Ai::json(
-                        \Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder::outlineContent(
-                            $ctx,
-                            $text,
-                            $level,
-                            (string) ($outline->h1 ?? ''),
-                            (string) ($outline->summary ?? ''),
-                        )
-                    ) ?? [];
-                } catch (\Throwable $e) {
-                    $response = [];
-                }
-
-                $body = '';
-                foreach (['body', 'html', 'content', 'text'] as $key) {
-                    if (! empty($response[$key]) && is_string($response[$key])) {
-                        $body = trim($response[$key]);
-
-                        break;
-                    }
-                }
-
-                $tag = 'h'.$level;
-                $html = "<{$tag}>".e($text)."</{$tag}>".$body;
-
-                $this->record->blockSuggestions()->create([
-                    'block_index' => null,
-                    'block_key' => 'outline.'.$sort,
-                    'block_type' => 'content',
-                    'field_key' => '_new',
-                    'is_new_block' => true,
-                    'suggested_value' => $html,
-                    'reason' => 'Op basis van outline heading: '.$text,
-                    'priority' => 'medium',
-                    'status' => 'pending',
-                ]);
-
-                $sort++;
-                $created++;
-            }
-
-            $outline->update(['content_generated_at' => now()]);
-
-            Notification::make()
-                ->title("{$created} content-blok voorstellen gegenereerd")
-                ->body('Vink ze aan in de Blokken-tab en klik "Toepassen" om ze als blokken toe te voegen aan de pagina.')
-                ->success()
-                ->send();
-        } finally {
-            $this->outlineGenerating = false;
-            $this->record->refresh();
-            $this->seedEditedValues();
-        }
-    }
-
-    protected function buildOutlineContext(): array
-    {
-        $subject = $this->record->subject;
-        $locale = $this->record->locale;
-
-        $name = '';
-        if ($subject) {
-            $raw = $subject->name ?? $subject->title ?? null;
-            if (is_array($raw)) {
-                $name = (string) ($raw[$locale] ?? reset($raw) ?? '');
-            } else {
-                $name = (string) $raw;
-            }
-        }
-
-        $url = '';
-        if ($subject && method_exists($subject, 'getUrl')) {
-            try {
-                $url = (string) $subject->getUrl();
-            } catch (\Throwable) {
-                //
-            }
-        }
-
-        $brand = '';
-        try {
-            $brand = app(\Dashed\DashedMarketing\Services\SocialContextBuilder::class)->build('seo');
-        } catch (\Throwable) {
-            //
-        }
-
-        $seededKeywords = [];
-        try {
-            $seededKeywords = \Dashed\DashedMarketing\Models\Keyword::query()
-                ->where('locale', $locale)
-                ->where(function ($q) {
-                    $q->whereNull('status')->orWhere('status', '!=', 'rejected');
-                })
-                ->pluck('keyword')
-                ->map(fn ($k) => (string) $k)
-                ->all();
-        } catch (\Throwable) {
-            //
-        }
-
-        return [
-            'subject' => [
-                'type' => class_basename($this->record->subject_type),
-                'id' => $this->record->subject_id,
-                'name' => $name,
-                'url' => $url,
-            ],
-            'locale' => $locale,
-            'brand' => $brand,
-            'user_instruction' => $this->record->instruction,
-            'seeded_keywords' => $seededKeywords,
-        ];
+        Notification::make()
+            ->title('Content-generatie gestart')
+            ->body('De voorstellen verschijnen automatisch in de Blokken-tab zodra ze klaar zijn.')
+            ->success()
+            ->send();
     }
 
     public function addInternalLink(): void

@@ -10,7 +10,7 @@ class SeoAuditBlockSuggestion extends Model
     protected $table = 'dashed__seo_audit_block_suggestions';
 
     protected $fillable = [
-        'audit_id', 'block_index', 'block_key', 'block_type', 'field_key',
+        'audit_id', 'block_index', 'applied_block_index', 'block_key', 'block_type', 'field_key',
         'is_new_block', 'current_value', 'suggested_value',
         'reason', 'priority', 'status', 'applied_at',
     ];
@@ -18,6 +18,7 @@ class SeoAuditBlockSuggestion extends Model
     protected $casts = [
         'is_new_block' => 'boolean',
         'applied_at' => 'datetime',
+        'applied_block_index' => 'integer',
     ];
 
     public function audit(): BelongsTo
