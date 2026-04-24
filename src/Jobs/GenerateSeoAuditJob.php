@@ -34,6 +34,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         public int|string $subjectId,
         public ?int $userId = null,
         public ?string $instruction = null,
+        public ?string $locale = null,
     ) {}
 
     public function handle(): void
@@ -103,7 +104,7 @@ class GenerateSeoAuditJob implements ShouldQueue
             'subject_type' => $this->subjectType,
             'subject_id' => (int) $this->subjectId,
             'status' => 'analyzing',
-            'locale' => $subject->locale ?? app()->getLocale(),
+            'locale' => $this->locale ?? $subject->locale ?? app()->getLocale(),
             'instruction' => $this->instruction,
             'created_by' => $this->userId,
             'progress_message' => 'Audit start',

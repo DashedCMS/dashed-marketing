@@ -2,10 +2,12 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
+use Dashed\DashedCore\Classes\Locales;
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
 use Dashed\DashedMarketing\Models\SeoAudit;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 
@@ -44,6 +46,18 @@ class RequestSeoAuditAction
             })
             ->modalSubmitActionLabel('Start analyse')
             ->schema([
+                Select::make('locale')
+                    ->label('Taal')
+                    ->helperText('De audit analyseert de pagina in deze taal en genereert alle suggesties (meta, content, FAQ, structured data) in deze taal.')
+                    ->options(Locales::getLocalesArray())
+                    ->default(function ($livewire) {
+                        $active = method_exists($livewire, 'getActiveSchemaLocale')
+                            ? $livewire->getActiveSchemaLocale()
+                            : null;
+
+                        return $active ?: app()->getLocale();
+                    })
+                    ->required(),
                 Textarea::make('instruction')
                     ->label('Instructie (optioneel)')
                     ->placeholder('Bijv. focus op lokale SEO Amsterdam.')
@@ -61,12 +75,14 @@ class RequestSeoAuditAction
                 }
 
                 $instruction = ! empty($data['instruction']) ? (string) $data['instruction'] : null;
+                $locale = ! empty($data['locale']) ? (string) $data['locale'] : null;
 
                 GenerateSeoAuditJob::dispatch(
                     $record::class,
                     $record->getKey(),
                     auth()->id(),
                     $instruction,
+                    $locale,
                 );
 
                 Notification::make()

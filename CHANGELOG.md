@@ -2,6 +2,26 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.7 - 2026-04-24
+
+### Added
+
+- `RequestSeoAuditAction` heeft nu een verplichte Taal-keuze. Default is de
+  actieve schema-locale op de Filament-pagina (of `app()->getLocale()` als
+  terugval). De audit analyseert de pagina in de gekozen taal en genereert
+  alle suggesties (meta, content, FAQ, structured data) in die taal.
+- `GenerateSeoAuditJob` accepteert nu een optionele `$locale` parameter
+  (vijfde constructor-argument). Geef null mee voor het oude gedrag
+  (`$subject->locale ?? app()->getLocale()`).
+- `SeoAuditResource` listing heeft nu bulk-acties:
+  - **Archiveren** — status naar `archived` zonder data-verlies.
+  - **Opnieuw genereren** — dispatcht een nieuwe audit per record met
+    dezelfde taal en instructie; bestaand audit wordt gearchiveerd.
+  - **Alles toepassen** — roept `applyAll()` aan voor elke ready /
+    partially_applied / fully_applied audit. Let op: destructief — blokken
+    worden gewist voor insert.
+  - **Verwijderen** — harde delete (Filament's DeleteBulkAction).
+
 ## v4.15.6 - 2026-04-24
 
 ### Fixed
