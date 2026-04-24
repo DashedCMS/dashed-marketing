@@ -82,14 +82,32 @@ class ReviewSeoAudit extends Page
     protected function detectExistingFaqBlock(SeoAudit $record): bool
     {
         $subject = $record->subject;
-        if (! $subject || ! method_exists($subject, 'customBlocks') || ! $subject->customBlocks) {
+        if (! $subject) {
             return false;
         }
 
-        try {
-            $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $record->locale) ?? []);
-        } catch (\Throwable) {
-            return false;
+        $blocks = [];
+        $translatable = (array) ($subject->translatable ?? []);
+        if (in_array('content', $translatable, true) && method_exists($subject, 'getTranslation')) {
+            try {
+                $content = $subject->getTranslation('content', $record->locale);
+                if (is_array($content)) {
+                    $blocks = $content;
+                }
+            } catch (\Throwable) {
+                //
+            }
+        }
+
+        if (empty($blocks) && method_exists($subject, 'customBlocks')) {
+            $customBlocks = $subject->customBlocks()->first();
+            if ($customBlocks) {
+                try {
+                    $blocks = (array) ($customBlocks->getTranslation('blocks', $record->locale) ?? []);
+                } catch (\Throwable) {
+                    //
+                }
+            }
         }
 
         $faqTypes = (array) config('dashed-marketing.seo_faq_block_types', ['faq']);

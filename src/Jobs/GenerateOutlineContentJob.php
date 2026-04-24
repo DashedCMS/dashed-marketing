@@ -58,6 +58,9 @@ class GenerateOutlineContentJob implements ShouldQueue
             if ($text === '') {
                 continue;
             }
+            if ($this->isFaqHeading($text)) {
+                continue;
+            }
 
             $response = [];
             try {
@@ -116,6 +119,39 @@ class GenerateOutlineContentJob implements ShouldQueue
 
         $audit = SeoAudit::with('outline')->find($this->auditId);
         $audit?->outline?->update(['content_generating_at' => null]);
+    }
+
+    /**
+     * Detect whether a heading text refers to the FAQ section. FAQ content is
+     * already surfaced via the separate FAQ suggestions and applied as its own
+     * block, so we skip generating a duplicate content-block for it.
+     */
+    protected function isFaqHeading(string $text): bool
+    {
+        $normalized = mb_strtolower(trim($text));
+        if ($normalized === '') {
+            return false;
+        }
+
+        $needles = [
+            'veelgestelde vragen',
+            'veel gestelde vragen',
+            'faq',
+            'faqs',
+            'frequently asked questions',
+            'häufig gestellte fragen',
+            'haufig gestellte fragen',
+            'questions fréquentes',
+            'preguntas frecuentes',
+        ];
+
+        foreach ($needles as $needle) {
+            if (str_contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

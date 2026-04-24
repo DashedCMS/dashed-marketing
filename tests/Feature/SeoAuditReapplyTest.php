@@ -70,7 +70,10 @@ it('overwrites the previously-created block on re-apply of is_new_block=true sug
     $subject->refresh();
     $blocks = $subject->customBlocks->getTranslation('blocks', 'nl');
     expect($blocks)->toHaveCount(1);
-    expect($blocks[0]['data']['content'])->toBe('<h2>Eerste</h2><p>Body een</p>');
+    expect($blocks[0]['data']['content'])->toBeArray();
+    expect($blocks[0]['data']['content']['type'])->toBe('doc');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($blocks[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Eerste')->and($rendered)->toContain('Body een');
 
     $sug->refresh();
     expect($sug->status)->toBe('applied');
@@ -87,7 +90,8 @@ it('overwrites the previously-created block on re-apply of is_new_block=true sug
     $blocks = $subject->customBlocks->getTranslation('blocks', 'nl');
 
     expect($blocks)->toHaveCount(1);
-    expect($blocks[0]['data']['content'])->toBe('<h2>Aangepast</h2><p>Nieuw body</p>');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($blocks[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Aangepast')->and($rendered)->toContain('Nieuw body');
     expect($sug->fresh()->applied_block_index)->toBe(0);
 });
 
@@ -119,7 +123,8 @@ it('falls back to append when previously-applied block was removed', function ()
     $subject->refresh();
     $blocks = $subject->customBlocks->getTranslation('blocks', 'nl');
     expect($blocks)->toHaveCount(1);
-    expect($blocks[0]['data']['content'])->toBe('<h2>Eerste</h2>');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($blocks[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Eerste');
     expect($sug->fresh()->applied_block_index)->toBe(0);
 });
 
@@ -151,10 +156,10 @@ it('falls back to append when block type no longer matches at applied_block_inde
 
     $subject->refresh();
     $blocks = $subject->customBlocks->getTranslation('blocks', 'nl');
-    expect($blocks)->toHaveCount(2);
-    expect($blocks[0]['type'])->toBe('image');
-    expect($blocks[1]['type'])->toBe('content');
-    expect($sug->fresh()->applied_block_index)->toBe(1);
+    // Wipe-mode: existing image is removed, only the new content block remains.
+    expect($blocks)->toHaveCount(1);
+    expect($blocks[0]['type'])->toBe('content');
+    expect($sug->fresh()->applied_block_index)->toBe(0);
 });
 
 it('re-applies existing-block field suggestion idempotently without duplicating blocks', function () {
@@ -298,7 +303,8 @@ it('also mirrors applied blocks to the subjects translatable content column', fu
     expect($customBlocksArr)->toHaveCount(1);
     expect($contentArr)->toHaveCount(1);
     expect($contentArr[0]['type'])->toBe('content');
-    expect($contentArr[0]['data']['content'])->toBe('<h2>Outline</h2><p>Body</p>');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($contentArr[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Outline')->and($rendered)->toContain('Body');
 
     $sug->update(['suggested_value' => '<h2>Overschreven</h2>', 'status' => 'applied']);
     app(SeoAuditApplier::class)->applySelected($audit, ['blocks' => [$sug->id]], userId: 1);
@@ -307,5 +313,118 @@ it('also mirrors applied blocks to the subjects translatable content column', fu
     $contentArr = $subject->getTranslation('content', 'nl');
 
     expect($contentArr)->toHaveCount(1);
-    expect($contentArr[0]['data']['content'])->toBe('<h2>Overschreven</h2>');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($contentArr[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Overschreven');
+});
+
+it('wipes existing legacy content-column blocks before inserting the new block', function () {
+    Schema::dropIfExists('fake_legacy_content_subjects');
+    Schema::create('fake_legacy_content_subjects', function (Blueprint $table) {
+        $table->id();
+        $table->json('name')->nullable();
+        $table->json('content')->nullable();
+        $table->timestamps();
+    });
+
+    $subject = FakeLegacyContentSubject::create([]);
+    $subject->setTranslation('content', 'nl', [
+        ['type' => 'header', 'data' => ['title' => 'Bestaande header', 'in_container' => true]],
+        ['type' => 'content', 'data' => ['content' => '<p>Bestaande content</p>', 'full-width' => false, 'top_margin' => true, 'in_container' => true, 'bottom_margin' => true]],
+    ]);
+    $subject->save();
+
+    $audit = SeoAudit::create([
+        'subject_type' => FakeLegacyContentSubject::class,
+        'subject_id' => $subject->id,
+        'status' => 'ready',
+        'locale' => 'nl',
+    ]);
+
+    $sug = SeoAuditBlockSuggestion::create([
+        'audit_id' => $audit->id,
+        'block_index' => null,
+        'block_key' => 'outline.0',
+        'block_type' => 'content',
+        'field_key' => '_new',
+        'is_new_block' => true,
+        'suggested_value' => '<h2>Outline heading</h2>',
+        'status' => 'pending',
+        'priority' => 'medium',
+    ]);
+
+    app(SeoAuditApplier::class)->applySelected($audit, ['blocks' => [$sug->id]], userId: 1);
+
+    $subject->refresh();
+    $content = $subject->getTranslation('content', 'nl');
+
+    // Wipe-mode: pre-existing header + content are removed, only the new outline block remains.
+    expect($content)->toHaveCount(1);
+    expect($content[0]['type'])->toBe('content');
+    $rendered = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($content[0]['data']['content'])->toUnsafeHtml();
+    expect($rendered)->toContain('Outline heading');
+    expect($content[0]['data']['full-width'])->toBe(false);
+    expect($content[0]['data']['in_container'])->toBe(true);
+    expect($sug->fresh()->applied_block_index)->toBe(0);
+});
+
+it('places FAQ block at the end when applying outline + FAQ in one batch', function () {
+    Schema::dropIfExists('fake_legacy_content_subjects');
+    Schema::create('fake_legacy_content_subjects', function (Blueprint $table) {
+        $table->id();
+        $table->json('name')->nullable();
+        $table->json('content')->nullable();
+        $table->timestamps();
+    });
+
+    $subject = FakeLegacyContentSubject::create([]);
+    $audit = SeoAudit::create([
+        'subject_type' => FakeLegacyContentSubject::class,
+        'subject_id' => $subject->id,
+        'status' => 'ready',
+        'locale' => 'nl',
+    ]);
+
+    $contentA = SeoAuditBlockSuggestion::create([
+        'audit_id' => $audit->id,
+        'block_index' => null,
+        'block_key' => 'outline.0',
+        'block_type' => 'content',
+        'field_key' => '_new',
+        'is_new_block' => true,
+        'suggested_value' => '<h2>Eerste</h2>',
+        'status' => 'pending',
+        'priority' => 'medium',
+    ]);
+    $contentB = SeoAuditBlockSuggestion::create([
+        'audit_id' => $audit->id,
+        'block_index' => null,
+        'block_key' => 'outline.1',
+        'block_type' => 'content',
+        'field_key' => '_new',
+        'is_new_block' => true,
+        'suggested_value' => '<h2>Tweede</h2>',
+        'status' => 'pending',
+        'priority' => 'medium',
+    ]);
+    $faq = \Dashed\DashedMarketing\Models\SeoAuditFaqSuggestion::create([
+        'audit_id' => $audit->id,
+        'question' => 'Waarom?',
+        'answer' => 'Omdat.',
+        'status' => 'pending',
+        'priority' => 'medium',
+    ]);
+
+    app(SeoAuditApplier::class)->applySelected($audit, [
+        'blocks' => [$contentA->id, $contentB->id],
+        'faqs' => [$faq->id],
+        'faq_target' => 'new',
+    ], userId: 1);
+
+    $subject->refresh();
+    $content = $subject->getTranslation('content', 'nl');
+
+    expect($content)->toHaveCount(3);
+    expect($content[0]['type'])->toBe('content');
+    expect($content[1]['type'])->toBe('content');
+    expect($content[2]['type'])->toBe('faq');
 });

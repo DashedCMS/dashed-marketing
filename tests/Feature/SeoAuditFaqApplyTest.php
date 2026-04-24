@@ -57,7 +57,7 @@ it('creates a new FAQ block when the page has none', function () {
     expect(end($blocks)['data']['faqs'])->toHaveCount(2);
 });
 
-it('appends to existing FAQ block when target is existing', function () {
+it('wipes pre-existing FAQ block and creates a fresh one on apply', function () {
     $subject = FakeFaqApplySubject::create([]);
 
     $cb = new CustomBlock();
@@ -82,6 +82,8 @@ it('appends to existing FAQ block when target is existing', function () {
 
     $subject->refresh();
     $blocks = $subject->customBlocks->getTranslation('blocks', 'nl');
-    expect($blocks[0]['data']['questions'])->toHaveCount(2);
-    expect($blocks[0]['data']['questions'][1]['question'])->toBe('Nieuw?');
+    expect($blocks)->toHaveCount(1);
+    expect($blocks[0]['type'])->toBe('faq');
+    expect($blocks[0]['data']['questions'])->toHaveCount(1);
+    expect($blocks[0]['data']['questions'][0]['question'])->toBe('Nieuw?');
 });

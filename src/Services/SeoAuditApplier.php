@@ -28,15 +28,26 @@ class SeoAuditApplier
 
         $result = new SeoAuditApplyResult();
 
+        $blockIds = (array) ($selectedIds['blocks'] ?? []);
+        $faqIds = array_map('intval', (array) ($selectedIds['faqs'] ?? []));
+
+        $hasNewBlock = ! empty($blockIds) && $audit->blockSuggestions()
+            ->whereIn('id', $blockIds)
+            ->where('is_new_block', true)
+            ->exists();
+
+        if ($hasNewBlock || ! empty($faqIds)) {
+            $this->clearAllSubjectBlocks($subject, $audit, $userId);
+        }
+
         foreach ((array) ($selectedIds['meta'] ?? []) as $id) {
             $this->applyMeta($audit, $subject, (int) $id, $userId, $result);
         }
 
-        foreach ((array) ($selectedIds['blocks'] ?? []) as $id) {
+        foreach ($blockIds as $id) {
             $this->applyBlock($audit, $subject, (int) $id, $userId, $result);
         }
 
-        $faqIds = array_map('intval', (array) ($selectedIds['faqs'] ?? []));
         $faqTarget = (string) ($selectedIds['faq_target'] ?? 'existing');
         if (! empty($faqIds)) {
             $this->applyFaqs($audit, $subject, $faqIds, $faqTarget, $userId, $result);
@@ -105,10 +116,12 @@ class SeoAuditApplier
                     }
                     $subject->save();
                 }
-            } elseif (str_starts_with($key, 'block.') && method_exists($subject, 'customBlocks') && $subject->customBlocks) {
-                $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $locale) ?? []);
+            } elseif ($key === 'blocks.wipe' && method_exists($subject, 'customBlocks')) {
+                $restored = is_array($previous) ? $previous : [];
+                $this->writeBlocks($subject, $locale, $restored);
+            } elseif (str_starts_with($key, 'block.') && method_exists($subject, 'customBlocks')) {
+                $blocks = $this->loadBlocks($subject, $locale);
                 if (str_starts_with($key, 'block.new.')) {
-                    // pop last block with matching type
                     $type = substr($key, strlen('block.new.'));
                     for ($i = count($blocks) - 1; $i >= 0; $i--) {
                         if (($blocks[$i]['type'] ?? null) === $type) {
@@ -123,13 +136,10 @@ class SeoAuditApplier
                         $blocks[(int) $idx]['data'][$fieldKey] = $previous;
                     }
                 }
-                $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
-                $subject->customBlocks->save();
-                $this->syncSubjectContent($subject, $locale, $blocks);
-            } elseif (str_starts_with($key, 'faq.') && method_exists($subject, 'customBlocks') && $subject->customBlocks) {
-                $blocks = (array) ($subject->customBlocks->getTranslation('blocks', $locale) ?? []);
+                $this->writeBlocks($subject, $locale, $blocks);
+            } elseif (str_starts_with($key, 'faq.') && method_exists($subject, 'customBlocks')) {
+                $blocks = $this->loadBlocks($subject, $locale);
                 if ($key === 'faq.new') {
-                    // pop the last faq-typed block
                     for ($i = count($blocks) - 1; $i >= 0; $i--) {
                         if (in_array($blocks[$i]['type'] ?? null, (array) config('dashed-marketing.seo_faq_block_types', ['faq']), true)) {
                             array_splice($blocks, $i, 1);
@@ -143,9 +153,7 @@ class SeoAuditApplier
                         $blocks[$idx]['data'] = $previous;
                     }
                 }
-                $subject->customBlocks->setTranslation('blocks', $locale, $blocks);
-                $subject->customBlocks->save();
-                $this->syncSubjectContent($subject, $locale, $blocks);
+                $this->writeBlocks($subject, $locale, $blocks);
             } elseif (str_starts_with($key, 'structured_data.')) {
                 $schema = substr($key, strlen('structured_data.'));
                 if ($previous === null) {
@@ -173,21 +181,189 @@ class SeoAuditApplier
     }
 
     /**
-     * Mirror the blocks array to the subject's legacy translatable `content` column
-     * so the frontend (which reads `$subject->content`) shows the same blocks as
-     * the `CustomBlock.blocks` storage used by the Filament builder.
+     * Load the current blocks array for a subject + locale.
+     *
+     * Prefers the legacy translatable `content` column (what the frontend actually
+     * renders via `<x-blocks :content="$subject->content">`). Falls back to the
+     * `CustomBlock.blocks` relation for subjects that never used the legacy column.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function loadBlocks(Model $subject, string $locale): array
+    {
+        $raw = null;
+
+        $translatable = (array) ($subject->translatable ?? []);
+        if (in_array('content', $translatable, true) && method_exists($subject, 'getTranslation')) {
+            try {
+                $raw = $subject->getTranslation('content', $locale);
+            } catch (Throwable) {
+                $raw = null;
+            }
+        }
+
+        if (! is_array($raw) || $this->extractBlockItems($raw) === []) {
+            if (method_exists($subject, 'customBlocks')) {
+                $customBlocks = $subject->customBlocks()->first();
+                if ($customBlocks) {
+                    try {
+                        $raw = $customBlocks->getTranslation('blocks', $locale);
+                    } catch (Throwable) {
+                        //
+                    }
+                }
+            }
+        }
+
+        return $this->extractBlockItems(is_array($raw) ? $raw : []);
+    }
+
+    /**
+     * Filter a raw blocks container to only the valid, numerically-keyed block
+     * envelopes. Drops null entries, `savefirst`-style legacy junk, and
+     * named-key dictionary entries (e.g. `top-content`) that belong to other
+     * consumers.
+     *
+     * @param  array<array-key, mixed>  $raw
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractBlockItems(array $raw): array
+    {
+        $out = [];
+        foreach ($raw as $key => $value) {
+            if (! is_int($key) && ! (is_string($key) && ctype_digit($key))) {
+                continue;
+            }
+            if (! is_array($value)) {
+                continue;
+            }
+            if (! isset($value['type']) || ! array_key_exists('data', $value)) {
+                continue;
+            }
+            $out[] = $value;
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * Write the blocks array back to the subject. Writes a clean, numerically-
+     * indexed array to the legacy translatable `content` column (frontend
+     * source of truth) and preserves any non-numeric keys in `CustomBlock.blocks`
+     * (e.g. `top-content` on ProductCategory) while replacing the numeric
+     * portion with the new blocks and stripping legacy `savefirst`-style junk.
      *
      * @param  array<int, array<string, mixed>>  $blocks
      */
-    protected function syncSubjectContent(Model $subject, string $locale, array $blocks): void
+    protected function writeBlocks(Model $subject, string $locale, array $blocks): void
     {
+        $blocks = $this->moveFaqBlocksToEnd(array_values($blocks));
+
         $translatable = (array) ($subject->translatable ?? []);
-        if (! in_array('content', $translatable, true) || ! method_exists($subject, 'setTranslation')) {
-            return;
+        if (in_array('content', $translatable, true) && method_exists($subject, 'setTranslation')) {
+            $subject->setTranslation('content', $locale, $blocks);
+            $subject->save();
         }
 
-        $subject->setTranslation('content', $locale, $blocks);
-        $subject->save();
+        if (method_exists($subject, 'customBlocks')) {
+            $customBlocks = $subject->customBlocks()->firstOrNew([
+                'blockable_type' => $subject::class,
+                'blockable_id' => $subject->getKey(),
+            ]);
+
+            $existing = [];
+            try {
+                $existing = (array) ($customBlocks->getTranslation('blocks', $locale) ?? []);
+            } catch (Throwable) {
+                $existing = [];
+            }
+
+            $preserved = [];
+            foreach ($existing as $key => $value) {
+                if (is_int($key) || (is_string($key) && ctype_digit($key))) {
+                    continue;
+                }
+                if ($value === null) {
+                    continue;
+                }
+                $preserved[$key] = $value;
+            }
+
+            $customBlocks->setTranslation('blocks', $locale, array_merge($blocks, $preserved));
+            $customBlocks->save();
+        }
+    }
+
+    /**
+     * Clear all existing blocks on the subject at the start of an apply batch.
+     * Logs the previous blocks array in a `ContentApplyLog` so rollbackAudit
+     * can restore the pre-apply state. This mirrors an intentionally-destructive
+     * "replace entire blocks-list" apply semantic — selected suggestions are
+     * the only blocks that remain after `applySelected()` completes.
+     */
+    protected function clearAllSubjectBlocks(Model $subject, SeoAudit $audit, ?int $userId): void
+    {
+        $previous = $this->loadBlocks($subject, $audit->locale);
+
+        $this->writeBlocks($subject, $audit->locale, []);
+
+        if (! empty($previous)) {
+            ContentApplyLog::create([
+                'seo_improvement_id' => null,
+                'audit_id' => $audit->id,
+                'subject_type' => $subject::class,
+                'subject_id' => $subject->getKey(),
+                'field_key' => 'blocks.wipe',
+                'previous_value' => json_encode($previous),
+                'new_value' => json_encode([]),
+                'applied_by' => $userId,
+                'applied_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Ensure FAQ blocks always appear at the end of the blocks list, preserving
+     * the relative order of non-FAQ blocks and of FAQ blocks amongst each other.
+     *
+     * @param  array<int, array<string, mixed>>  $blocks
+     * @return array<int, array<string, mixed>>
+     */
+    protected function moveFaqBlocksToEnd(array $blocks): array
+    {
+        $faqTypes = (array) config('dashed-marketing.seo_faq_block_types', ['faq']);
+
+        $nonFaq = [];
+        $faq = [];
+        foreach ($blocks as $block) {
+            if (is_array($block) && in_array($block['type'] ?? null, $faqTypes, true)) {
+                $faq[] = $block;
+            } else {
+                $nonFaq[] = $block;
+            }
+        }
+
+        return array_values(array_merge($nonFaq, $faq));
+    }
+
+    /**
+     * Convert an HTML string into the TipTap JSON document structure that
+     * Filament's RichEditor / Builder-content-block expects.
+     *
+     * @return array<string, mixed>
+     */
+    protected function htmlToTiptapDoc(string $html): array
+    {
+        try {
+            $doc = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($html)->toArray();
+            if (is_array($doc) && ! empty($doc)) {
+                return $doc;
+            }
+        } catch (Throwable) {
+            //
+        }
+
+        return ['type' => 'doc', 'content' => []];
     }
 
     protected function applyMeta(SeoAudit $audit, Model $subject, int $id, ?int $userId, SeoAuditApplyResult $result): void
@@ -274,16 +450,7 @@ class SeoAuditApplier
                 throw new RuntimeException('Subject heeft geen customBlocks relatie');
             }
 
-            $customBlocks = $subject->customBlocks()->firstOrNew([
-                'blockable_type' => $subject::class,
-                'blockable_id' => $subject->getKey(),
-            ]);
-            $blocks = [];
-            try {
-                $blocks = (array) ($customBlocks->getTranslation('blocks', $audit->locale) ?? []);
-            } catch (Throwable) {
-                $blocks = [];
-            }
+            $blocks = $this->loadBlocks($subject, $audit->locale);
 
             $previous = null;
             $newValue = null;
@@ -295,10 +462,11 @@ class SeoAuditApplier
                 if ($isOutline) {
                     $sort = (int) substr($sug->block_key, strlen('outline.'));
                     $data = [
-                        'in_container' => true,
+                        'content' => $this->htmlToTiptapDoc((string) $sug->suggested_value),
+                        'full-width' => false,
                         'top_margin' => $sort === 0,
+                        'in_container' => true,
                         'bottom_margin' => true,
-                        'content' => (string) $sug->suggested_value,
                     ];
                 } else {
                     $decoded = json_decode((string) $sug->suggested_value, true);
@@ -353,10 +521,8 @@ class SeoAuditApplier
 
             $appliedIndexForClosure = $sug->is_new_block ? ($appliedIndex ?? null) : null;
 
-            DB::transaction(function () use ($customBlocks, $audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey, $appliedIndexForClosure) {
-                $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
-                $customBlocks->save();
-                $this->syncSubjectContent($subject, $audit->locale, $blocks);
+            DB::transaction(function () use ($audit, $blocks, $subject, $sug, $userId, $previous, $newValue, $logKey, $appliedIndexForClosure) {
+                $this->writeBlocks($subject, $audit->locale, $blocks);
 
                 ContentApplyLog::create([
                     'seo_improvement_id' => null,
@@ -408,20 +574,21 @@ class SeoAuditApplier
             return;
         }
 
-        $items = $sugs->map(fn ($f) => [
-            'question' => (string) $f->question,
-            'description' => (string) $f->answer,
-            'title' => (string) $f->question,
-            'content' => (string) $f->answer,
-        ])->values()->all();
+        $items = $sugs->map(function ($f) {
+            $answer = (string) $f->answer;
+            $answerDoc = $this->htmlToTiptapDoc($answer);
+
+            return [
+                'question' => (string) $f->question,
+                'description' => $answerDoc,
+                'title' => (string) $f->question,
+                'content' => $answerDoc,
+            ];
+        })->values()->all();
 
         try {
             DB::transaction(function () use ($subject, $audit, $sugs, $items, $target, $userId) {
-                $customBlocks = $subject->customBlocks()->firstOrNew([
-                    'blockable_type' => $subject::class,
-                    'blockable_id' => $subject->getKey(),
-                ]);
-                $blocks = (array) ($customBlocks->getTranslation('blocks', $audit->locale) ?? []);
+                $blocks = $this->loadBlocks($subject, $audit->locale);
                 $faqTypes = (array) config('dashed-marketing.seo_faq_block_types', ['faq']);
 
                 $previous = null;
@@ -458,9 +625,7 @@ class SeoAuditApplier
                     $logKey = "faq.{$faqIndex}";
                 }
 
-                $customBlocks->setTranslation('blocks', $audit->locale, $blocks);
-                $customBlocks->save();
-                $this->syncSubjectContent($subject, $audit->locale, $blocks);
+                $this->writeBlocks($subject, $audit->locale, $blocks);
 
                 ContentApplyLog::create([
                     'seo_improvement_id' => null,

@@ -2,6 +2,58 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.15.5 - 2026-04-24
+
+### Fixed
+
+- Kritieke fix: blokken worden nu opgeslagen met `data.content` als TipTap-JSON
+  (`{type: 'doc', content: [...]}`) in plaats van als raw HTML-string. Dat is
+  het formaat dat Filament's Builder + RichEditor verwacht. Eerder crashte
+  Filament met "Argument #1 (\$itemData) must be of type array, null given"
+  bij het openen van de page-editor na een apply.
+- FAQ-apply gebruikt ook TipTap-JSON voor `description` + `content` binnen
+  `questions`, consistent met hoe Filament FAQ-items opslaat.
+- `loadBlocks()` filtert niet-numerieke keys (`savefirst`, `top-content`) en
+  null-entries uit bij het inlezen, zodat corrupte state de apply niet
+  blokkeert.
+- `writeBlocks()` preservert niet-numerieke keys in `CustomBlock.blocks` (bv.
+  `top-content` bij ProductCategory) en verwijdert alleen legacy null-junk.
+  Subject.content krijgt een pure numerieke array (dat is wat Filament Builder
+  verwacht).
+- Applier wipete bestaande legacy blokken op `Page.content` en
+  vergelijkbare subjects.
+- FAQ-blokken worden na elke apply automatisch naar het einde van de blokken-
+  lijst verplaatst. Nieuw toegepaste content-blokken komen daarmee altijd vóór
+  een bestaand FAQ-blok op de pagina.
+- `GenerateOutlineContentJob` slaat FAQ-achtige headings ("Veelgestelde vragen",
+  "FAQ", "Frequently Asked Questions", etc.) over bij het genereren van
+  content-blokken. Die secties worden al afgedekt door het aparte FAQ-blok —
+  voorheen werden ze zowel als content-blok (met de FAQ-lijst in HTML) als
+  apart FAQ-blok toegevoegd aan de pagina.
+
+### BREAKING
+
+- Apply-gedrag is nu **wipe-first** voor block/FAQ suggesties: zodra er ook maar
+  één `is_new_block=true` block-suggestie of FAQ-suggestie in de apply-batch zit,
+  worden alle bestaande blokken op het subject eerst gewist. Daarna worden
+  alleen de geselecteerde suggesties geplaatst. Pure meta-only applies (zonder
+  blokken/FAQ) laten de blokken ongemoeid. Een `ContentApplyLog` met
+  `field_key='blocks.wipe'` en de oude blokken-array wordt aangemaakt zodat
+  `rollbackAudit` de pre-apply state kan herstellen. De applier laadde blokken uit `CustomBlock.blocks`
+  (vaak leeg voor legacy pagina's) en schreef die lege set vervolgens terug
+  naar `$subject->content`, waardoor alle bestaande blokken verdwenen. Applier
+  gebruikt nu een nieuwe `loadBlocks()` helper die eerst `$subject->content`
+  als source of truth pakt (matcht wat de frontend en de legacy Filament
+  Builder tonen) en alleen bij echt lege content terugvalt op `CustomBlock`.
+  `writeBlocks()` mirrort dezelfde array naar beide opslagplekken.
+- Outline-blok-data bevat nu `full-width: false` zodat de structuur exact
+  matcht met hoe Filament's Builder handmatig aangemaakte content-blokken
+  opslaat. Dit voorkomt "Argument #1 (\$itemData) must be of type array, null
+  given"-errors wanneer Filament de Builder-items ophaalt.
+- `detectExistingFaqBlock()` leest ook uit `$subject->content` eerst zodat
+  FAQ-target-detectie consistent is met wat er daadwerkelijk op de pagina
+  staat.
+
 ## v4.15.4 - 2026-04-24
 
 ### Fixed

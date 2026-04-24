@@ -189,3 +189,27 @@ it('clears content_generating_at in failed() hook', function () {
 
     expect($audit->outline->fresh()->content_generating_at)->toBeNull();
 });
+
+it('skips FAQ-like headings so they do not duplicate the FAQ block', function () {
+    $audit = makeAuditWithOutline([
+        ['level' => 2, 'text' => 'Eerste sectie'],
+        ['level' => 2, 'text' => 'Veelgestelde vragen over de draken'],
+        ['level' => 2, 'text' => 'FAQ'],
+        ['level' => 2, 'text' => 'Frequently Asked Questions'],
+        ['level' => 2, 'text' => 'Laatste sectie'],
+    ]);
+
+    Ai::shouldReceive('json')
+        ->times(2)
+        ->andReturn(['body' => '<p>Body</p>']);
+
+    (new GenerateOutlineContentJob($audit->id))->handle();
+
+    $suggestions = SeoAuditBlockSuggestion::where('audit_id', $audit->id)
+        ->orderBy('block_key')
+        ->get();
+
+    expect($suggestions)->toHaveCount(2);
+    expect($suggestions[0]->suggested_value)->toContain('Eerste sectie');
+    expect($suggestions[1]->suggested_value)->toContain('Laatste sectie');
+});
