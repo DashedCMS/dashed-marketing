@@ -126,7 +126,7 @@ class GenerateImageAction extends Action
      *
      * @return array<int, string>
      */
-    private function generateDistinctImagePrompts($record, int $count, ?string $subjectType = null, $subjectId = null): array
+    private function generateDistinctImagePrompts($record, int $count, ?string $subjectType = null, $subjectId = null, ?string $userInstructions = null): array
     {
         if (! $record || $count < 1) {
             return [];
@@ -144,20 +144,39 @@ class GenerateImageAction extends Action
             ? "\n\nGekoppeld onderwerp (de afbeelding moet passen bij de inhoud van dit item):\n{$subjectContext}"
             : '';
 
-        $prompt = <<<PROMPT
-        Genereer {$count} sterk verschillende image prompts in het Engels voor één social media post.
-        Elke prompt moet visueel een ander invalshoek pakken (compositie, perspectief, lighting, setting, sfeer)
-        maar visueel passen bij hetzelfde merk en dezelfde post-boodschap. Beschrijf subject, compositie, lighting,
-        color palette, mood en stijl. Geen tekst in het beeld tenzij expliciet gevraagd.
+        $userSection = ($userInstructions !== null && trim($userInstructions) !== '')
+            ? "\n\nGebruikersinstructies (verwerk deze volledig in elke prompt):\n".trim($userInstructions)
+            : '';
 
-        Caption van de post:
+        $prompt = <<<PROMPT
+        Generate {$count} strongly distinct, production-grade image prompts in ENGLISH for a single social media post.
+
+        ## Quality bar (NON-NEGOTIABLE)
+        Each prompt MUST read like a senior product photographer's brief. That means:
+        - Open with a concrete style declaration: "Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", "Documentary candid of...", "High-end studio still life of..." — pick what fits the brand.
+        - Name the SUBJECT precisely (what is in frame, how many, in what arrangement).
+        - Name a concrete SETTING (not "background" — give a real place: e.g. "wooden table outside a typical Dutch canal house", "linen-covered marble countertop", "sunlit bedroom with sheer curtains").
+        - Name 3+ concrete PROPS / scene elements that reinforce the post's theme. If the user mentions a holiday, season or event, EXPAND it into specific iconography (e.g. King's Day → "small orange tulips, a tiny Dutch flag, orange streamers, orange crown decorations", Christmas → "pine sprigs, red berries, beeswax candles, linen napkins"). Never use vague phrases like "festive decorations" or "subtle accents".
+        - Specify LIGHTING with a real time-of-day or quality (e.g. "soft natural daylight", "golden hour", "moody overcast", "warm tungsten side-light").
+        - Specify CAMERA / OPTICS: lens (e.g. "50mm", "85mm macro", "35mm wide"), depth of field (e.g. "shallow depth of field", "everything in sharp focus"), framing (e.g. "close-up", "three-quarter angle", "overhead flat-lay").
+        - End with a short BRAND VIBE (e.g. "Cozy, premium lifestyle vibe", "minimalist Scandinavian, calm and quiet", "bold and energetic streetwear").
+        - No text in the image unless the user explicitly asked for it.
+        - Each prompt should be ~50-120 words, dense and concrete. NEVER produce a generic abstract prompt with words like "stylish", "elegant", "modern aesthetic" without grounding them in concrete visuals.
+
+        ## Variation rule
+        Across the {$count} prompts, vary composition, angle, setting and light — but keep brand and subject coherent.
+
+        ## Inputs
+        Post caption:
         "{$caption}"
 
-        Alt-tekst:
+        Alt text:
         "{$altText}"
 
-        Basis prompt (gebruik als startpunt, varieer eromheen):
-        "{$seed}"{$subjectSection}
+        Seed prompt (use as a starting point, do not just copy):
+        "{$seed}"{$subjectSection}{$userSection}
+
+        If the user instructions above are short or thematic (e.g. just "King's Day", "for spring", "promote the new bundle"), you MUST EXPAND them into a full concrete scene per the quality bar — never echo a short brief back as the prompt.
 
         Retourneer UITSLUITEND geldig JSON in dit formaat:
         {
@@ -340,9 +359,65 @@ class GenerateImageAction extends Action
                         $set('prompts', array_fill(0, max(1, $count), ['text' => $base]));
                     }),
 
+                SchemaActions::make([
+                    Action::make('aiFillSamePrompt')
+                        ->label('Vul prompt met AI')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('info')
+                        ->visible(fn () => Ai::hasProvider())
+                        ->modalHeading('Image prompt genereren met AI')
+                        ->modalSubmitActionLabel('Genereer')
+                        ->schema([
+                            Textarea::make('instructions')
+                                ->label('Instructies voor de afbeelding (optioneel)')
+                                ->placeholder('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld')
+                                ->helperText('Hoe gedetailleerder, hoe beter de prompt aansluit op wat je wilt zien.')
+                                ->rows(4),
+                        ])
+                        ->action(function (array $data, callable $get, callable $set) use ($record): void {
+                            $instructionParts = array_filter([
+                                (string) ($get('same_prompt_text') ?? ''),
+                                (string) ($data['instructions'] ?? ''),
+                            ], fn ($v) => trim($v) !== '');
+
+                            $userInstructions = implode("\n\n", $instructionParts);
+
+                            $prompts = $this->generateDistinctImagePrompts(
+                                $record,
+                                1,
+                                $get('subject_type'),
+                                $get('subject_id'),
+                                $userInstructions,
+                            );
+
+                            $generated = $prompts[0] ?? null;
+                            if (! $generated) {
+                                Notification::make()
+                                    ->title('AI gaf geen geldige prompt terug')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $set('same_prompt_text', $generated);
+
+                            if ($record) {
+                                $record->update(['image_prompt' => $generated]);
+                            }
+
+                            Notification::make()
+                                ->title($record ? 'Prompt ingevuld en opgeslagen' : 'Prompt ingevuld')
+                                ->body($record ? null : 'Sla de post op om de prompt permanent te bewaren.')
+                                ->success()
+                                ->send();
+                        }),
+                ])
+                    ->visible(fn (callable $get) => (bool) $get('same_prompt')),
+
                 Textarea::make('same_prompt_text')
                     ->label('Image prompt')
-                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding.')
+                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding. Zelf invullen om eigen instructies mee te geven, of gebruik de knop "Vul prompt met AI" om een suggestie te laten maken op basis van de caption en eventuele extra instructies.')
                     ->default(fn () => (string) ($record?->image_prompt ?? ''))
                     ->rows(3)
                     ->required(fn (callable $get) => (bool) $get('same_prompt'))
@@ -354,13 +429,36 @@ class GenerateImageAction extends Action
                         ->icon('heroicon-o-sparkles')
                         ->color('info')
                         ->visible(fn () => Ai::hasProvider())
-                        ->action(function (callable $get, callable $set) use ($record): void {
+                        ->modalHeading('Image prompts genereren met AI')
+                        ->modalSubmitActionLabel('Genereer')
+                        ->schema([
+                            Textarea::make('instructions')
+                                ->label('Instructies voor de afbeeldingen (optioneel)')
+                                ->placeholder('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld')
+                                ->helperText('Wordt voor alle prompts gebruikt. Bestaande tekst in de promptvelden wordt ook meegenomen als context.')
+                                ->rows(4),
+                        ])
+                        ->action(function (array $data, callable $get, callable $set) use ($record): void {
                             $count = (int) ($get('image_count') ?: 1);
+                            $existingPrompts = (array) ($get('prompts') ?? []);
+                            $existingText = collect($existingPrompts)
+                                ->map(fn ($row) => trim((string) ($row['text'] ?? '')))
+                                ->filter()
+                                ->implode("\n\n");
+
+                            $instructionParts = array_filter([
+                                $existingText,
+                                (string) ($data['instructions'] ?? ''),
+                            ], fn ($v) => trim($v) !== '');
+
+                            $userInstructions = implode("\n\n", $instructionParts);
+
                             $prompts = $this->generateDistinctImagePrompts(
                                 $record,
                                 $count,
                                 $get('subject_type'),
                                 $get('subject_id'),
+                                $userInstructions,
                             );
 
                             if (empty($prompts)) {
@@ -374,8 +472,14 @@ class GenerateImageAction extends Action
 
                             $set('prompts', array_map(fn ($p) => ['text' => $p], $prompts));
 
+                            // Persist the first prompt as the post's seed image_prompt so it survives modal close.
+                            if ($record && ! empty($prompts[0])) {
+                                $record->update(['image_prompt' => $prompts[0]]);
+                            }
+
                             Notification::make()
-                                ->title('Prompts ingevuld')
+                                ->title($record ? 'Prompts ingevuld en eerste opgeslagen als seed' : 'Prompts ingevuld')
+                                ->body($record ? null : 'Sla de post op om de prompts permanent te bewaren.')
                                 ->success()
                                 ->send();
                         }),

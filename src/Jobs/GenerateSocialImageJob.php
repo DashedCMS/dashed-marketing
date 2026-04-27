@@ -91,10 +91,14 @@ class GenerateSocialImageJob implements ShouldQueue
     {
         $userPrompt = trim($userPrompt);
 
-        $prompt = 'Keep the product in the input image 100% identical: same exact shape, silhouette, '
-            .'proportions, colors, materials, textures, logos, labels and every fine detail. '
-            .'Do not redraw, restyle, recolor or reshape the product in any way. '
-            .'Only change the background, environment, lighting and surrounding scene as described. '
+        $prompt = 'CRITICAL: The product / main subject in the input image MUST stay 100% pixel-identical. '
+            .'Same exact shape, silhouette, proportions, colors, materials, textures, logos, labels, typography, '
+            .'reflections and every fine detail. Do NOT redraw, restyle, recolor, reshape, retouch, upscale, '
+            .'sharpen, smooth, denoise, or alter the product in any way whatsoever. Treat the product pixels '
+            .'as immutable - copy them as-is into the new scene. '
+            .'You may ONLY change the background, environment, surrounding scene, lighting on the surroundings '
+            .'and props placed around (not on) the product, as described below. '
+            .'If you are unsure whether a change touches the product, do not make that change. '
             ."\n\nScene: ".$userPrompt;
 
         return [

@@ -58,7 +58,7 @@ class GenerateSocialPostJob implements ShouldQueue
             'status' => 'concept',
             'caption' => $firstCaption,
             'channel_captions' => $result['channel_captions'],
-            'captions_per_channel' => count($result['channel_captions']) > 1,
+            'captions_per_channel' => false,
             'hashtags' => $result['hashtags'] ?? null,
             'alt_text' => $result['alt_text'] ?? null,
             'image_prompt' => $result['image_prompt'] ?? null,
@@ -113,7 +113,7 @@ class GenerateSocialPostJob implements ShouldQueue
         2. **Waarde of emotie** - Lever iets: inzicht, herkenning, een tip, een verhaal, of een mening. Schrijf alsof je 1-op-1 met één persoon uit de doelgroep praat.
         3. **Stem & toon** - Houd je strikt aan de merkbeschrijving, tone of voice en doelgroep hierboven. Als er geen merkstem is: schrijf warm, menselijk en to-the-point.
         4. **Structuur** - Korte zinnen. Witregels voor ritme en scanbaarheid. Emoji's alleen als ze waarde toevoegen, nooit als decoratie. Geen clichés, geen buzzwords, geen AI-taal ("in een wereld waar...", "ontdek hoe...", "in deze snel veranderende tijd...").
-        5. **Call-to-action** - Sluit af met een heldere, passende CTA (reageren, opslaan, delen, klikken, DM'en, volgen). De CTA past bij het platform en het doel van de post.
+        5. **Call-to-action** - Sluit af met een heldere, passende CTA (reageren, opslaan, delen, DM'en, volgen). De CTA past bij het platform en het doel van de post. **Verwijs NOOIT naar "link in bio", "linkje in bio", "link in onze bio", "swipe up", "tap de link" of vergelijkbare bio-/link-verwijzingen** - die worden, als ze nodig zijn, los toegevoegd door de redacteur.
         6. **Platformfit** - Respecteer de caption lengte, hashtag aantallen en tips uit de platform-regels hierboven. Schrijf niet alsof het voor een ander platform is. Voor Instagram/TikTok: visueler, persoonlijker. Voor LinkedIn: zakelijker maar nog steeds menselijk. Voor X: scherp en compact. Voor Facebook: verhalend.
 
         ## Hashtags
@@ -122,8 +122,16 @@ class GenerateSocialPostJob implements ShouldQueue
         ## Alt-tekst
         Eén korte, beschrijvende alt-tekst voor de bijbehorende afbeelding. Beschrijf wat er letterlijk te zien is (onderwerp, setting, sfeer), niet wat het symboliseert. Max 2 zinnen.
 
-        ## Image prompt (Engels)
-        Eén gedetailleerde image prompt in het Engels. Beschrijf subject, compositie, lighting, color palette, mood en stijl. Moet visueel passen bij het merk en de toon van de caption. Geen tekst in het beeld tenzij expliciet gevraagd.
+        ## Image prompt (English, production-grade)
+        Write ONE image prompt in ENGLISH that reads like a senior product photographer's brief. It MUST:
+        - Open with a concrete style declaration ("Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", etc.).
+        - Name the subject precisely.
+        - Name a concrete setting — a real place, never just "background".
+        - Name 3+ concrete props / scene elements that reinforce the caption's theme. If the caption references a holiday, season or event, EXPAND it into specific iconography (King's Day → "small orange tulips, a tiny Dutch flag, orange streamers, orange crown decorations"; Christmas → "pine sprigs, red berries, beeswax candles"). Never use vague terms like "festive decorations" or "subtle accents".
+        - Specify lighting (e.g. "soft natural daylight", "golden hour", "moody overcast").
+        - Specify camera/optics: lens (50mm/85mm/35mm), depth of field, framing.
+        - End with a short brand vibe line.
+        - ~60-120 words, dense and concrete. No text in the image unless requested.
 
         Retourneer UITSLUITEND geldig JSON, zonder uitleg, zonder markdown fences:
         {

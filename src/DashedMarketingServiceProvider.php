@@ -4,6 +4,7 @@ namespace Dashed\DashedMarketing;
 
 use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
+use Dashed\DashedMarketing\Commands\GenerateProductPromptCommand;
 use Dashed\DashedMarketing\Commands\MigrateSeoImprovementsCommand;
 use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
 use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
@@ -44,6 +45,8 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
     public function bootingPackage()
     {
+        cms()->registerNavigationGroup('Marketing', 60);
+
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
@@ -410,6 +413,7 @@ MARKDOWN,
             ->hasConfigFile(['dashed-marketing', 'dashed-marketing-content'])
             ->hasViews('dashed-marketing')
             ->hasCommands([
+                GenerateProductPromptCommand::class,
                 MigrateSeoImprovementsCommand::class,
                 PublishDueSocialPostsCommand::class,
                 SocialNotifyDueCommand::class,

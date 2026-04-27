@@ -2,6 +2,71 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.16.0 - 2026-04-27
+
+### Added
+
+- `ProductPromptGenerator` service onder `Services/`. Vision-gebaseerde generator
+  die een productfoto + thema omzet naar een Engelstalige image-prompt voor
+  fal nano-banana / flux-kontext. Brand-voice (naam, story, writing style) en
+  productinfo (naam, materiaal, finish, dimensies, USP) worden dynamisch
+  meegegeven, dus geen hardcoded merken. Lock-zin "the product itself must
+  remain identical to the reference image..." wordt programmatisch geforceerd
+  in de output. Theme-tabel met 11 vooraf gevulde Nederlandse feestdagen
+  en seizoenen.
+- `GenerateProductPromptCommand` artisan-command:
+  `php artisan dashed:generate-product-prompt {imagePath} {theme}` met
+  `--model`, `--brand-name`, `--brand-story`, `--writing-style`,
+  `--product-name`, `--product-context`, `--instructions`, `--no-cache`.
+- `RegenerateImagePromptAction` modal heeft nu velden voor Thema en Productinfo
+  (auto-aangevuld vanuit gekoppeld subject) en gebruikt vision via
+  `ProductPromptGenerator` zodra de post een lokale productfoto heeft. Valt
+  terug op de oude text-only flow als er geen image is.
+- Per-kanaal `posted_at` tracking via nieuwe JSON kolom `posted_at_per_channel`
+  op `dashed__social_posts`. Migratie:
+  `2026_04_27_080000_add_posted_at_per_channel_to_social_posts.php`. De
+  Resultaat-sectie op de SocialPost edit-page toont per geselecteerd kanaal
+  de post-URL en posted-at tijd in een gestructureerde lijst.
+- Marketing-package registreert nu zijn eigen navigatiegroep via
+  `cms()->registerNavigationGroup('Marketing', 60)` bij boot, samen met de
+  nieuwe dashed-core registry.
+- `docs/product-prompts.md` met service-uitleg, voorbeelden, theme-lijst,
+  downstream nano-banana flow en tuning tips.
+
+### Changed
+
+- `Toggle::make('captions_per_channel')` heeft expliciete `->default(false)`.
+- `GenerateSocialPostJob` zet `captions_per_channel => false` na AI-generatie
+  in plaats van auto-aan op basis van caption-aantal.
+- "Publiceer nu" actie op de SocialPost edit-page zet `scheduled_at = now()`
+  voor dispatch zodat de planning-tijd het publicatie-moment reflecteert.
+- Caption- en image-prompt-generatie eist NOOIT verwijzingen naar
+  "link in bio", "linkje in bio", "swipe up", "tap de link" of vergelijkbare
+  bio of link frases.
+- Image-prompts worden nu in het Engels gegenereerd met een veel sterkere
+  "Product hero" framing: 60-70 procent van de descriptive weight moet over
+  het product zelf gaan (silhouet, finish, hoe licht erop valt), props zijn
+  uitsluitend supporting. Twee productspecifieke few-shot voorbeelden
+  toegevoegd.
+- `RegenerateCaptionAction` en `RegenerateImagePromptAction` werken nu ook op
+  de CreateSocialPost page. Form-state wordt via `data_set` plus
+  `refreshFormData` plus `fillForm` gesyncd zodat de nieuwe waarde
+  betrouwbaar zichtbaar EN persistent is. Op een bestaand record wordt
+  direct naar de DB geschreven.
+- `GenerateImageAction::aiFillSamePrompt` en `aiFillPrompts` schrijven de
+  gegenereerde prompt(s) ook naar `$record->image_prompt` zodat ze niet meer
+  verloren gaan bij modal-close.
+- AI-modals voor "Vul prompt met AI" accepteren nu vrije instructies, knop
+  staat boven het promptveld (single-prompt modus).
+- Reference-image edit (nano-banana) wrapper-prompt is verstrengd: expliciete
+  "MUST stay 100% pixel-identical, do NOT redraw/restyle/recolor/reshape/
+  retouch/upscale/sharpen/smooth/denoise/alter" instructie.
+
+### Migration
+
+- Run `php artisan migrate` om `posted_at_per_channel` toe te voegen aan
+  `dashed__social_posts`.
+
 ## v4.15.7 - 2026-04-24
 
 ### Added

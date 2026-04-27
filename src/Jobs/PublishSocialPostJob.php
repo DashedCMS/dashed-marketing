@@ -33,17 +33,27 @@ class PublishSocialPostJob implements ShouldQueue
         $attempt = $this->post->retry_count + 1;
 
         if ($result->success) {
+            $now = now();
             $update = [
                 'status' => 'posted',
-                'posted_at' => now(),
+                'posted_at' => $now,
                 'retry_count' => $attempt,
             ];
+
+            $channels = is_array($this->post->channels) ? $this->post->channels : [];
+            $perChannel = is_array($this->post->posted_at_per_channel) ? $this->post->posted_at_per_channel : [];
+            foreach ($channels as $slug) {
+                $perChannel[$slug] = $now->toIso8601String();
+            }
+            $update['posted_at_per_channel'] = $perChannel;
 
             if ($result->externalId) {
                 $update['external_id'] = $result->externalId;
                 // External adapter: actual state is confirmed by the sync-post-statuses polling command
                 $update['status'] = $this->post->scheduled_at?->isFuture() ? 'scheduled' : 'publishing';
                 unset($update['posted_at']);
+                // Per-channel posted_at is also confirmed by polling, so clear pre-fill in that case
+                unset($update['posted_at_per_channel']);
             }
 
             if ($result->externalUrl) {

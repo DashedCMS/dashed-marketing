@@ -145,6 +145,7 @@ class SocialPostResource extends Resource
                         Toggle::make('captions_per_channel')
                             ->label('Caption per kanaal aanpassen')
                             ->helperText('Wanneer aan: elk kanaal krijgt zijn eigen caption hieronder. Wanneer uit: de standaard caption wordt overal gebruikt.')
+                            ->default(false)
                             ->live()
                             ->columnSpanFull(),
                         TagsInput::make('hashtags')
@@ -320,8 +321,83 @@ class SocialPostResource extends Resource
 
                 Section::make('Resultaat')
                     ->schema([
+                        Placeholder::make('per_channel_results')
+                            ->label('Per kanaal')
+                            ->columnSpanFull()
+                            ->content(function (?SocialPost $record): HtmlString|string {
+                                if (! $record) {
+                                    return '-';
+                                }
+
+                                $channels = is_array($record->channels) ? $record->channels : [];
+                                if (empty($channels)) {
+                                    return new HtmlString('<em>Geen kanalen geselecteerd.</em>');
+                                }
+
+                                $publishedUrls = is_array($record->published_urls) ? $record->published_urls : [];
+                                $postedAtPerChannel = is_array($record->posted_at_per_channel) ? $record->posted_at_per_channel : [];
+                                $failed = is_array($record->failed_platforms) ? $record->failed_platforms : [];
+
+                                $rowCls = 'flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800';
+                                $labelCls = 'font-medium text-gray-900 dark:text-gray-100';
+                                $metaCls = 'text-xs text-gray-500 dark:text-gray-400';
+                                $linkCls = 'text-primary-600 hover:underline dark:text-primary-400';
+                                $badgeOkCls = 'inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-900/30 dark:text-success-300';
+                                $badgeFailCls = 'inline-flex items-center rounded-full bg-danger-50 px-2 py-0.5 text-xs font-medium text-danger-700 dark:bg-danger-900/30 dark:text-danger-300';
+                                $badgePendingCls = 'inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200';
+
+                                $html = '<div class="space-y-2">';
+
+                                foreach ($channels as $slug) {
+                                    if (! is_string($slug) || $slug === '') {
+                                        continue;
+                                    }
+
+                                    $label = static::resolveChannelLabel($slug);
+                                    $url = $publishedUrls[$slug] ?? null;
+                                    $postedAtRaw = $postedAtPerChannel[$slug] ?? null;
+                                    $isFailed = in_array($slug, $failed, true);
+
+                                    $postedAt = null;
+                                    if ($postedAtRaw) {
+                                        try {
+                                            $postedAt = \Illuminate\Support\Carbon::parse($postedAtRaw)
+                                                ->timezone('Europe/Amsterdam')
+                                                ->format('d-m-Y H:i');
+                                        } catch (\Throwable $e) {
+                                            $postedAt = null;
+                                        }
+                                    }
+
+                                    $html .= '<div class="'.$rowCls.'">';
+                                    $html .= '<div class="flex flex-col gap-0.5">';
+                                    $html .= '<span class="'.$labelCls.'">'.e($label).'</span>';
+                                    if ($postedAt) {
+                                        $html .= '<span class="'.$metaCls.'">Gepost op '.e($postedAt).'</span>';
+                                    } elseif (! $isFailed) {
+                                        $html .= '<span class="'.$metaCls.'">Nog niet gepost</span>';
+                                    }
+                                    $html .= '</div>';
+
+                                    $html .= '<div class="flex items-center gap-2">';
+                                    if ($isFailed) {
+                                        $html .= '<span class="'.$badgeFailCls.'">Mislukt</span>';
+                                    } elseif ($url) {
+                                        $html .= '<span class="'.$badgeOkCls.'">Gepost</span>';
+                                        $html .= '<a href="'.e($url).'" target="_blank" rel="noopener" class="'.$linkCls.'">Bekijk ↗</a>';
+                                    } else {
+                                        $html .= '<span class="'.$badgePendingCls.'">In behandeling</span>';
+                                    }
+                                    $html .= '</div>';
+                                    $html .= '</div>';
+                                }
+
+                                $html .= '</div>';
+
+                                return new HtmlString($html);
+                            }),
                         TextInput::make('post_url')
-                            ->label('Post URL')
+                            ->label('Post URL (algemeen)')
                             ->url()
                             ->nullable()
                             ->columnSpanFull(),

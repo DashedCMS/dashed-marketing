@@ -23,6 +23,7 @@ class SocialPost extends Model
         'images',
         'scheduled_at',
         'posted_at',
+        'posted_at_per_channel',
         'post_url',
         'channel_captions',
         'captions_per_channel',
@@ -47,6 +48,7 @@ class SocialPost extends Model
     protected $casts = [
         'scheduled_at' => 'datetime',
         'posted_at' => 'datetime',
+        'posted_at_per_channel' => 'array',
         'performance_data' => 'array',
         'hashtags' => 'array',
         'channels' => 'array',

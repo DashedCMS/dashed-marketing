@@ -38,14 +38,7 @@ class RegenerateCaptionAction
             ])
             ->action(function (array $data, $livewire) use ($channelSlug) {
                 $record = $livewire->record ?? null;
-                if (! $record instanceof SocialPost) {
-                    Notification::make()
-                        ->title('Kan record niet vinden')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
+                $record = $record instanceof SocialPost ? $record : null;
 
                 try {
                     $formState = $livewire->form->getState();
@@ -71,34 +64,73 @@ class RegenerateCaptionAction
                 }
 
                 if ($channelSlug === null) {
-                    $record->update(['caption' => $newCaption]);
-                    $livewire->refreshFormData(['caption']);
+                    if ($record) {
+                        $record->update(['caption' => $newCaption]);
+                        $livewire->record?->refresh();
+                    }
+                    self::syncFormField($livewire, 'caption', $newCaption);
                 } else {
-                    $channelCaptions = $record->channel_captions ?? [];
-                    $channelCaptions[$channelSlug] = $newCaption;
-                    $record->update(['channel_captions' => $channelCaptions]);
-                    $livewire->refreshFormData(['channel_captions']);
+                    $current = $record
+                        ? ($record->channel_captions ?? [])
+                        : (array) ($formState['channel_captions'] ?? []);
+                    $current[$channelSlug] = $newCaption;
+
+                    if ($record) {
+                        $record->update(['channel_captions' => $current]);
+                        $livewire->record?->refresh();
+                    }
+                    self::syncFormField($livewire, 'channel_captions', $current);
+                    self::syncFormField($livewire, "channel_captions.{$channelSlug}", $newCaption);
                 }
 
                 Notification::make()
-                    ->title('Caption gegenereerd')
+                    ->title($record ? 'Caption gegenereerd en opgeslagen' : 'Caption gegenereerd')
+                    ->body($record ? null : 'Sla de post op om de caption permanent te bewaren.')
                     ->success()
                     ->send();
             });
     }
 
-    private static function generate(SocialPost $record, ?string $channelSlug, array $formState, string $instructions): ?string
+    /**
+     * Push a value into the Livewire component's form state by every available
+     * mechanism so the textarea actually shows the new caption AND a subsequent
+     * form save writes the new caption to the DB instead of the stale form state.
+     */
+    private static function syncFormField($livewire, string $path, mixed $value): void
+    {
+        if (isset($livewire->data) && is_array($livewire->data)) {
+            data_set($livewire->data, $path, $value);
+        }
+
+        $rootKey = explode('.', $path, 2)[0];
+
+        try {
+            $livewire->refreshFormData([$rootKey]);
+        } catch (\Throwable $e) {
+            // Fall back to a fillForm hydration; on Create pages refreshFormData may
+            // throw because there is no bound record.
+            if (method_exists($livewire, 'fillForm')) {
+                try {
+                    $livewire->fillForm($livewire->data ?? []);
+                } catch (\Throwable) {
+                    // Last resort: leave the data_set above as the source of truth.
+                }
+            }
+        }
+    }
+
+    private static function generate(?SocialPost $record, ?string $channelSlug, array $formState, string $instructions): ?string
     {
         $currentCaption = $channelSlug === null
-            ? (string) ($formState['caption'] ?? $record->caption ?? '')
-            : (string) ($formState['channel_captions'][$channelSlug] ?? ($record->channel_captions[$channelSlug] ?? '') ?? '');
+            ? (string) ($formState['caption'] ?? $record?->caption ?? '')
+            : (string) ($formState['channel_captions'][$channelSlug] ?? ($record?->channel_captions[$channelSlug] ?? '') ?? '');
 
-        $defaultCaption = (string) ($formState['caption'] ?? $record->caption ?? '');
-        $channels = $formState['channels'] ?? $record->channels ?? [];
-        $type = $formState['type'] ?? $record->type ?? 'post';
+        $defaultCaption = (string) ($formState['caption'] ?? $record?->caption ?? '');
+        $channels = $formState['channels'] ?? $record?->channels ?? [];
+        $type = $formState['type'] ?? $record?->type ?? 'post';
 
         $subject = null;
-        if ($record->subject_type && $record->subject_id && class_exists($record->subject_type)) {
+        if ($record && $record->subject_type && $record->subject_id && class_exists($record->subject_type)) {
             $subject = $record->subject_type::find($record->subject_id);
         }
 
@@ -149,7 +181,7 @@ class RegenerateCaptionAction
         ## Opdracht
         Herschrijf de caption voor deze social media post. {$channelFocusSection}
 
-        Houd je aan dezelfde kwaliteitseisen: sterke hook, concrete waarde, platform-passende toon, korte zinnen, duidelijke CTA, geen AI-clichés.
+        Houd je aan dezelfde kwaliteitseisen: sterke hook, concrete waarde, platform-passende toon, korte zinnen, duidelijke CTA, geen AI-clichés. Verwijs NOOIT naar "link in bio", "linkje in bio", "swipe up", "tap de link" of vergelijkbare bio-/link-verwijzingen.
 
         {$channelRules}
 

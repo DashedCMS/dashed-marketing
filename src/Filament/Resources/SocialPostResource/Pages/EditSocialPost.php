@@ -30,6 +30,9 @@ class EditSocialPost extends EditRecord
                 ->modalHeading('Post publiceren?')
                 ->modalDescription('De post wordt via de actieve adapter gepubliceerd naar de geselecteerde kanalen.')
                 ->action(function () {
+                    $this->record->update(['scheduled_at' => now()]);
+                    $this->refreshFormData(['scheduled_at']);
+
                     PublishSocialPostJob::dispatch($this->record);
 
                     Notification::make()
