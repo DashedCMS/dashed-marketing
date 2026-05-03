@@ -79,13 +79,13 @@ All notable changes to `dashed-marketing`.
   (vijfde constructor-argument). Geef null mee voor het oude gedrag
   (`$subject->locale ?? app()->getLocale()`).
 - `SeoAuditResource` listing heeft nu bulk-acties:
-  - **Archiveren** — status naar `archived` zonder data-verlies.
-  - **Opnieuw genereren** — dispatcht een nieuwe audit per record met
+  - **Archiveren** - status naar `archived` zonder data-verlies.
+  - **Opnieuw genereren** - dispatcht een nieuwe audit per record met
     dezelfde taal en instructie; bestaand audit wordt gearchiveerd.
-  - **Alles toepassen** — roept `applyAll()` aan voor elke ready /
-    partially_applied / fully_applied audit. Let op: destructief — blokken
+  - **Alles toepassen** - roept `applyAll()` aan voor elke ready /
+    partially_applied / fully_applied audit. Let op: destructief - blokken
     worden gewist voor insert.
-  - **Verwijderen** — harde delete (Filament's DeleteBulkAction).
+  - **Verwijderen** - harde delete (Filament's DeleteBulkAction).
 
 ## v4.15.6 - 2026-04-24
 
@@ -96,7 +96,7 @@ All notable changes to `dashed-marketing`.
   AI-response voordat ze worden opgeslagen, en de outline-prompt instrueert
   de AI expliciet om geen FAQ-heading voor te stellen. Eerder kwam "Veelgestelde
   vragen" als heading in de outline te staan, waarna `GenerateOutlineContentJob`
-  die overigens al overslaat — maar de user zag hem nog wel in de outline-
+  die overigens al overslaat - maar de user zag hem nog wel in de outline-
   editor. Nu komt hij er niet eens meer in.
 - FAQ-heading-detectie gedeeld tussen `GenerateSeoAuditJob` en
   `GenerateOutlineContentJob` via nieuwe `FaqHeadingDetector`-support class.
@@ -126,7 +126,7 @@ All notable changes to `dashed-marketing`.
   een bestaand FAQ-blok op de pagina.
 - `GenerateOutlineContentJob` slaat FAQ-achtige headings ("Veelgestelde vragen",
   "FAQ", "Frequently Asked Questions", etc.) over bij het genereren van
-  content-blokken. Die secties worden al afgedekt door het aparte FAQ-blok —
+  content-blokken. Die secties worden al afgedekt door het aparte FAQ-blok -
   voorheen werden ze zowel als content-blok (met de FAQ-lijst in HTML) als
   apart FAQ-blok toegevoegd aan de pagina.
 
@@ -193,7 +193,7 @@ All notable changes to `dashed-marketing`.
 
 ### Added
 
-- `applied_block_index` kolom op `dashed__seo_audit_block_suggestions` —
+- `applied_block_index` kolom op `dashed__seo_audit_block_suggestions` -
   re-apply van `is_new_block=true` suggesties overschrijft nu het eerder
   aangemaakte blok op dezelfde positie in plaats van een duplicaat toe te
   voegen. Valt terug op append als het blok tussentijds is verwijderd of als

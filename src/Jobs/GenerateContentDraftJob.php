@@ -74,7 +74,7 @@ class GenerateContentDraftJob implements ShouldQueue
 
         $content = $this->sanitizeContent($content, $sanitizer);
 
-        // (legacy branch that created improvement rows was dropped in v4.12 — use SeoAudit flow for existing entities)
+        // (legacy branch that created improvement rows was dropped in v4.12 - use SeoAudit flow for existing entities)
         ContentDraft::create([
             'content_cluster_id' => $cluster->id,
             'keyword' => $keyword->keyword,

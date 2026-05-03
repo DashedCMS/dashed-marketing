@@ -30,7 +30,7 @@ class RegenerateImagePromptAction
                     ->helperText('Voor seizoenen/feestdagen vult het systeem automatisch concrete iconografie in. Laat leeg voor een neutrale productshot.'),
                 Textarea::make('product_context')
                     ->label('Productinfo (sterk aanbevolen)')
-                    ->placeholder("Bijv: Lovora Family Figurine — gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.")
+                    ->placeholder("Bijv: Lovora Family Figurine - gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.")
                     ->helperText('Naam, materiaal, finish, maten, designtaal, USP. Hoe specifieker, hoe meer de prompt over JOUW product gaat in plaats van een generiek figuurtje. Auto-aangevuld vanuit gekoppeld product/page als beschikbaar.')
                     ->default(fn ($livewire) => self::buildProductContextDefault($livewire->record ?? null))
                     ->rows(4),
@@ -308,17 +308,17 @@ class RegenerateImagePromptAction
 
         ## Quality bar (NON-NEGOTIABLE)
         The prompt MUST read like a senior product photographer's brief. That means:
-        - Open with a concrete style declaration: "Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", "Documentary candid of...", "High-end studio still life of..." — whichever fits the brand.
+        - Open with a concrete style declaration: "Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", "Documentary candid of...", "High-end studio still life of..." - whichever fits the brand.
         - Name the SUBJECT precisely (what's in frame, how many, in what arrangement).
-        - Name a concrete SETTING — a real place, not "background" (e.g. "wooden table outside a typical Dutch canal house", "linen-covered marble countertop", "sunlit bedroom with sheer curtains").
+        - Name a concrete SETTING - a real place, not "background" (e.g. "wooden table outside a typical Dutch canal house", "linen-covered marble countertop", "sunlit bedroom with sheer curtains").
         - Name 3+ concrete PROPS / scene elements that reinforce the post's theme. If the user mentions a holiday, season or event, EXPAND it into specific iconography (e.g. King's Day → "small orange tulips, a tiny Dutch flag, orange streamers, orange crown decorations"; Christmas → "pine sprigs, red berries, beeswax candles, linen napkins"). Never write vague phrases like "festive decorations" or "subtle accents".
         - Specify LIGHTING (e.g. "soft natural daylight", "golden hour", "moody overcast", "warm tungsten side-light").
         - Specify CAMERA / OPTICS: lens (e.g. "50mm", "85mm macro", "35mm wide"), depth of field, framing (close-up, three-quarter angle, overhead flat-lay).
         - End with a short BRAND VIBE line (e.g. "Cozy, premium lifestyle vibe", "minimalist Scandinavian, calm and quiet").
         - No text in the image unless the user instructions explicitly asked for it.
-        - Aim for ~60-120 words, dense and concrete. NEVER output a generic abstract prompt; never echo a short user brief back — EXPAND it.
+        - Aim for ~60-120 words, dense and concrete. NEVER output a generic abstract prompt; never echo a short user brief back - EXPAND it.
 
-        Verwerk de gebruikersinstructies hierboven (indien aanwezig) volledig — als ze kort of thematisch zijn ("Koningsdag", "lente", "promoot de nieuwe bundel") moet je ze uitvouwen tot een complete concrete scène.
+        Verwerk de gebruikersinstructies hierboven (indien aanwezig) volledig - als ze kort of thematisch zijn ("Koningsdag", "lente", "promoot de nieuwe bundel") moet je ze uitvouwen tot een complete concrete scène.
 
         Retourneer UITSLUITEND geldig JSON zonder uitleg of markdown:
         {

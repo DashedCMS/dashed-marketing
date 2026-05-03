@@ -298,7 +298,7 @@ class SeoAuditApplier
      * Clear all existing blocks on the subject at the start of an apply batch.
      * Logs the previous blocks array in a `ContentApplyLog` so rollbackAudit
      * can restore the pre-apply state. This mirrors an intentionally-destructive
-     * "replace entire blocks-list" apply semantic — selected suggestions are
+     * "replace entire blocks-list" apply semantic - selected suggestions are
      * the only blocks that remain after `applySelected()` completes.
      */
     protected function clearAllSubjectBlocks(Model $subject, SeoAudit $audit, ?int $userId): void

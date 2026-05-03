@@ -153,9 +153,9 @@ class GenerateImageAction extends Action
 
         ## Quality bar (NON-NEGOTIABLE)
         Each prompt MUST read like a senior product photographer's brief. That means:
-        - Open with a concrete style declaration: "Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", "Documentary candid of...", "High-end studio still life of..." — pick what fits the brand.
+        - Open with a concrete style declaration: "Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", "Documentary candid of...", "High-end studio still life of..." - pick what fits the brand.
         - Name the SUBJECT precisely (what is in frame, how many, in what arrangement).
-        - Name a concrete SETTING (not "background" — give a real place: e.g. "wooden table outside a typical Dutch canal house", "linen-covered marble countertop", "sunlit bedroom with sheer curtains").
+        - Name a concrete SETTING (not "background" - give a real place: e.g. "wooden table outside a typical Dutch canal house", "linen-covered marble countertop", "sunlit bedroom with sheer curtains").
         - Name 3+ concrete PROPS / scene elements that reinforce the post's theme. If the user mentions a holiday, season or event, EXPAND it into specific iconography (e.g. King's Day → "small orange tulips, a tiny Dutch flag, orange streamers, orange crown decorations", Christmas → "pine sprigs, red berries, beeswax candles, linen napkins"). Never use vague phrases like "festive decorations" or "subtle accents".
         - Specify LIGHTING with a real time-of-day or quality (e.g. "soft natural daylight", "golden hour", "moody overcast", "warm tungsten side-light").
         - Specify CAMERA / OPTICS: lens (e.g. "50mm", "85mm macro", "35mm wide"), depth of field (e.g. "shallow depth of field", "everything in sharp focus"), framing (e.g. "close-up", "three-quarter angle", "overhead flat-lay").
@@ -164,7 +164,7 @@ class GenerateImageAction extends Action
         - Each prompt should be ~50-120 words, dense and concrete. NEVER produce a generic abstract prompt with words like "stylish", "elegant", "modern aesthetic" without grounding them in concrete visuals.
 
         ## Variation rule
-        Across the {$count} prompts, vary composition, angle, setting and light — but keep brand and subject coherent.
+        Across the {$count} prompts, vary composition, angle, setting and light - but keep brand and subject coherent.
 
         ## Inputs
         Post caption:
@@ -176,7 +176,7 @@ class GenerateImageAction extends Action
         Seed prompt (use as a starting point, do not just copy):
         "{$seed}"{$subjectSection}{$userSection}
 
-        If the user instructions above are short or thematic (e.g. just "King's Day", "for spring", "promote the new bundle"), you MUST EXPAND them into a full concrete scene per the quality bar — never echo a short brief back as the prompt.
+        If the user instructions above are short or thematic (e.g. just "King's Day", "for spring", "promote the new bundle"), you MUST EXPAND them into a full concrete scene per the quality bar - never echo a short brief back as the prompt.
 
         Retourneer UITSLUITEND geldig JSON in dit formaat:
         {

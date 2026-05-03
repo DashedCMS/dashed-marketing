@@ -67,7 +67,7 @@ it('converts legacy SeoImprovement into SeoAudit with meta + block suggestions +
     expect($log->audit_id)->toBe($audit->id);
 });
 
-it('is idempotent — rerunning does not create duplicates', function () {
+it('is idempotent - rerunning does not create duplicates', function () {
     $subject = FakeMigrateSeoSubject::create([]);
 
     DB::table('dashed__seo_improvements')->insert([

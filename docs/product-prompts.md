@@ -29,7 +29,7 @@ $prompt = app(ProductPromptGenerator::class)->generate(
 );
 ```
 
-`generate()` returns the raw English prompt as a single string — no preamble, no quotes, no markdown. Throws `RuntimeException` on unreadable image / empty response, and re-throws `AiException` / `AiRateLimitException` from the AI layer.
+`generate()` returns the raw English prompt as a single string - no preamble, no quotes, no markdown. Throws `RuntimeException` on unreadable image / empty response, and re-throws `AiException` / `AiRateLimitException` from the AI layer.
 
 Brand voice is **dynamic**: `brand_name`, `brand_story`, `writing_style` are passed as options. Defaults fall back to `Customsetting::get('site_name')`, `ai_brand_story`, `ai_writing_style` so the same service works for any consumer (Lovora and others).
 
@@ -51,13 +51,13 @@ Output is cached for 24h by default, keyed on `md5(image bytes + theme + model +
 - `pasen`
 - `halloween`
 
-Themes outside the table still work — the system prompt forces Claude to invent specific concrete props rather than vague placeholders.
+Themes outside the table still work - the system prompt forces Claude to invent specific concrete props rather than vague placeholders.
 
 ## Filament integration
 
 `RegenerateImagePromptAction` (single-prompt regen on a `SocialPost`) now opens a modal with **Theme** and **Extra instructions** fields. When the post has a usable local product image, the action calls `ProductPromptGenerator` (vision path); otherwise it falls back to the existing text-only path so posts without an image still work.
 
-The other two callers (`GenerateImageAction.generateDistinctImagePrompts`, `GenerateSocialPostJob`) intentionally still use the text-only path for now — when we're happy with the vision output we can migrate them too.
+The other two callers (`GenerateImageAction.generateDistinctImagePrompts`, `GenerateSocialPostJob`) intentionally still use the text-only path for now - when we're happy with the vision output we can migrate them too.
 
 ## Test command
 
@@ -89,10 +89,10 @@ GenerateSocialImageJob::dispatch(
 );
 ```
 
-When `referenceImageUrl` is set, the job hits `fal-ai/nano-banana/edit` with a hardened "do not change the product" wrapper around the prompt — combined with the lock clause that `ProductPromptGenerator` already appended, the product stays pixel-identical while the scene is restyled.
+When `referenceImageUrl` is set, the job hits `fal-ai/nano-banana/edit` with a hardened "do not change the product" wrapper around the prompt - combined with the lock clause that `ProductPromptGenerator` already appended, the product stays pixel-identical while the scene is restyled.
 
 ## Tuning
 
-- **Bad outputs?** First check whether the theme is in `THEME_HINTS`. If not, add a row — that gives the biggest single quality jump for that occasion.
+- **Bad outputs?** First check whether the theme is in `THEME_HINTS`. If not, add a row - that gives the biggest single quality jump for that occasion.
 - **Drift / generic prompts?** Bump `SYSTEM_VERSION` and re-run with `--no-cache` while iterating on `buildSystem()` few-shot examples.
 - **Costs?** Sonnet 4.6 at ~800 max-tokens with image input is roughly the right tier. Use `--model=claude-haiku-4-5-20251001` for cheap drafts; switch back to sonnet (or opus, when latency allows) for production runs.

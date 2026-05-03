@@ -145,7 +145,7 @@ class GenerateSectionBodyJob implements ShouldQueue
 
     /**
      * Drop link-candidates whose URL already appears in another section's
-     * body — ensures each internal link is used at most once across the
+     * body - ensures each internal link is used at most once across the
      * whole article. Retries on the same section still allow its own
      * previous URL so a regenerated section can keep (or swap) its link.
      *
@@ -259,7 +259,7 @@ Huidige sectie:
 Keywords om thematisch te gebruiken (primaire keywords zwaarder):
 {$keywords}
 
-Interne link-kandidaten (beschikbaar voor DEZE sectie — al gebruikt in eerdere secties is eruit gefilterd):
+Interne link-kandidaten (beschikbaar voor DEZE sectie - al gebruikt in eerdere secties is eruit gefilterd):
 {$candidatesJson}
 
 Regels (hard):

@@ -345,7 +345,7 @@ class ReviewSeoAudit extends Page
         if ($outline->content_generating_at !== null) {
             Notification::make()
                 ->title('Content-generatie loopt al')
-                ->body('Even geduld — de voorstellen verschijnen zodra de job klaar is.')
+                ->body('Even geduld - de voorstellen verschijnen zodra de job klaar is.')
                 ->warning()
                 ->send();
 

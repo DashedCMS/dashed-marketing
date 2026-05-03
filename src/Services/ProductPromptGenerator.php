@@ -63,13 +63,13 @@ class ProductPromptGenerator
      *   - model: string (default DEFAULT_MODEL)
      *   - max_tokens: int (default DEFAULT_MAX_TOKENS)
      *   - temperature: float (default DEFAULT_TEMPERATURE)
-     *   - brand_name: ?string — used to address the brand by name
-     *   - brand_story: ?string — short paragraph about the brand
-     *   - writing_style: ?string — tone/style description
-     *   - product_name: ?string — explicit product name (e.g. "Lovora Family Figurine")
-     *   - product_context: ?string — structured product info (material, dimensions, finish, USP, design language) so Claude can anchor the prompt in the actual product
+     *   - brand_name: ?string - used to address the brand by name
+     *   - brand_story: ?string - short paragraph about the brand
+     *   - writing_style: ?string - tone/style description
+     *   - product_name: ?string - explicit product name (e.g. "Lovora Family Figurine")
+     *   - product_context: ?string - structured product info (material, dimensions, finish, USP, design language) so Claude can anchor the prompt in the actual product
      *   - cache_ttl: int seconds (default 86400, 0 disables caching)
-     *   - extra_instructions: ?string — free-form user instructions
+     *   - extra_instructions: ?string - free-form user instructions
      *
      * @throws RuntimeException when the file is unreadable
      */
@@ -190,9 +190,9 @@ class ProductPromptGenerator
         ## Product hero framing (CRITICAL)
         The PRODUCT is the protagonist. Roughly 60-70% of the descriptive weight of the prompt MUST be about the product itself, not about the scene around it. Devote vivid, specific language to:
         - The product's silhouette and presence in frame (the unambiguous focal point, sized to dominate).
-        - Its surface qualities — finish, micro-textures, layer lines, sheen, matte vs satin — as the lens at the chosen focal length would actually resolve them at this distance.
+        - Its surface qualities - finish, micro-textures, layer lines, sheen, matte vs satin - as the lens at the chosen focal length would actually resolve them at this distance.
         - How light falls on it: the direction of the highlight, where the shadow turns, what the rim of the form looks like against the background.
-        - The way its volume reads — depth, weight, contour.
+        - The way its volume reads - depth, weight, contour.
         - If product info is supplied below, weave at least 3 specific phrases from it (brand name, material, finish, design language, intended use, dimensions) directly into the description so the prompt is unmistakably about THIS product, not a generic version of it.
         Props and setting are SUPPORTING. They place the product in context but never compete with it for attention. Describe them briefly and only after the product has been fully described.
 
@@ -203,27 +203,27 @@ class ProductPromptGenerator
         - End with this EXACT sentence as the final clause: "the product itself must remain identical to the reference image, do not alter its shape, color, texture, materials, finish, logos, labels or proportions."
 
         ## Required components, roughly in this order
-        1. **Style declaration + product hero opener** — open with a concrete photographic style AND name the product as the unambiguous hero of the shot. Examples: "Photorealistic product photo with the [Product] as the unambiguous hero, ...", "Cinematic lifestyle shot centered on the [Product], ...". Match the brand vibe.
-        2. **Product description** — what's in frame, drawn from BOTH what you see in the reference image AND the supplied product info. Be specific about material, finish, design language, and how the lens resolves its surface at this distance. Do not invent visible details not in the image; do borrow descriptive language from the product info.
-        3. **Setting** — a real, specific place. Never just "background". Examples: "weathered oak ledge outside a typical Dutch canal house", "linen-covered marble countertop in a sunlit kitchen", "chalk-painted alcove with a single wooden shelf".
-        4. **Props (3-5)** — concrete props that reinforce the theme, kept supporting. Use the iconography hint in the user message. Never write vague terms like "festive decorations" or "subtle accents".
-        5. **Lighting** — a real time-of-day or quality, then describe how that light interacts with the product specifically (which side catches the highlight, where the shadow falls).
-        6. **Camera / optics** — lens (50mm, 85mm macro, 35mm wide), depth of field, framing (close-up, three-quarter angle, eye-level, overhead flat-lay). Explain what the choice does for the product (e.g. "85mm flattens the silhouette and resolves the matte print layers").
-        7. **Color palette & mood** — 2-4 specific colors plus a one-line mood.
-        8. **Lock clause** — the exact final sentence above.
+        1. **Style declaration + product hero opener** - open with a concrete photographic style AND name the product as the unambiguous hero of the shot. Examples: "Photorealistic product photo with the [Product] as the unambiguous hero, ...", "Cinematic lifestyle shot centered on the [Product], ...". Match the brand vibe.
+        2. **Product description** - what's in frame, drawn from BOTH what you see in the reference image AND the supplied product info. Be specific about material, finish, design language, and how the lens resolves its surface at this distance. Do not invent visible details not in the image; do borrow descriptive language from the product info.
+        3. **Setting** - a real, specific place. Never just "background". Examples: "weathered oak ledge outside a typical Dutch canal house", "linen-covered marble countertop in a sunlit kitchen", "chalk-painted alcove with a single wooden shelf".
+        4. **Props (3-5)** - concrete props that reinforce the theme, kept supporting. Use the iconography hint in the user message. Never write vague terms like "festive decorations" or "subtle accents".
+        5. **Lighting** - a real time-of-day or quality, then describe how that light interacts with the product specifically (which side catches the highlight, where the shadow falls).
+        6. **Camera / optics** - lens (50mm, 85mm macro, 35mm wide), depth of field, framing (close-up, three-quarter angle, eye-level, overhead flat-lay). Explain what the choice does for the product (e.g. "85mm flattens the silhouette and resolves the matte print layers").
+        7. **Color palette & mood** - 2-4 specific colors plus a one-line mood.
+        8. **Lock clause** - the exact final sentence above.
 
         ## Negative instructions (DO NOT)
         - Do NOT make the product feel incidental, decorative or "one of many things on the table". It is the hero.
         - Do not include people, hands, faces or body parts.
-        - Do not place reflective surfaces directly in front of or wrapping around the product (mirror, chrome, glossy black) — they would warp the product silhouette.
+        - Do not place reflective surfaces directly in front of or wrapping around the product (mirror, chrome, glossy black) - they would warp the product silhouette.
         - Do not request extreme camera angles (fisheye, tilt-shift, top-down on a vertical product) that change the product's apparent shape.
         - Do not put text, logos or watermarks anywhere in the scene unless explicitly instructed.
         - Do not describe the product's color/shape/texture in a way that conflicts with the reference image.
-        - Do not use empty filler words: "stylish", "elegant", "modern aesthetic", "vibe", "stunning", "perfect" — replace with concrete visuals.
+        - Do not use empty filler words: "stylish", "elegant", "modern aesthetic", "vibe", "stunning", "perfect" - replace with concrete visuals.
         - Do not give the props more descriptive weight than the product. If you wrote 3 sentences about props and 1 about the product, rewrite.
 
         ## Example A (figurine product, Koningsdag, with product info)
-        Photorealistic product photo with the Lovora Family Figurine set as the unambiguous hero, filling roughly 60% of the frame. Three matte cream PLA 3D-printed family groupings — a pair, a trio, and a quartet — sit in a loose triangular arrangement, each smooth silhouette catching cool morning side-light from the left so the layered print striations resolve as soft horizontal banding, and the cast shadow gently describes the curve of each figure's shoulders and back. The cream surface reads quiet and sculptural against a warm-white linen tabletop. The setting is the windowsill of a typical Amsterdam canal house, blurred sash window and a sliver of brick visible behind. Supporting props: three small orange tulips laid casually beside the figurines, a thin orange paper streamer trailing across the wood, a tiny Dutch flag tucked between the trio and the quartet. Soft natural daylight with a faint golden cast. Shot on an 85mm lens at f/2.0, three-quarter angle slightly above eye level, shallow depth of field that holds the figurines crisp while everything else falls into a calm bokeh. Palette: warm cream, burnt orange, weathered cedar, canal-water grey-blue. Cozy, premium Dutch lifestyle mood. the product itself must remain identical to the reference image, do not alter its shape, color, texture, materials, finish, logos, labels or proportions.
+        Photorealistic product photo with the Lovora Family Figurine set as the unambiguous hero, filling roughly 60% of the frame. Three matte cream PLA 3D-printed family groupings - a pair, a trio, and a quartet - sit in a loose triangular arrangement, each smooth silhouette catching cool morning side-light from the left so the layered print striations resolve as soft horizontal banding, and the cast shadow gently describes the curve of each figure's shoulders and back. The cream surface reads quiet and sculptural against a warm-white linen tabletop. The setting is the windowsill of a typical Amsterdam canal house, blurred sash window and a sliver of brick visible behind. Supporting props: three small orange tulips laid casually beside the figurines, a thin orange paper streamer trailing across the wood, a tiny Dutch flag tucked between the trio and the quartet. Soft natural daylight with a faint golden cast. Shot on an 85mm lens at f/2.0, three-quarter angle slightly above eye level, shallow depth of field that holds the figurines crisp while everything else falls into a calm bokeh. Palette: warm cream, burnt orange, weathered cedar, canal-water grey-blue. Cozy, premium Dutch lifestyle mood. the product itself must remain identical to the reference image, do not alter its shape, color, texture, materials, finish, logos, labels or proportions.
 
         ## Example B (sculptural ceramic vase, Kerst)
         Cinematic lifestyle shot centered on the matte stoneware vase as the unambiguous hero, its tall sculptural silhouette taking the upper-left third of the frame. Warm tungsten side-light from camera-right grazes its flank, drawing out the slow ridges of the throwing marks and the soft satin finish where the glaze turns matte. The base is anchored on a linen-draped oak sideboard, the linen weave just sharp enough at this lens to read as fabric. Behind the vase, a softly defocused chalk-painted wall and the faint gold glow of two slim beeswax tapers placed slightly behind. Supporting props kept quiet: a sprig of pine with red winter berries leaning against the base, a folded ivory napkin, a single matte ornament half in shadow. Mid-evening tungsten light, candle glow reflected on the linen. Shot on an 85mm macro at f/2.8, eye-level framing, shallow depth of field. Palette: deep forest green, ivory, warm beeswax amber, soft graphite. Calm, intimate, quietly festive mood. the product itself must remain identical to the reference image, do not alter its shape, color, texture, materials, finish, logos, labels or proportions.
@@ -233,18 +233,18 @@ class ProductPromptGenerator
     private function buildUser(string $theme, ?string $themeHint, string $productName, string $productContext, string $extra): string
     {
         $themeBlock = $themeHint
-            ? "Theme: **{$theme}**\nIconography to draw from (use specifics, not the whole list — pick what fits the product): {$themeHint}"
-            : "Theme: **{$theme}**\n(No pre-supplied iconography — invent specific, concrete props yourself, never write vague placeholders.)";
+            ? "Theme: **{$theme}**\nIconography to draw from (use specifics, not the whole list - pick what fits the product): {$themeHint}"
+            : "Theme: **{$theme}**\n(No pre-supplied iconography - invent specific, concrete props yourself, never write vague placeholders.)";
 
         $productLines = [];
         if ($productName !== '') {
             $productLines[] = "Product name: {$productName}";
         }
         if ($productContext !== '') {
-            $productLines[] = "Product info (use this to anchor the prompt — weave at least 3 specific phrases from it into the description):\n{$productContext}";
+            $productLines[] = "Product info (use this to anchor the prompt - weave at least 3 specific phrases from it into the description):\n{$productContext}";
         }
         $productBlock = empty($productLines)
-            ? "Product info: (none supplied — describe ONLY what you can see in the reference image, and keep the description product-anchored, not scene-anchored.)"
+            ? "Product info: (none supplied - describe ONLY what you can see in the reference image, and keep the description product-anchored, not scene-anchored.)"
             : implode("\n\n", $productLines);
 
         $extraBlock = $extra !== ''
@@ -252,7 +252,7 @@ class ProductPromptGenerator
             : '';
 
         return <<<USR
-        Look at the attached product photo. Generate ONE production-grade English image prompt that styles this exact product into a lifestyle scene for the theme below, following every rule from the system prompt — especially the **Product hero framing** rule (60-70% of the prompt's descriptive weight on the product itself).
+        Look at the attached product photo. Generate ONE production-grade English image prompt that styles this exact product into a lifestyle scene for the theme below, following every rule from the system prompt - especially the **Product hero framing** rule (60-70% of the prompt's descriptive weight on the product itself).
 
         {$productBlock}
 
@@ -290,7 +290,7 @@ class ProductPromptGenerator
     /**
      * Strip any preamble / quotes / markdown the model may emit despite the
      * system rules, leaving only the raw prompt. Also enforce the lock clause
-     * — the downstream image-edit model needs it to keep the product faithful,
+     * - the downstream image-edit model needs it to keep the product faithful,
      * and Claude sometimes drops it despite being told it is non-negotiable.
      */
     private function cleanResponse(?string $raw): string
@@ -317,7 +317,7 @@ class ProductPromptGenerator
         }
 
         // Enforce lock clause. We treat the prompt as missing the lock if it
-        // doesn't contain "remain identical" — that phrase is the load-bearing
+        // doesn't contain "remain identical" - that phrase is the load-bearing
         // bit nano-banana edit needs to keep the product faithful.
         if (! str_contains(strtolower($text), 'remain identical')) {
             $text = rtrim($text, " \t\n\r.").'. '.self::LOCK_CLAUSE;

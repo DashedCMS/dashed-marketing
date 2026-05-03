@@ -268,7 +268,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         return is_string($v) ? $v : null;
     }
 
-    // Step stubs — implemented in Tasks 3.4-3.10. For now they just consume the Ai::json call
+    // Step stubs - implemented in Tasks 3.4-3.10. For now they just consume the Ai::json call
     // so the test that stubs it 7 times works and the skeleton is fully exercised.
 
     protected function analysePage(SeoAudit $audit, array $context): void

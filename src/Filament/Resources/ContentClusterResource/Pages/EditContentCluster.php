@@ -119,7 +119,7 @@ class EditContentCluster extends EditRecord
                     $cluster->update(['pending_concepts' => null]);
 
                     Notification::make()
-                        ->title("{$created} drafts aangemaakt — content wordt op de achtergrond gegenereerd")
+                        ->title("{$created} drafts aangemaakt - content wordt op de achtergrond gegenereerd")
                         ->success()
                         ->send();
 

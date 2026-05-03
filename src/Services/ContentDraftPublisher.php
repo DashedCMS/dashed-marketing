@@ -10,7 +10,7 @@ class ContentDraftPublisher
 {
     /**
      * Per-request cache for available block options. Activating builder blocks
-     * and iterating them costs several seconds — memoize so repeat calls
+     * and iterating them costs several seconds - memoize so repeat calls
      * (modal open / settings page / publish) stay instant.
      *
      * @var array<string, string>|null
@@ -124,7 +124,7 @@ class ContentDraftPublisher
             // Write the same items under both repeater keys we've seen in the wild
             // (`faqs` on the dashed-core default, `questions` on customised sites),
             // and populate both field-name pairs. Filament only renders the
-            // one its schema actually reads — extras are harmless.
+            // one its schema actually reads - extras are harmless.
             $items = $draft->faqs->map(fn ($f) => [
                 'question' => (string) $f->question,
                 'description' => (string) $f->answer,
@@ -152,7 +152,7 @@ class ContentDraftPublisher
      * injected by `AppServiceProvider::getDefaultBlockFields()` so that blocks
      * we build programmatically match what the admin UI would create.
      *
-     * Extract from the Filament schema isn't practical here — Filament
+     * Extract from the Filament schema isn't practical here - Filament
      * components need a container context before their defaults can be read.
      *
      * @return array<string, mixed>
@@ -215,7 +215,7 @@ class ContentDraftPublisher
     }
 
     /**
-     * Default block choices — reads from settings first, falls back to sensible guesses.
+     * Default block choices - reads from settings first, falls back to sensible guesses.
      *
      * @return array{header: ?string, content: ?string, faq: ?string}
      */

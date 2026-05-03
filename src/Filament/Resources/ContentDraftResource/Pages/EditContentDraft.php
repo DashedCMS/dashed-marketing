@@ -21,7 +21,7 @@ class EditContentDraft extends EditRecord
 
     public function pollDraft(): void
     {
-        // Cheap status-only query — avoids hydrating relations on every poll.
+        // Cheap status-only query - avoids hydrating relations on every poll.
         // Livewire serialises requests per-component, so keeping this short
         // lets user clicks (e.g. opening modals) slip between polls instead
         // of queueing behind a full record refresh + form re-fill.
@@ -156,7 +156,7 @@ class EditContentDraft extends EditRecord
 
                     Notification::make()
                         ->title($recreated
-                            ? 'Oude record was verwijderd — nieuwe '.class_basename($class).' aangemaakt en gevuld'
+                            ? 'Oude record was verwijderd - nieuwe '.class_basename($class).' aangemaakt en gevuld'
                             : 'Gesynchroniseerd naar '.class_basename($class))
                         ->success()
                         ->send();

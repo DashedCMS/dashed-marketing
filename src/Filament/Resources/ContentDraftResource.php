@@ -314,7 +314,7 @@ TXT;
                                 if (! empty($indices)) {
                                     $picked = array_map(fn ($i) => $indexed[(int) $i], $indices);
                                 } else {
-                                    // AI had no usable output — fall back to top scored shortlist.
+                                    // AI had no usable output - fall back to top scored shortlist.
                                     $picked = array_map(fn ($e) => $e['c'], array_slice($shortlist, 0, $max));
                                 }
                             }
@@ -599,7 +599,7 @@ TXT;
                     ->label('Cluster')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('—'),
+                    ->placeholder('-'),
                 TextColumn::make('created_at')
                     ->label('Aangemaakt')
                     ->dateTime('d-m-Y H:i')

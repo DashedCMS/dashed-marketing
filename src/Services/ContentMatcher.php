@@ -97,7 +97,7 @@ class ContentMatcher
         $keywordTokens = $this->normalizer->tokens($keyword->keyword, $locale);
 
         if (empty($keywordTokens)) {
-            return true; // keyword itself is all stopwords — don't over-filter
+            return true; // keyword itself is all stopwords - don't over-filter
         }
 
         $haystack = implode(' ', array_filter([

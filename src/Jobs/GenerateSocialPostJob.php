@@ -126,7 +126,7 @@ class GenerateSocialPostJob implements ShouldQueue
         Write ONE image prompt in ENGLISH that reads like a senior product photographer's brief. It MUST:
         - Open with a concrete style declaration ("Photorealistic product photo of...", "Cinematic lifestyle shot of...", "Editorial flat-lay of...", etc.).
         - Name the subject precisely.
-        - Name a concrete setting — a real place, never just "background".
+        - Name a concrete setting - a real place, never just "background".
         - Name 3+ concrete props / scene elements that reinforce the caption's theme. If the caption references a holiday, season or event, EXPAND it into specific iconography (King's Day → "small orange tulips, a tiny Dutch flag, orange streamers, orange crown decorations"; Christmas → "pine sprigs, red berries, beeswax candles"). Never use vague terms like "festive decorations" or "subtle accents".
         - Specify lighting (e.g. "soft natural daylight", "golden hour", "moody overcast").
         - Specify camera/optics: lens (50mm/85mm/35mm), depth of field, framing.
