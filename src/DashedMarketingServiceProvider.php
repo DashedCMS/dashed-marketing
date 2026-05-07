@@ -62,6 +62,11 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
             new DashedMarketingPlugin,
         ]);
 
+        cms()->builder('summaryContributors', array_merge(
+            cms()->builder('summaryContributors') ?? [],
+            [\Dashed\DashedMarketing\Services\Summary\MarketingSummaryContributor::class],
+        ));
+
         cms()->registerSettingsPage(
             SocialSettingsPage::class,
             'Social media',

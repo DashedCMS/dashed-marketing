@@ -2,6 +2,23 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.17.0 - 2026-05-07
+
+### Added
+
+- `MarketingSummaryContributor` onder `Services/Summary/`. Implementeert
+  `SummaryContributorInterface` uit dashed-core v4.5.0 en voegt een sectie
+  "Marketing" toe aan de admin samenvatting-mails. Stats-blok toont het
+  aantal gepubliceerde social-posts en het aantal gegenereerde
+  content-drafts in de periode. Tabel toont posts per kanaal, gesorteerd
+  op aantal aflopend, met channel-namen uit `dashed__social_channels` of
+  fallback naar de platforms-config. Default-frequentie is `monthly`,
+  daily is bewust niet beschikbaar omdat marketing geen dagelijks rapport
+  is. Retourneert null als er in de periode geen posts en geen drafts
+  zijn, zodat lege secties niet in de mail terechtkomen.
+- Registratie van de contributor in `DashedMarketingServiceProvider` via
+  `cms()->builder('summaryContributors', ...)`.
+
 ## v4.16.0 - 2026-04-27
 
 ### Added
