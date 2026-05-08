@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.18.0 - 2026-05-08
+
+### Added
+- "Dupliceren"-record-action op `SocialPostResource`. Maakt een kopie van een social post als concept, met behoud van caption, kanalen, pijler, onderwerp, afbeeldingen en hashtags. Velden gekoppeld aan publicatie (`status`, `scheduled_at`, `posted_at`, `posted_at_per_channel`, `post_url`, `external_id`, `external_data`, `failed_platforms`, `published_urls`, `retry_count`, `analytics_synced_at`, `performance_data`) worden gereset zodat de duplicaat als verse concept verder bewerkt en gepland kan worden.
+
 ## v4.17.0 - 2026-05-07
 
 ### Added

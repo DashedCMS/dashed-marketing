@@ -27,6 +27,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Notifications\Notification;
 use Filament\Forms\Components\DateTimePicker;
 use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Filament\Actions\RegenerateCaptionAction;
@@ -479,6 +480,41 @@ class SocialPostResource extends Resource
             ->defaultSort('scheduled_at', 'desc')
             ->recordActions([
                 EditAction::make(),
+                Action::make('duplicate')
+                    ->label('Dupliceren')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Social post dupliceren')
+                    ->modalDescription('Maakt een kopie aan met de status "Concept". Caption, kanalen, pijler, onderwerp en afbeeldingen worden meegenomen; planning, publicatie-status en analytics worden gereset.')
+                    ->modalSubmitActionLabel('Dupliceren')
+                    ->action(function (SocialPost $record): void {
+                        // Reset alle velden die aan een specifieke publicatie
+                        // zijn gekoppeld; de duplicaat moet als verse concept
+                        // geopend kunnen worden.
+                        $copy = $record->replicate([
+                            'status',
+                            'scheduled_at',
+                            'posted_at',
+                            'posted_at_per_channel',
+                            'post_url',
+                            'external_id',
+                            'external_data',
+                            'failed_platforms',
+                            'published_urls',
+                            'retry_count',
+                            'analytics_synced_at',
+                            'performance_data',
+                        ]);
+                        $copy->status = 'concept';
+                        $copy->save();
+
+                        Notification::make()
+                            ->title('Social post gedupliceerd')
+                            ->body('De kopie staat klaar als concept en kan apart bewerkt en gepland worden.')
+                            ->success()
+                            ->send();
+                    }),
                 Action::make('markPosted')
                     ->label('Markeer als gepost')
                     ->icon('heroicon-o-check-circle')
