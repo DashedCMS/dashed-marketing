@@ -1,12 +1,12 @@
 <?php
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Services\LinkCandidatesService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
 
 uses(TestCase::class, RefreshDatabase::class);
 

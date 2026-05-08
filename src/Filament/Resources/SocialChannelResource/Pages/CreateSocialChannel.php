@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 use Filament\Resources\Pages\CreateRecord;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 
 class CreateSocialChannel extends CreateRecord
 {

@@ -1,9 +1,9 @@
 <?php
 
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

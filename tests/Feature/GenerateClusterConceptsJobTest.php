@@ -1,11 +1,11 @@
 <?php
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
 
 uses(TestCase::class, RefreshDatabase::class);
 

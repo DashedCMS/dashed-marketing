@@ -2,15 +2,13 @@
 
 namespace Dashed\DashedMarketing\Services;
 
+use Throwable;
+use RuntimeException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedCore\Models\CustomStructuredData;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
-use Dashed\DashedMarketing\Models\SeoAuditFaqSuggestion;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use RuntimeException;
-use Throwable;
 
 class SeoAuditApplier
 {
@@ -23,6 +21,7 @@ class SeoAuditApplier
         $subject = $audit->subject;
         if (! $subject) {
             $audit->update(['status' => 'failed', 'error_message' => 'Subject verdwenen']);
+
             throw new RuntimeException('Audit subject is no longer available');
         }
 
@@ -272,6 +271,7 @@ class SeoAuditApplier
             ]);
 
             $existing = [];
+
             try {
                 $existing = (array) ($customBlocks->getTranslation('blocks', $locale) ?? []);
             } catch (Throwable) {
@@ -387,6 +387,7 @@ class SeoAuditApplier
                 if ($field === 'meta_title' || $field === 'meta_description') {
                     $metadata = $subject->metadata()->firstOrNew([]);
                     $attr = $field === 'meta_title' ? 'title' : 'description';
+
                     try {
                         $previous = $metadata->getTranslation($attr, $audit->locale);
                     } catch (Throwable) {

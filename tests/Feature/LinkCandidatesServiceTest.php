@@ -1,11 +1,11 @@
 <?php
 
-use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
 
 uses(TestCase::class, RefreshDatabase::class);
 

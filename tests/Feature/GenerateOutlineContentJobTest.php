@@ -1,17 +1,17 @@
 <?php
 
+use Tests\TestCase;
 use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Models\SeoAuditOutline;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Dashed\DashedCore\Models\Concerns\HasCustomBlocks;
 use Dashed\DashedMarketing\Jobs\GenerateOutlineContentJob;
-use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
-use Dashed\DashedMarketing\Models\SeoAuditOutline;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Translatable\HasTranslations;
-use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

@@ -2,12 +2,12 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
+use Illuminate\Console\Command;
 use Dashed\DashedCore\Classes\Sites;
 use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedMarketing\Jobs\SendSocialNotificationJob;
-use Dashed\DashedMarketing\Mail\HolidayReminderMail;
 use Dashed\DashedMarketing\Models\SocialHoliday;
-use Illuminate\Console\Command;
+use Dashed\DashedMarketing\Mail\HolidayReminderMail;
+use Dashed\DashedMarketing\Jobs\SendSocialNotificationJob;
 
 class SocialCheckHolidaysCommand extends Command
 {

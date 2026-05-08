@@ -1,12 +1,12 @@
 <?php
 
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Models\Keyword;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
+use Livewire\Livewire;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
 
 uses(TestCase::class, RefreshDatabase::class);
 

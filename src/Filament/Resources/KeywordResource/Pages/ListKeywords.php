@@ -2,17 +2,17 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
-use Dashed\DashedMarketing\Facades\KeywordData;
-use Dashed\DashedMarketing\Filament\Actions\XlsxImportAction;
-use Dashed\DashedMarketing\Filament\Imports\KeywordImporter;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
-use Dashed\DashedMarketing\Jobs\ClusterKeywordsJob;
-use Dashed\DashedMarketing\Managers\KeywordDataManager;
-use Dashed\DashedMarketing\Models\Keyword;
 use Filament\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Facades\KeywordData;
+use Dashed\DashedMarketing\Jobs\ClusterKeywordsJob;
+use Dashed\DashedMarketing\Managers\KeywordDataManager;
+use Dashed\DashedMarketing\Filament\Imports\KeywordImporter;
+use Dashed\DashedMarketing\Filament\Actions\XlsxImportAction;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 
 class ListKeywords extends ListRecords
 {

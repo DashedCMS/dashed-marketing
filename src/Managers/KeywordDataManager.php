@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Managers;
 
-use Dashed\DashedMarketing\Adapters\ManualKeywordDataProvider;
-use Dashed\DashedMarketing\Contracts\KeywordDataProvider;
 use InvalidArgumentException;
+use Dashed\DashedMarketing\Contracts\KeywordDataProvider;
+use Dashed\DashedMarketing\Adapters\ManualKeywordDataProvider;
 
 class KeywordDataManager
 {
@@ -15,7 +15,7 @@ class KeywordDataManager
 
     public function __construct()
     {
-        $this->register(new ManualKeywordDataProvider);
+        $this->register(new ManualKeywordDataProvider());
     }
 
     public function register(KeywordDataProvider $provider): void

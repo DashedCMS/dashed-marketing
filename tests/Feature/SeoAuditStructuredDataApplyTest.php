@@ -1,15 +1,15 @@
 <?php
 
-use Dashed\DashedCore\Models\CustomStructuredData;
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoAuditStructuredDataSuggestion;
-use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedCore\Models\CustomStructuredData;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Dashed\DashedMarketing\Models\SeoAuditStructuredDataSuggestion;
 
 uses(TestCase::class, RefreshDatabase::class);
 

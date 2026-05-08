@@ -2,27 +2,27 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
+use UnitEnum;
 use BackedEnum;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Filters\SelectFilter;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\EditContentCluster;
 use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\ListContentClusters;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
-use UnitEnum;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\CreateContentCluster;
 
 class ContentClusterResource extends Resource
 {
@@ -131,6 +131,7 @@ class ContentClusterResource extends Resource
                                     ->label('Target type')
                                     ->options(function () {
                                         $options = [];
+
                                         try {
                                             foreach ((array) cms()->builder('routeModels') as $key => $entry) {
                                                 $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
@@ -152,6 +153,7 @@ class ContentClusterResource extends Resource
                                         if (! $typeKey) {
                                             return [];
                                         }
+
                                         try {
                                             $entry = cms()->builder('routeModels')[$typeKey] ?? null;
                                             $class = is_array($entry) ? ($entry['class'] ?? null) : null;

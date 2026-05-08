@@ -1,8 +1,8 @@
 <?php
 
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
+use Dashed\DashedMarketing\Models\SocialChannel;
 
 uses(TestCase::class);
 

@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Filament\Resources\Pages\CreateRecord;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 
 class CreateSocialHoliday extends CreateRecord
 {

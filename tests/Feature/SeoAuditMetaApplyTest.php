@@ -1,16 +1,16 @@
 <?php
 
+use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedCore\Models\Concerns\HasMetadata;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoAuditMetaSuggestion;
-use Dashed\DashedMarketing\Services\SeoAuditApplier;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Translatable\HasTranslations;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Dashed\DashedMarketing\Models\SeoAuditMetaSuggestion;
 
 uses(TestCase::class, RefreshDatabase::class);
 

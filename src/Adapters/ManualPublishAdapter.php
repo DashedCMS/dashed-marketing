@@ -2,10 +2,10 @@
 
 namespace Dashed\DashedMarketing\Adapters;
 
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
 use Dashed\DashedMarketing\DTOs\PostStatus;
-use Dashed\DashedMarketing\DTOs\PublishResult;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\DTOs\PublishResult;
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
 
 class ManualPublishAdapter implements PublishingAdapter
 {

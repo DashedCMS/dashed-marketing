@@ -1,18 +1,18 @@
 <?php
 
-use Dashed\DashedCore\Models\Concerns\HasCustomBlocks;
-use Dashed\DashedCore\Models\CustomBlock;
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
-use Dashed\DashedMarketing\Models\SeoAuditMetaSuggestion;
-use Dashed\DashedMarketing\Services\SeoAuditApplier;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Translatable\HasTranslations;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
+use Dashed\DashedCore\Models\CustomBlock;
+use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Dashed\DashedCore\Models\Concerns\HasCustomBlocks;
+use Dashed\DashedMarketing\Models\SeoAuditMetaSuggestion;
+use Dashed\DashedMarketing\Models\SeoAuditBlockSuggestion;
 
 uses(TestCase::class, RefreshDatabase::class);
 

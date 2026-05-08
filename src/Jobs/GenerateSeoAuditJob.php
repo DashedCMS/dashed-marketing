@@ -2,19 +2,19 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Throwable;
+use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Services\LinkCandidatesService;
-use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateSeoAuditJob implements ShouldQueue
 {
@@ -35,7 +35,8 @@ class GenerateSeoAuditJob implements ShouldQueue
         public ?int $userId = null,
         public ?string $instruction = null,
         public ?string $locale = null,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {
@@ -161,6 +162,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         }
 
         $brand = '';
+
         try {
             $brand = app(SocialContextBuilder::class)->build('seo');
         } catch (Throwable) {
@@ -168,6 +170,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         }
 
         $routePool = [];
+
         try {
             $routePool = app(LinkCandidatesService::class)->allForLocale($locale, 200);
         } catch (Throwable) {
@@ -210,6 +213,7 @@ class GenerateSeoAuditJob implements ShouldQueue
     protected function runStep(SeoAudit $audit, string $step, callable $fn): void
     {
         $audit->update(['progress_message' => "Stap: {$step}"]);
+
         try {
             $fn();
             $this->markStep($audit, $step, true);

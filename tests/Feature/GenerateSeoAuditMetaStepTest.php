@@ -1,13 +1,13 @@
 <?php
 
+use Tests\TestCase;
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
-use Dashed\DashedMarketing\Models\SeoAudit;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\SeoAudit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
 
 uses(TestCase::class, RefreshDatabase::class);
 

@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Mail;
 
-use Dashed\DashedCore\Models\Customsetting;
-use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
-use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
-use Dashed\DashedMarketing\Models\SocialHoliday;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
+use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedMarketing\Models\SocialHoliday;
+use Dashed\DashedCore\Notifications\DTOs\TelegramSummary;
+use Dashed\DashedCore\Notifications\Contracts\SendsToTelegram;
 
 class HolidayReminderMail extends Mailable implements SendsToTelegram
 {
@@ -20,7 +20,8 @@ class HolidayReminderMail extends Mailable implements SendsToTelegram
     public function __construct(
         public SocialHoliday $holiday,
         public string $siteName,
-    ) {}
+    ) {
+    }
 
     public function envelope(): Envelope
     {

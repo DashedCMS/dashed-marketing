@@ -1,9 +1,9 @@
 <?php
 
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Filament\Facades\Filament;
 use Tests\TestCase;
+use Filament\Facades\Filament;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 
 uses(TestCase::class);
 

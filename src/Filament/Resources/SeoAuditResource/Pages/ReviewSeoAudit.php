@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
-use Dashed\DashedMarketing\Jobs\GenerateOutlineContentJob;
-use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
-use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Services\SeoAuditApplier;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
+use Filament\Notifications\Notification;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Models\ContentApplyLog;
+use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
+use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Dashed\DashedMarketing\Jobs\GenerateOutlineContentJob;
+use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 
 class ReviewSeoAudit extends Page
 {

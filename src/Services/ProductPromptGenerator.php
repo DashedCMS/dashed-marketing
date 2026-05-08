@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Dashed\DashedAi\Exceptions\AiException;
-use Dashed\DashedAi\Exceptions\AiRateLimitException;
+use RuntimeException;
+use Illuminate\Support\Str;
 use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Dashed\DashedAi\Exceptions\AiException;
 use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use RuntimeException;
+use Dashed\DashedAi\Exceptions\AiRateLimitException;
 
 /**
  * Generates a production-grade English image prompt for an image-to-image
@@ -133,9 +133,11 @@ class ProductPromptGenerator
             ]);
         } catch (AiRateLimitException $e) {
             Log::warning('[product-prompt] rate limit', ['theme' => $theme, 'error' => $e->getMessage()]);
+
             throw $e;
         } catch (AiException|ConnectionException $e) {
             Log::error('[product-prompt] ai error', ['theme' => $theme, 'error' => $e->getMessage()]);
+
             throw $e;
         }
 
@@ -147,6 +149,7 @@ class ProductPromptGenerator
                 'model' => $model,
                 'image_hash' => $imageHash,
             ]);
+
             throw new RuntimeException('AI returned an empty product prompt.');
         }
 

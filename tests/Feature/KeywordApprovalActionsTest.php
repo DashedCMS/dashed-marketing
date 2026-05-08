@@ -1,10 +1,10 @@
 <?php
 
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages\ListKeywords;
+use Tests\TestCase;
+use Livewire\Livewire;
 use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages\ListKeywords;
 
 uses(TestCase::class, RefreshDatabase::class);
 

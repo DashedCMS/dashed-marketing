@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\SeoAudit;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateOutlineContentJob implements ShouldQueue
 {
@@ -26,7 +26,9 @@ class GenerateOutlineContentJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(public int $auditId) {}
+    public function __construct(public int $auditId)
+    {
+    }
 
     public function handle(): void
     {
@@ -63,6 +65,7 @@ class GenerateOutlineContentJob implements ShouldQueue
             }
 
             $response = [];
+
             try {
                 $response = Ai::json(
                     SeoAuditPromptBuilder::outlineContent(
@@ -149,6 +152,7 @@ class GenerateOutlineContentJob implements ShouldQueue
         }
 
         $brand = '';
+
         try {
             $brand = app(SocialContextBuilder::class)->build('seo');
         } catch (\Throwable) {
@@ -156,6 +160,7 @@ class GenerateOutlineContentJob implements ShouldQueue
         }
 
         $seededKeywords = [];
+
         try {
             $seededKeywords = \Dashed\DashedMarketing\Models\Keyword::query()
                 ->where('locale', $locale)

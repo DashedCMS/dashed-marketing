@@ -9,5 +9,6 @@ class PublishResult
         public readonly ?string $externalUrl = null,
         public readonly ?string $externalId = null,
         public readonly ?string $error = null,
-    ) {}
+    ) {
+    }
 }

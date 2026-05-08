@@ -1,8 +1,8 @@
 <?php
 
+use Tests\TestCase;
 use Dashed\DashedMarketing\Models\ContentCluster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 

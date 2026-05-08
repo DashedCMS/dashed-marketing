@@ -1,14 +1,14 @@
 <?php
 
+use Tests\TestCase;
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Models\ContentCluster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Tests\TestCase;
+use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
 
 uses(TestCase::class, RefreshDatabase::class);
 

@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 
 class ListContentClusters extends ListRecords
 {

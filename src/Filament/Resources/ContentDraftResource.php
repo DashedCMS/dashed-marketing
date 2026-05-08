@@ -2,36 +2,36 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
+use UnitEnum;
 use BackedEnum;
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateContentDraft;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\ListContentDrafts;
-use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
-use Dashed\DashedMarketing\Jobs\RegenerateSectionHeadingJob;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Schemas\Schema;
+use Dashed\DashedAi\Facades\Ai;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\RichEditor;
+use Filament\Resources\Resource;
+use Filament\Actions\DeleteAction;
+use Illuminate\Support\HtmlString;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
-use Illuminate\Support\Str;
-use UnitEnum;
+use Filament\Forms\Components\Placeholder;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Dashed\DashedMarketing\Jobs\RegenerateSectionHeadingJob;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\EditContentDraft;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\ListContentDrafts;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateContentDraft;
 
 class ContentDraftResource extends Resource
 {
@@ -91,6 +91,7 @@ class ContentDraftResource extends Resource
                         ->label('Target type')
                         ->options(function () {
                             $options = [];
+
                             try {
                                 foreach ((array) cms()->builder('routeModels') as $key => $entry) {
                                     $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
@@ -381,6 +382,7 @@ TXT;
                                 ->helperText('Laat leeg voor een losse URL.')
                                 ->options(function () {
                                     $options = [];
+
                                     try {
                                         foreach ((array) cms()->builder('routeModels') as $key => $entry) {
                                             $name = is_array($entry) ? ($entry['name'] ?? $key) : $key;
@@ -701,7 +703,7 @@ TXT;
         }
 
         try {
-            $model = new $class;
+            $model = new $class();
             $table = $model->getTable();
         } catch (\Throwable) {
             return $cache[$class] = [];
