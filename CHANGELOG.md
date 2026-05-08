@@ -2,6 +2,13 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.19.0 - 2026-05-08
+
+### Changed
+- `SocialPostResource` edit-form: het algemene `post_url`-veld is verwijderd. In plaats daarvan rendert de "Per kanaal" sectie nu één bewerkbare URL-`TextInput` per geselecteerd kanaal, gebonden aan `published_urls.{slug}`. De helper-tekst onder elk veld toont per kanaal de status ("Gepost op …", "Mislukt", of "Gepost").
+- De read-only "In behandeling" badge in het oude placeholder-blok is opgeheven; de status zit nu als helper-text onder elk URL-veld en de centrale boodschap is consistent "Gepost".
+- "Performance" (KeyValue voor `performance_data`) is verplaatst naar een eigen ingeklapte sectie.
+
 ## v4.18.0 - 2026-05-08
 
 ### Added
