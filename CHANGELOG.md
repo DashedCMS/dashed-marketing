@@ -2,6 +2,15 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.21.0 - 2026-05-11
+
+### Added
+- **SEO-audit Keywords-tab: handmatig keywords toevoegen en verwijderen.** Elke keyword-pill heeft een ×-knop met bevestiging; onderaan de tab staat een formulier met velden Keyword + Type (primary/secondary/longtail/lsi/gap) + Intent + Prioriteit. Livewire-methoden `addKeyword()` en `removeKeyword(int $id)` op `ReviewSeoAudit` doen de DB-mutaties (case-insensitive duplicate-guard, `notes='Handmatig toegevoegd'`).
+- **Self-link guard op interne link-suggesties.** `GenerateSeoAuditJob::suggestInternalLinks()` filtert AI-suggesties weg waarvan het pad gelijk is aan het subject zelf, en `ReviewSeoAudit::addInternalLink()` weigert handmatig toegevoegde self-links met een waarschuwing. Nieuwe helper `GenerateSeoAuditJob::normalizeLinkPath()` strip scheme/host en lowercased het pad zodat `https://site.nl/foo/` en `/foo` gelijk gerekend worden.
+
+### Changed
+- **Auto-keyword-prompt strakker en pagina-gebonden.** `SeoAuditPromptBuilder::keywords()` krijgt nu het volledige `current_blocks` + `current_meta` mee en eist dat iedere AI-suggestie aantoonbaar over DEZE pagina gaat (niet over het bedrijf in het algemeen). Aantal teruggebracht: max 5 totaal (LSI 1-3, gap 0-2) i.p.v. 5-8. Vraagt expliciet om een 1-zins-`notes` waarom de keyword bij de pagina past, en zet `priority=high` alleen toe als de match onbetwijfeld is.
+
 ## v4.20.0 - 2026-05-11
 
 ### Removed

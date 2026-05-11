@@ -45,6 +45,8 @@ TXT;
         $brand = $context['brand'];
         $seeded = array_values(array_unique(array_map('trim', (array) ($context['seeded_keywords'] ?? []))));
         $seededJson = json_encode($seeded, JSON_UNESCAPED_UNICODE);
+        $blocks = json_encode($context['current_blocks'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $meta = json_encode($context['current_meta'] ?? [], JSON_UNESCAPED_UNICODE);
 
         return <<<TXT
 {$instruction}Vul aan op de curated keyword-research voor "{$subject['name']}" (locale: {$context['locale']}).
@@ -52,17 +54,27 @@ TXT;
 Merk-context:
 {$brand}
 
+Huidige meta van deze pagina:
+{$meta}
+
+Content-blokken van deze pagina (JSON, gebruik ALLEEN als ankerpunt voor onderwerp en woordkeus van suggesties):
+{$blocks}
+
 Al beschikbare keywords uit de zoekwoord-research (niet herhalen):
 {$seededJson}
 
 Regels:
 - Geef UITSLUITEND LSI/semantic en gap keywords. Primary/secondary/longtail komen uit de research, niet uit AI.
-- LSI: semantisch verwant aan de bestaande keywords; voeg 3-5 toe.
-- Gap: relevante keywords die de research mist; voeg 2-3 toe.
-- Vermijd duplicates van de lijst hierboven, ook niet in vervoegingen/meervouden die hetzelfde bedoelen.
+- Iedere suggestie moet aantoonbaar over het onderwerp van DEZE pagina gaan (zoals zichtbaar in de content/meta hierboven). Niet over het bedrijf in het algemeen of over andere paginas.
+- Wees kieskeurig: liever 2 sterke suggesties dan 5 zwakke. Sla LSI of gap helemaal over als je niets sterks kunt bedenken.
+- LSI: 1-3 echt semantisch verwante termen die de huidige pagina-content versterken.
+- Gap: 0-2 keywords die de pagina mist maar logisch hoort te dekken op basis van zijn onderwerp.
+- Maximaal 5 suggesties in totaal.
+- Vermijd duplicates van de research-lijst, ook niet in vervoegingen/meervouden of synoniemen die hetzelfde bedoelen.
 - intent per keyword: informational | commercial | transactional | navigational.
 - volume_indication: high | medium | low (qualitatief, geen verzonnen cijfers).
-- priority: high | medium | low.
+- priority: high | medium | low (zet alleen high als de keyword zonder twijfel matcht met de pagina-intentie).
+- notes: 1 korte zin (max 12 woorden) die uitlegt waarom dit bij DEZE pagina past.
 - Geen em-dashes, geen AI-clichés.
 
 Retourneer JSON: {"summary": "...", "suggestions": [{"keyword": "...", "type": "lsi|gap", "intent": "...", "volume_indication": "...", "priority": "...", "notes": "..."}]}

@@ -161,10 +161,23 @@
                         <h3 class="mb-2 text-sm font-semibold uppercase text-gray-950 dark:text-white">{{ $type }}</h3>
                         <div class="flex flex-wrap gap-2">
                             @foreach($items as $k)
-                                <span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-white/10 dark:text-gray-100">
-                                    {{ $k->keyword }}
-                                    @if($k->intent)<span class="ml-1 text-xs text-gray-500">· {{ $k->intent }}</span>@endif
-                                    @if($k->volume_indication)<span class="ml-1 text-xs text-gray-500">· vol: {{ $k->volume_indication }}</span>@endif
+                                <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-white/10 dark:text-gray-100">
+                                    <span>
+                                        {{ $k->keyword }}
+                                        @if($k->intent)<span class="ml-1 text-xs text-gray-500">· {{ $k->intent }}</span>@endif
+                                        @if($k->volume_indication)<span class="ml-1 text-xs text-gray-500">· vol: {{ $k->volume_indication }}</span>@endif
+                                    </span>
+                                    <button
+                                        type="button"
+                                        wire:click="removeKeyword({{ $k->id }})"
+                                        wire:confirm="Keyword '{{ $k->keyword }}' verwijderen?"
+                                        class="-mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-500/20 dark:hover:text-red-300"
+                                        title="Verwijder keyword"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
                                 </span>
                             @endforeach
                         </div>
@@ -172,8 +185,50 @@
                 @endif
             @endforeach
             @if($record->keywords->isEmpty())
-                <p class="text-sm text-gray-500">Geen keywords.</p>
+                <p class="text-sm text-gray-500">Nog geen keywords. Voeg er hieronder een toe of vernieuw de audit.</p>
             @endif
+
+            <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                <h3 class="mb-3 text-sm font-semibold text-gray-950 dark:text-white">Keyword handmatig toevoegen</h3>
+                <div class="grid gap-3 md:grid-cols-4">
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-medium uppercase text-gray-500">Keyword</label>
+                        <input wire:model="newKeyword" placeholder="Bijv. duurzame leren tas" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">Type</label>
+                        <select wire:model="newKeywordType" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white">
+                            <option value="primary">Primary</option>
+                            <option value="secondary">Secondary</option>
+                            <option value="longtail">Long-tail</option>
+                            <option value="lsi">LSI</option>
+                            <option value="gap">Gap</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium uppercase text-gray-500">Intent</label>
+                        <select wire:model="newKeywordIntent" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white">
+                            <option value="informational">Informational</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="transactional">Transactional</option>
+                            <option value="navigational">Navigational</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2 md:col-span-4">
+                        <div class="w-40">
+                            <label class="text-xs font-medium uppercase text-gray-500">Prioriteit</label>
+                            <select wire:model="newKeywordPriority" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white">
+                                <option value="high">Hoog</option>
+                                <option value="medium">Middel</option>
+                                <option value="low">Laag</option>
+                            </select>
+                        </div>
+                        <x-filament::button wire:click="addKeyword" icon="heroicon-o-plus">
+                            Toevoegen
+                        </x-filament::button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Meta tab --}}

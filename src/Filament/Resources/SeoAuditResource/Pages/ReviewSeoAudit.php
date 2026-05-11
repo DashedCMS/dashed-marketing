@@ -68,6 +68,14 @@ class ReviewSeoAudit extends Page
 
     public string $newLinkPriority = 'medium';
 
+    public string $newKeyword = '';
+
+    public string $newKeywordType = 'gap';
+
+    public string $newKeywordIntent = 'informational';
+
+    public string $newKeywordPriority = 'medium';
+
     public function mount(SeoAudit $record): void
     {
         $this->record = $record;
@@ -379,6 +387,24 @@ class ReviewSeoAudit extends Page
             return;
         }
 
+        $subjectUrl = '';
+        if ($this->record->subject && method_exists($this->record->subject, 'getUrl')) {
+            try {
+                $subjectUrl = (string) $this->record->subject->getUrl();
+            } catch (\Throwable) {
+                $subjectUrl = '';
+            }
+        }
+        $selfPath = GenerateSeoAuditJob::normalizeLinkPath($subjectUrl);
+        if ($selfPath !== '' && GenerateSeoAuditJob::normalizeLinkPath($url) === $selfPath) {
+            Notification::make()
+                ->title('Interne links mogen niet naar dezelfde pagina wijzen')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         $priority = in_array($this->newLinkPriority, ['high', 'medium', 'low'], true)
             ? $this->newLinkPriority
             : 'medium';
@@ -400,6 +426,79 @@ class ReviewSeoAudit extends Page
 
         Notification::make()
             ->title('Interne link toegevoegd')
+            ->success()
+            ->send();
+    }
+
+    public function addKeyword(): void
+    {
+        $keyword = trim($this->newKeyword);
+        if ($keyword === '') {
+            Notification::make()
+                ->title('Vul een keyword in')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $allowedTypes = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
+        $allowedIntents = ['informational', 'commercial', 'transactional', 'navigational'];
+        $allowedPriorities = ['high', 'medium', 'low'];
+
+        $type = in_array($this->newKeywordType, $allowedTypes, true) ? $this->newKeywordType : 'gap';
+        $intent = in_array($this->newKeywordIntent, $allowedIntents, true) ? $this->newKeywordIntent : null;
+        $priority = in_array($this->newKeywordPriority, $allowedPriorities, true) ? $this->newKeywordPriority : 'medium';
+
+        $exists = $this->record->keywords()
+            ->whereRaw('LOWER(keyword) = ?', [mb_strtolower($keyword)])
+            ->exists();
+
+        if ($exists) {
+            Notification::make()
+                ->title('Deze keyword staat er al')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->record->keywords()->create([
+            'keyword' => mb_substr($keyword, 0, 500),
+            'type' => $type,
+            'intent' => $intent,
+            'priority' => $priority,
+            'notes' => 'Handmatig toegevoegd',
+        ]);
+
+        $this->newKeyword = '';
+        $this->newKeywordType = 'gap';
+        $this->newKeywordIntent = 'informational';
+        $this->newKeywordPriority = 'medium';
+
+        $this->record->refresh();
+
+        Notification::make()
+            ->title('Keyword toegevoegd')
+            ->success()
+            ->send();
+    }
+
+    public function removeKeyword(int $id): void
+    {
+        $keyword = $this->record->keywords()->whereKey($id)->first();
+        if (! $keyword) {
+            return;
+        }
+
+        $label = $keyword->keyword;
+        $keyword->delete();
+
+        $this->record->refresh();
+
+        Notification::make()
+            ->title('Keyword verwijderd')
+            ->body($label)
             ->success()
             ->send();
     }

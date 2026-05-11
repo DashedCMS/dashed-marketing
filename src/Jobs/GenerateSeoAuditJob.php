@@ -534,6 +534,8 @@ class GenerateSeoAuditJob implements ShouldQueue
         $response = Ai::json(SeoAuditPromptBuilder::internalLinks($context)) ?? [];
 
         $validUrls = array_flip(array_column($context['route_pool'], 'url'));
+        $selfPath = $this->normalizeLinkPath((string) ($context['subject']['url'] ?? ''));
+
         $audit->internalLinkSuggestions()->delete();
 
         foreach ((array) ($response['suggestions'] ?? []) as $s) {
@@ -548,6 +550,10 @@ class GenerateSeoAuditJob implements ShouldQueue
                 continue;
             }
 
+            if ($selfPath !== '' && $this->normalizeLinkPath($url) === $selfPath) {
+                continue;
+            }
+
             $audit->internalLinkSuggestions()->create([
                 'anchor_text' => $anchor,
                 'target_url' => $url,
@@ -559,5 +565,26 @@ class GenerateSeoAuditJob implements ShouldQueue
                 'status' => 'pending',
             ]);
         }
+    }
+
+    /**
+     * Normaliseert een URL of pad zodat self-link checks consistent zijn:
+     * "https://site.nl/foo/" en "/foo" worden allebei "/foo". Root wordt "/".
+     */
+    public static function normalizeLinkPath(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        if (! is_string($path) || $path === '') {
+            $path = $url;
+        }
+
+        $path = '/' . trim($path, '/');
+
+        return mb_strtolower($path);
     }
 }
