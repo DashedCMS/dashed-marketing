@@ -18,8 +18,6 @@ $prompt = app(ProductPromptGenerator::class)->generate(
     theme: 'Koningsdag',
     options: [
         'brand_name' => 'Lovora',
-        'brand_story' => 'Lovora ontwerpt 3D-geprinte design vazen…',
-        'writing_style' => 'premium, minimalistisch, Scandinavisch, warme natuurlijke lighting',
         'extra_instructions' => 'close-up op product, geen mensen',
         'model' => 'claude-sonnet-4-6', // optional override
         'temperature' => 0.7,           // optional
@@ -31,9 +29,9 @@ $prompt = app(ProductPromptGenerator::class)->generate(
 
 `generate()` returns the raw English prompt as a single string - no preamble, no quotes, no markdown. Throws `RuntimeException` on unreadable image / empty response, and re-throws `AiException` / `AiRateLimitException` from the AI layer.
 
-Brand voice is **dynamic**: `brand_name`, `brand_story`, `writing_style` are passed as options. Defaults fall back to `Customsetting::get('site_name')`, `ai_brand_story`, `ai_writing_style` so the same service works for any consumer (Lovora and others).
+Brand voice komt nu uitsluitend uit de tone-of-voice Brief (zie `dashed-ai`); `AiManager::prependToneOfVoice()` voegt de Brief automatisch toe aan elke `Ai::vision()`-call. De system prompt van `ProductPromptGenerator` benoemt alleen nog `brand_name` (default `Customsetting::get('site_name')`) zodat het model het merk kan aanspreken.
 
-Output is cached for 24h by default, keyed on `md5(image bytes + theme + model + brand fields + system version)`. Bumping `ProductPromptGenerator::SYSTEM_VERSION` invalidates all cached prompts.
+Output is cached for 24h by default, keyed on `md5(image bytes + theme + model + brand_name + product fields + system version)`. Bumping `ProductPromptGenerator::SYSTEM_VERSION` invalidates all cached prompts.
 
 ## Built-in theme iconography
 
@@ -65,8 +63,6 @@ The other two callers (`GenerateImageAction.generateDistinctImagePrompts`, `Gene
 php artisan dashed:generate-product-prompt {imagePath} {theme}
     [--model=]
     [--brand-name=]
-    [--brand-story=]
-    [--writing-style=]
     [--instructions=]
     [--no-cache]
 ```

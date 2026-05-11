@@ -12,8 +12,6 @@ class GenerateProductPromptCommand extends Command
         {theme : Theme / occasion (e.g. Koningsdag, Kerst, Lente)}
         {--model= : Override Claude model (default claude-sonnet-4-6)}
         {--brand-name= : Override brand name (default site_name customsetting)}
-        {--brand-story= : Override brand story (default ai_brand_story customsetting)}
-        {--writing-style= : Override writing style (default ai_writing_style customsetting)}
         {--product-name= : Explicit product name to anchor the prompt}
         {--product-context= : Multi-line product info (material, finish, dimensions, USP) to anchor the prompt}
         {--instructions= : Extra free-form art-direction}
@@ -36,8 +34,6 @@ class GenerateProductPromptCommand extends Command
         $options = array_filter([
             'model' => $this->option('model'),
             'brand_name' => $this->option('brand-name'),
-            'brand_story' => $this->option('brand-story'),
-            'writing_style' => $this->option('writing-style'),
             'product_name' => $this->option('product-name'),
             'product_context' => $this->option('product-context'),
             'extra_instructions' => $this->option('instructions'),

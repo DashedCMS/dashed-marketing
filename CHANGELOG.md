@@ -2,6 +2,14 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.20.0 - 2026-05-11
+
+### Removed
+- **`ai_brand_story` / `ai_writing_style` fallback uit `SocialContextBuilder` en `ProductPromptGenerator` gehaald.** Deze velden bestaan niet meer in de AI-instellingen (zie dashed-ai v4.2.0); de tone-of-voice Brief is voortaan de enige merk-context en wordt automatisch door `AiManager` aan elke AI-call geprepend.
+- `SocialContextBuilder::addBrandInfo()` laat de "Merkverhaal" en "Schrijfstijl" regels achterwege; alleen `Merk` (site_name), `Doelgroep` en `USPs` blijven over.
+- `ProductPromptGenerator::generate()` accepteert geen `brand_story` / `writing_style` options meer; `buildSystem()` signature simplified tot `(string $brandName)`. Cache-sleutel doet dezelfde inputs niet meer mee dus oude entries blijven gewoon valide.
+- `dashed:generate-product-prompt` CLI: `--brand-story` en `--writing-style` flags zijn weg.
+
 ## v4.19.0 - 2026-05-08
 
 ### Changed

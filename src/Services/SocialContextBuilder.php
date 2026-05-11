@@ -142,16 +142,6 @@ class SocialContextBuilder
             $parts[] = "Merk: {$siteName}";
         }
 
-        $brandStory = Customsetting::get('ai_brand_story');
-        if ($brandStory) {
-            $parts[] = "Merkverhaal: {$brandStory}";
-        }
-
-        $writingStyle = Customsetting::get('ai_writing_style');
-        if ($writingStyle) {
-            $parts[] = "Schrijfstijl: {$writingStyle}";
-        }
-
         $targetAudience = Customsetting::get('social_target_audience');
         if ($targetAudience) {
             $parts[] = "Doelgroep: {$targetAudience}";

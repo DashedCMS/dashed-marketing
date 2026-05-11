@@ -64,8 +64,6 @@ class ProductPromptGenerator
      *   - max_tokens: int (default DEFAULT_MAX_TOKENS)
      *   - temperature: float (default DEFAULT_TEMPERATURE)
      *   - brand_name: ?string - used to address the brand by name
-     *   - brand_story: ?string - short paragraph about the brand
-     *   - writing_style: ?string - tone/style description
      *   - product_name: ?string - explicit product name (e.g. "Lovora Family Figurine")
      *   - product_context: ?string - structured product info (material, dimensions, finish, USP, design language) so Claude can anchor the prompt in the actual product
      *   - cache_ttl: int seconds (default 86400, 0 disables caching)
@@ -92,8 +90,6 @@ class ProductPromptGenerator
         $themeHint = self::THEME_HINTS[$themeKey] ?? null;
 
         $brandName = trim((string) ($options['brand_name'] ?? Customsetting::get('site_name', null, '') ?: ''));
-        $brandStory = trim((string) ($options['brand_story'] ?? Customsetting::get('ai_brand_story', null, '') ?: ''));
-        $writingStyle = trim((string) ($options['writing_style'] ?? Customsetting::get('ai_writing_style', null, '') ?: ''));
         $productName = trim((string) ($options['product_name'] ?? ''));
         $productContext = trim((string) ($options['product_context'] ?? ''));
         $extra = trim((string) ($options['extra_instructions'] ?? ''));
@@ -109,8 +105,6 @@ class ProductPromptGenerator
             $themeKey,
             $model,
             $brandName,
-            $brandStory,
-            $writingStyle,
             $productName,
             $productContext,
             $extra,
@@ -120,7 +114,7 @@ class ProductPromptGenerator
             return $cached;
         }
 
-        $systemPrompt = $this->buildSystem($brandName, $brandStory, $writingStyle);
+        $systemPrompt = $this->buildSystem($brandName);
         $userPrompt = $this->buildUser($theme, $themeHint, $productName, $productContext, $extra);
 
         try {
@@ -178,17 +172,14 @@ class ProductPromptGenerator
         return array_keys(self::THEME_HINTS);
     }
 
-    private function buildSystem(string $brandName, string $brandStory, string $writingStyle): string
+    private function buildSystem(string $brandName): string
     {
         $brandLine = $brandName !== ''
             ? "You write image prompts for the brand **{$brandName}**."
             : 'You write image prompts for a premium consumer brand.';
 
-        $brandStorySection = $brandStory !== '' ? "\n\nBrand story:\n{$brandStory}" : '';
-        $writingStyleSection = $writingStyle !== '' ? "\n\nBrand voice / writing style:\n{$writingStyle}" : '';
-
         return <<<SYS
-        You are a senior product photography prompt engineer. {$brandLine} The prompts you write feed an image-to-image model (fal nano-banana / flux-kontext) that EDITS a reference product photo into a styled lifestyle shot. The model is exceptionally faithful to the input image when you instruct it correctly.{$brandStorySection}{$writingStyleSection}
+        You are a senior product photography prompt engineer. {$brandLine} The prompts you write feed an image-to-image model (fal nano-banana / flux-kontext) that EDITS a reference product photo into a styled lifestyle shot. The model is exceptionally faithful to the input image when you instruct it correctly.
 
         ## Product hero framing (CRITICAL)
         The PRODUCT is the protagonist. Roughly 60-70% of the descriptive weight of the prompt MUST be about the product itself, not about the scene around it. Devote vivid, specific language to:
