@@ -3,6 +3,7 @@
 namespace Dashed\DashedMarketing\Models;
 
 use Dashed\DashedCore\Classes\Sites;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SocialPost extends Model
 {
+    use LogsActivity;
     protected $table = 'dashed__social_posts';
 
     protected $fillable = [
@@ -158,5 +160,27 @@ class SocialPost extends Model
             'posted_at' => now(),
             'post_url' => $postUrl,
         ]);
+    }
+
+    /**
+     * Activity-log integration: emits a row per edit so the Filament
+     * LastEditedColumn can surface "who changed this when".
+     */
+    public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions
+    {
+        return \Spatie\Activitylog\LogOptions::defaults()
+            ->logOnly(['*'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * Latest activity-log entry. Eager-load via
+     * `with('latestActivity.causer')` to avoid N+1 on list pages.
+     */
+    public function latestActivity(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(\Spatie\Activitylog\Models\Activity::class, 'subject')
+            ->latestOfMany('created_at');
     }
 }
