@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
+use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
 use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
@@ -22,6 +23,7 @@ class GenerateSeoAuditJob implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+    use HandlesQueueFailures;
 
     public int $tries = 2;
 
@@ -83,6 +85,8 @@ class GenerateSeoAuditJob implements ShouldQueue
                 'progress_message' => null,
                 'error_message' => 'Job gefaald: '.$exception->getMessage(),
             ]);
+
+        $this->reportFailure($exception);
     }
 
     protected function bootstrapAudit(): ?SeoAudit
