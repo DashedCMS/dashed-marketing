@@ -62,26 +62,37 @@ class FormFlowEnrollment extends Model
     {
         $next = null;
 
-        if (! $this->unenrolled_at && ! $this->completed_at && $this->flow) {
-            $sent = is_array($this->sent_steps) ? $this->sent_steps : [];
-            $sentIds = array_map('strval', array_keys($sent));
-
-            $startedAt = $this->enrolled_at ?: ($this->created_at ?? now());
-
-            $query = $this->flow->emails()
-                ->where('is_active', true);
-
-            if (! empty($sentIds)) {
-                $query->whereNotIn('id', $sentIds);
+        if (! $this->unenrolled_at && ! $this->completed_at) {
+            try {
+                $flow = $this->flow;
+            } catch (\Throwable) {
+                $flow = null;
             }
 
-            $nextStep = $query
-                ->orderBy('send_after_minutes')
-                ->orderBy('id')
-                ->first();
+            if ($flow) {
+                $sent = is_array($this->sent_steps) ? $this->sent_steps : [];
+                $sentIds = array_map('strval', array_keys($sent));
 
-            if ($nextStep) {
-                $next = $startedAt->copy()->addMinutes((int) ($nextStep->send_after_minutes ?? 0));
+                $startedAt = $this->enrolled_at ?: ($this->created_at ?? now());
+
+                try {
+                    $query = $flow->emails()->where('is_active', true);
+                    if (! empty($sentIds)) {
+                        $query->whereNotIn('id', $sentIds);
+                    }
+                    $nextStep = $query
+                        ->orderBy('send_after_minutes')
+                        ->orderBy('id')
+                        ->first();
+
+                    if ($nextStep) {
+                        $next = $startedAt->copy()->addMinutes((int) ($nextStep->send_after_minutes ?? 0));
+                    }
+                } catch (\Throwable) {
+                    // Flow-related tables may not exist yet on a fresh install;
+                    // skipping next_mail_at calculation lets the scheduler pick
+                    // up the row later once dashed-popups migrations have run.
+                }
             }
         }
 
