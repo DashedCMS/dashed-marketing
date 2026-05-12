@@ -38,6 +38,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSoc
 
 class SocialPostResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\HasLastEditedColumn;
+
     protected static ?string $model = SocialPost::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-share';
