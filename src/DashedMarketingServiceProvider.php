@@ -49,6 +49,16 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
+        // Wire the form-submission → marketing-flow enrolment listener. Skipped
+        // when dashed-forms isn't installed on the host so this provider can
+        // boot in marketing-only setups.
+        if (class_exists(\Dashed\DashedForms\Events\FormSubmitted::class)) {
+            \Illuminate\Support\Facades\Event::listen(
+                \Dashed\DashedForms\Events\FormSubmitted::class,
+                \Dashed\DashedMarketing\Listeners\EnrolFormSubmitterInFlowListener::class,
+            );
+        }
+
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('social:publish-due')->everyMinute()->withoutOverlapping();
             $schedule->command('social:notify-due')->dailyAt('08:00');
