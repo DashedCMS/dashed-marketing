@@ -67,6 +67,7 @@ class SocialPost extends Model
 
     public const STATUSES = [
         'concept' => 'Concept',
+        'pending' => 'In wachtrij',
         'in_review' => 'In review',
         'approved' => 'Goedgekeurd',
         'scheduled' => 'Ingepland',

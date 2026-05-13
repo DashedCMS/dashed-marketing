@@ -6,6 +6,7 @@ use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Dashed\DashedMarketing\Filament\Actions\GeneratePostAction;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Filament\Widgets\SocialPostPendingStat;
 
 class ListSocialPosts extends ListRecords
 {
@@ -22,5 +23,12 @@ class ListSocialPosts extends ListRecords
             GeneratePostAction::make(),
             CreateAction::make(),
         ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return array_merge(parent::getHeaderWidgets() ?? [], [
+            SocialPostPendingStat::class,
+        ]);
     }
 }
