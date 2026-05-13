@@ -2,23 +2,23 @@
 
 namespace Dashed\DashedMarketing;
 
-use Dashed\DashedMarketing\Filament\Pages\Settings\ContentPublishSettingsPage;
-use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Filament\Panel;
+use Filament\Contracts\Plugin;
 use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
 use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Widgets\SocialCalendarWidget;
-use Filament\Contracts\Plugin;
-use Filament\Panel;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Filament\Pages\Settings\ContentPublishSettingsPage;
 
 class DashedMarketingPlugin implements Plugin
 {
@@ -53,5 +53,7 @@ class DashedMarketingPlugin implements Plugin
             ]);
     }
 
-    public function boot(Panel $panel): void {}
+    public function boot(Panel $panel): void
+    {
+    }
 }

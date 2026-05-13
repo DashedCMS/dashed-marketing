@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 use Filament\Resources\Pages\ListRecords;
+use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 
 class ListSeoAudits extends ListRecords
 {

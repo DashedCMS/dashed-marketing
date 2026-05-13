@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages;
 
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 use Filament\Resources\Pages\CreateRecord;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 
 class CreateSocialPillar extends CreateRecord
 {

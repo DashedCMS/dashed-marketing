@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Templates;
 
-use Dashed\DashedMarketing\Contracts\ContentTemplate;
 use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Contracts\ContentTemplate;
 
 class ProductCategoryTemplate implements ContentTemplate
 {

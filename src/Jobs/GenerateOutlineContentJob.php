@@ -2,18 +2,18 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
-use Dashed\DashedMarketing\Support\FaqHeadingDetector;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Support\FaqHeadingDetector;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateOutlineContentJob implements ShouldQueue
 {
@@ -28,7 +28,9 @@ class GenerateOutlineContentJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(public int $auditId) {}
+    public function __construct(public int $auditId)
+    {
+    }
 
     public function handle(): void
     {

@@ -2,21 +2,21 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Throwable;
+use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Dashed\DashedMarketing\Services\LinkCandidatesService;
-use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
-use Dashed\DashedMarketing\Support\FaqHeadingDetector;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use Dashed\DashedMarketing\Support\FaqHeadingDetector;
+use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateSeoAuditJob implements ShouldQueue
 {
@@ -38,7 +38,8 @@ class GenerateSeoAuditJob implements ShouldQueue
         public ?int $userId = null,
         public ?string $instruction = null,
         public ?string $locale = null,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Models\Keyword;
+use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
+use Dashed\DashedAi\Facades\Ai;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Dashed\DashedMarketing\Models\ContentCluster;
 
 class GenerateClusterConceptsJob implements ShouldQueue
 {
@@ -24,7 +24,8 @@ class GenerateClusterConceptsJob implements ShouldQueue
         public int $clusterId,
         public int $count = 10,
         public ?string $briefing = null,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

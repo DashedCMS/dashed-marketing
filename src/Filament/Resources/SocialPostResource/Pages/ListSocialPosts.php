@@ -2,11 +2,11 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
 use Dashed\DashedMarketing\Filament\Actions\GeneratePostAction;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 use Dashed\DashedMarketing\Filament\Widgets\SocialPostPendingStat;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
 
 class ListSocialPosts extends ListRecords
 {

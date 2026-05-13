@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Facades;
 
-use Dashed\DashedMarketing\Managers\KeywordDataManager;
 use Illuminate\Support\Facades\Facade;
+use Dashed\DashedMarketing\Managers\KeywordDataManager;
 
 /**
  * @method static void register(\Dashed\DashedMarketing\Contracts\KeywordDataProvider $provider)

@@ -2,11 +2,11 @@
 
 namespace Dashed\DashedMarketing\Filament\Widgets;
 
+use Filament\Widgets\StatsOverviewWidget;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Dashed\DashedCore\Filament\Support\ResourceFilterUrl;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
  * Stat-widget bovenaan de social-posts-lijst: telt posts die in de

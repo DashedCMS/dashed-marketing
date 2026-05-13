@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
-use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
-use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Console\Command;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Jobs\PublishSocialPostJob;
 
 class PublishDueSocialPostsCommand extends Command
 {

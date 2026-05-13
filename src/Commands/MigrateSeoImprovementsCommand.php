@@ -2,11 +2,11 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
-use Dashed\DashedMarketing\Models\SeoAudit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Dashed\DashedMarketing\Models\SeoAudit;
 
 class MigrateSeoImprovementsCommand extends Command
 {

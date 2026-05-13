@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Models;
 
-use Dashed\DashedPopups\Models\PopupFollowUpFlow;
 use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedPopups\Models\PopupFollowUpFlow;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**

@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Contracts;
 
-use Dashed\DashedMarketing\DTOs\KeywordResearchResult;
 use Illuminate\Support\Collection;
+use Dashed\DashedMarketing\DTOs\KeywordResearchResult;
 
 interface KeywordResearchAdapter
 {

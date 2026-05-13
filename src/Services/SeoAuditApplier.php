@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Services;
 
+use Throwable;
+use RuntimeException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedCore\Models\CustomStructuredData;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
-use Dashed\DashedMarketing\Models\SeoAudit;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use RuntimeException;
-use Throwable;
 
 class SeoAuditApplier
 {
@@ -26,7 +26,7 @@ class SeoAuditApplier
             throw new RuntimeException('Audit subject is no longer available');
         }
 
-        $result = new SeoAuditApplyResult;
+        $result = new SeoAuditApplyResult();
 
         $blockIds = (array) ($selectedIds['blocks'] ?? []);
         $faqIds = array_map('intval', (array) ($selectedIds['faqs'] ?? []));

@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Listeners;
 
-use Dashed\DashedForms\Events\FormSubmitted;
 use Dashed\DashedForms\Models\Form;
+use Dashed\DashedForms\Events\FormSubmitted;
 use Dashed\DashedMarketing\Models\FormFlowEnrollment;
 
 /**
@@ -13,7 +13,7 @@ use Dashed\DashedMarketing\Models\FormFlowEnrollment;
  *
  * Once Bundle 2 ships `Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures`,
  * this listener should be promoted to a queued job that uses the trait so
- * downstream alert/retry behavior is centralised. v1 stays synchronous —
+ * downstream alert/retry behavior is centralised. v1 stays synchronous -
  * the work is one find + one upsert and is fast enough to keep inline.
  */
 class EnrolFormSubmitterInFlowListener

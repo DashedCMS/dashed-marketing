@@ -2,24 +2,24 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
+use UnitEnum;
 use BackedEnum;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\CreateSocialPillar;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\ColorPicker;
+use Dashed\DashedMarketing\Models\SocialPillar;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\EditSocialPillar;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\ListSocialPillars;
-use Dashed\DashedMarketing\Models\SocialPillar;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use UnitEnum;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\CreateSocialPillar;
 
 class SocialPillarResource extends Resource
 {
