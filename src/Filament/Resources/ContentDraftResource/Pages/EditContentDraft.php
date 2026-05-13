@@ -2,18 +2,18 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
-use Filament\Actions\Action;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Bus;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\EditRecord;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 use Dashed\DashedMarketing\Jobs\GenerateDraftFaqsJob;
 use Dashed\DashedMarketing\Jobs\GenerateDraftMetaJob;
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Services\ContentDraftPublisher;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 class EditContentDraft extends EditRecord
 {
@@ -132,7 +132,7 @@ class EditContentDraft extends EditRecord
                         }
 
                         $locale = $draft->locale ?? 'nl';
-                        $target = new $class();
+                        $target = new $class;
                         $target->setTranslation('name', $locale, (string) $draft->name);
                         $target->setTranslation('slug', $locale, (string) $draft->slug);
                         $target->save();
@@ -223,7 +223,7 @@ class EditContentDraft extends EditRecord
                     if (! empty($data['target_id'])) {
                         $record = $class::findOrFail($data['target_id']);
                     } else {
-                        $record = new $class();
+                        $record = new $class;
                         $record->setTranslation('name', $locale, (string) $draft->name);
                         $record->setTranslation('slug', $locale, (string) $draft->slug);
                         $record->save();

@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
-use Illuminate\Console\Command;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
+use Illuminate\Console\Command;
 
 class SocialKeywordSyncCommand extends Command
 {

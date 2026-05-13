@@ -2,19 +2,19 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Throwable;
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Models\User;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialIdea;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Filament\Notifications\Notification;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class GenerateBulkSocialIdeasJob implements ShouldQueue
 {
@@ -28,13 +28,12 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
         public int $count,
         public ?string $focus = null,
         public ?int $userId = null,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {
         try {
-            $contextBuilder = new SocialContextBuilder();
+            $contextBuilder = new SocialContextBuilder;
             $context = $contextBuilder->build();
 
             $period = $this->period;

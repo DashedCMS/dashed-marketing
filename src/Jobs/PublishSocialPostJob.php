@@ -2,14 +2,14 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Models\SocialPost;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class PublishSocialPostJob implements ShouldQueue
 {
@@ -20,8 +20,7 @@ class PublishSocialPostJob implements ShouldQueue
 
     public function __construct(
         public SocialPost $post,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

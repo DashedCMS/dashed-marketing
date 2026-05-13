@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Managers;
 
-use InvalidArgumentException;
 use Dashed\DashedMarketing\Contracts\ContentTemplate;
+use InvalidArgumentException;
 
 class ContentTemplateRegistry
 {

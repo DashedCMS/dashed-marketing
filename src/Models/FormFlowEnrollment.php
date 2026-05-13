@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Models;
 
+use Dashed\DashedPopups\Models\PopupFollowUpFlow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Dashed\DashedPopups\Models\PopupFollowUpFlow;
 
 /**
  * Ledger of form submitters who have been enrolled into a PopupFollowUpFlow.

@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use RuntimeException;
-use Illuminate\Support\Str;
-use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Dashed\DashedAi\Exceptions\AiException;
+use Dashed\DashedAi\Exceptions\AiRateLimitException;
+use Dashed\DashedAi\Facades\Ai;
 use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Http\Client\ConnectionException;
-use Dashed\DashedAi\Exceptions\AiRateLimitException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Generates a production-grade English image prompt for an image-to-image
@@ -238,7 +238,7 @@ class ProductPromptGenerator
             $productLines[] = "Product info (use this to anchor the prompt - weave at least 3 specific phrases from it into the description):\n{$productContext}";
         }
         $productBlock = empty($productLines)
-            ? "Product info: (none supplied - describe ONLY what you can see in the reference image, and keep the description product-anchored, not scene-anchored.)"
+            ? 'Product info: (none supplied - describe ONLY what you can see in the reference image, and keep the description product-anchored, not scene-anchored.)'
             : implode("\n\n", $productLines);
 
         $extraBlock = $extra !== ''

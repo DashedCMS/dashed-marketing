@@ -2,16 +2,14 @@
 
 namespace Dashed\DashedMarketing\Observers;
 
-use Illuminate\Database\Eloquent\Model;
+use Dashed\DashedMarketing\Jobs\RebuildContentEmbeddingJob;
 use Dashed\DashedMarketing\Models\ContentEmbedding;
 use Dashed\DashedMarketing\Services\EmbeddingService;
-use Dashed\DashedMarketing\Jobs\RebuildContentEmbeddingJob;
+use Illuminate\Database\Eloquent\Model;
 
 class VisitableModelEmbeddingObserver
 {
-    public function __construct(protected EmbeddingService $embeddings)
-    {
-    }
+    public function __construct(protected EmbeddingService $embeddings) {}
 
     public function saved(Model $model): void
     {

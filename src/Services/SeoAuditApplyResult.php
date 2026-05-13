@@ -12,8 +12,7 @@ final class SeoAuditApplyResult
         public int $failed = 0,
         public int $skipped = 0,
         public array $failures = [],
-    ) {
-    }
+    ) {}
 
     public function recordApplied(): void
     {

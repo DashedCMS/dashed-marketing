@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Dashed\DashedMarketing\Services\Summary;
 
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Models\ContentDraft;
-use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedCore\Services\Summary\Contracts\SummaryContributorInterface;
 use Dashed\DashedCore\Services\Summary\DTOs\SummaryPeriod;
 use Dashed\DashedCore\Services\Summary\DTOs\SummarySection;
-use Dashed\DashedCore\Services\Summary\Contracts\SummaryContributorInterface;
+use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialPost;
 
 /**
  * Samenvatting-bijdrage voor de marketing-module. Toont in de mail

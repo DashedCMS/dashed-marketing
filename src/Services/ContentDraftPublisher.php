@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Illuminate\Database\Eloquent\Model;
 use Dashed\DashedCore\Models\Customsetting;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Illuminate\Database\Eloquent\Model;
 
 class ContentDraftPublisher
 {

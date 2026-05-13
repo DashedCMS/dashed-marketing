@@ -2,25 +2,25 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Actions\Action;
-use Filament\Actions\BulkAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Notifications\Notification;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
-use Dashed\DashedMarketing\Models\SeoAudit;
-use Illuminate\Database\Eloquent\Collection;
-use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
-use Dashed\DashedMarketing\Services\SeoAuditApplier;
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages\ListSeoAudits;
 use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages\ReviewSeoAudit;
+use Dashed\DashedMarketing\Jobs\GenerateSeoAuditJob;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Services\SeoAuditApplier;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
+use UnitEnum;
 
 class SeoAuditResource extends Resource
 {
@@ -91,10 +91,10 @@ class SeoAuditResource extends Resource
                     ->label('Type')
                     ->options(
                         fn () => SeoAudit::query()
-                        ->distinct()
-                        ->pluck('subject_type')
-                        ->mapWithKeys(fn ($t) => [$t => class_basename((string) $t)])
-                        ->toArray()
+                            ->distinct()
+                            ->pluck('subject_type')
+                            ->mapWithKeys(fn ($t) => [$t => class_basename((string) $t)])
+                            ->toArray()
                     ),
                 SelectFilter::make('status')->options([
                     'analyzing' => 'Analyseren',

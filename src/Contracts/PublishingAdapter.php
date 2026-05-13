@@ -3,8 +3,8 @@
 namespace Dashed\DashedMarketing\Contracts;
 
 use Dashed\DashedMarketing\DTOs\PostStatus;
-use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedMarketing\DTOs\PublishResult;
+use Dashed\DashedMarketing\Models\SocialPost;
 
 interface PublishingAdapter
 {

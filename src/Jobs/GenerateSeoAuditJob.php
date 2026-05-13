@@ -2,28 +2,29 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Throwable;
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
 use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
-use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
 use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Support\FaqHeadingDetector;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class GenerateSeoAuditJob implements ShouldQueue
 {
     use Dispatchable;
+    use HandlesQueueFailures;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
-    use HandlesQueueFailures;
 
     public int $tries = 2;
 
@@ -37,8 +38,7 @@ class GenerateSeoAuditJob implements ShouldQueue
         public ?int $userId = null,
         public ?string $instruction = null,
         public ?string $locale = null,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {
@@ -336,7 +336,7 @@ class GenerateSeoAuditJob implements ShouldQueue
 
                 $seeded[mb_strtolower(trim((string) $kw->keyword))] = true;
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             //
         }
 
@@ -451,7 +451,7 @@ class GenerateSeoAuditJob implements ShouldQueue
             if ($text === '') {
                 continue;
             }
-            if (\Dashed\DashedMarketing\Support\FaqHeadingDetector::isFaq($text)) {
+            if (FaqHeadingDetector::isFaq($text)) {
                 continue;
             }
             $headings[] = ['level' => $level, 'text' => $text];
@@ -587,7 +587,7 @@ class GenerateSeoAuditJob implements ShouldQueue
             $path = $url;
         }
 
-        $path = '/' . trim($path, '/');
+        $path = '/'.trim($path, '/');
 
         return mb_strtolower($path);
     }

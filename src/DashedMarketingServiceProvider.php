@@ -2,42 +2,46 @@
 
 namespace Dashed\DashedMarketing;
 
-use Spatie\LaravelPackageTools\Package;
 use Dashed\DashedCore\Models\Customsetting;
-use Illuminate\Console\Scheduling\Schedule;
-use Dashed\DashedMarketing\Facades\ContentTemplates;
-use Dashed\DashedMarketing\Templates\ProductTemplate;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Dashed\DashedMarketing\Contracts\PublishingAdapter;
-use Dashed\DashedMarketing\Managers\KeywordDataManager;
+use Dashed\DashedForms\Events\FormSubmitted;
 use Dashed\DashedMarketing\Adapters\ManualPublishAdapter;
-use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
-use Dashed\DashedMarketing\Templates\LandingPageTemplate;
+use Dashed\DashedMarketing\Commands\GenerateProductPromptCommand;
+use Dashed\DashedMarketing\Commands\MigrateSeoImprovementsCommand;
+use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
+use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
+use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
 use Dashed\DashedMarketing\Commands\SocialNotifyDueCommand;
+use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
 use Dashed\DashedMarketing\Commands\SocialWeeklyGapsCommand;
 use Dashed\DashedMarketing\Contracts\KeywordResearchAdapter;
-use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
-use Dashed\DashedMarketing\Commands\SocialKeywordSyncCommand;
-use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
-use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
-use Dashed\DashedMarketing\Commands\SocialNotifyMissedCommand;
-use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
-use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
-use Dashed\DashedMarketing\Commands\SocialCheckHolidaysCommand;
-use Dashed\DashedMarketing\Commands\GenerateProductPromptCommand;
-use Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand;
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
-use Dashed\DashedMarketing\Commands\MigrateSeoImprovementsCommand;
-use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
-use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
-use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
-use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
-use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Contracts\PublishingAdapter;
+use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Filament\Pages\Settings\ContentPublishSettingsPage;
+use Dashed\DashedMarketing\Filament\Pages\Settings\SocialSettingsPage;
+use Dashed\DashedMarketing\Filament\Pages\SocialCalendarPage;
+use Dashed\DashedMarketing\Filament\Pages\SocialDashboardPage;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Listeners\EnrolFormSubmitterInFlowListener;
+use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
+use Dashed\DashedMarketing\Managers\KeywordDataManager;
+use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
+use Dashed\DashedMarketing\Observers\VisitableModelEmbeddingObserver;
+use Dashed\DashedMarketing\Services\Summary\MarketingSummaryContributor;
+use Dashed\DashedMarketing\Templates\BlogArticleTemplate;
+use Dashed\DashedMarketing\Templates\LandingPageTemplate;
+use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
+use Dashed\DashedMarketing\Templates\ProductTemplate;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Event;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class DashedMarketingServiceProvider extends PackageServiceProvider
 {
@@ -52,10 +56,10 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         // Wire the form-submission → marketing-flow enrolment listener. Skipped
         // when dashed-forms isn't installed on the host so this provider can
         // boot in marketing-only setups.
-        if (class_exists(\Dashed\DashedForms\Events\FormSubmitted::class)) {
-            \Illuminate\Support\Facades\Event::listen(
-                \Dashed\DashedForms\Events\FormSubmitted::class,
-                \Dashed\DashedMarketing\Listeners\EnrolFormSubmitterInFlowListener::class,
+        if (class_exists(FormSubmitted::class)) {
+            Event::listen(
+                FormSubmitted::class,
+                EnrolFormSubmitterInFlowListener::class,
             );
         }
 
@@ -69,12 +73,12 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         });
 
         cms()->builder('plugins', [
-            new DashedMarketingPlugin(),
+            new DashedMarketingPlugin,
         ]);
 
         cms()->builder('summaryContributors', array_merge(
             cms()->builder('summaryContributors') ?? [],
-            [\Dashed\DashedMarketing\Services\Summary\MarketingSummaryContributor::class],
+            [MarketingSummaryContributor::class],
         ));
 
         cms()->registerSettingsPage(
@@ -444,7 +448,7 @@ MARKDOWN,
     {
         $keywordResearchAdapter = config('dashed-marketing.adapters.keyword_research');
         if ($keywordResearchAdapter) {
-            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter());
+            $this->app->bind(KeywordResearchAdapter::class, fn () => new $keywordResearchAdapter);
         }
 
         $this->app->bind(PublishingAdapter::class, function ($app, array $parameters = []) {
@@ -452,11 +456,11 @@ MARKDOWN,
             $slug = Customsetting::get('social_publishing_adapter', $siteId) ?: 'manual';
             $entry = PublishingAdapterRegistry::get($slug);
 
-            return $entry ? new $entry['class']() : new ManualPublishAdapter();
+            return $entry ? new $entry['class'] : new ManualPublishAdapter;
         });
 
         $this->app->singleton(KeywordDataManager::class, function () {
-            return new KeywordDataManager();
+            return new KeywordDataManager;
         });
 
         $this->app->singleton(ContentTemplateRegistry::class);

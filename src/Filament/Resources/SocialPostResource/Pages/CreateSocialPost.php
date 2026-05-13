@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateSocialPost extends CreateRecord
 {

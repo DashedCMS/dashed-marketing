@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages;
 
+use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
-use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 
 class ListSocialPillars extends ListRecords
 {

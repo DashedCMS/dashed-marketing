@@ -2,16 +2,17 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftSection;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class GenerateSectionBodyJob implements ShouldQueue
 {
@@ -26,9 +27,7 @@ class GenerateSectionBodyJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public int $sectionId)
-    {
-    }
+    public function __construct(public int $sectionId) {}
 
     public function handle(LinkCandidatesService $links): void
     {
@@ -152,7 +151,7 @@ class GenerateSectionBodyJob implements ShouldQueue
      * previous URL so a regenerated section can keep (or swap) its link.
      *
      * @param  array<int, array{type: string, title: string, url: string}>  $candidates
-     * @param  \Illuminate\Support\Collection<int, ContentDraftSection>     $allSections
+     * @param  Collection<int, ContentDraftSection>  $allSections
      * @return array<int, array{type: string, title: string, url: string}>
      */
     private function filterAlreadyUsed(array $candidates, $allSections, int $currentSectionId): array

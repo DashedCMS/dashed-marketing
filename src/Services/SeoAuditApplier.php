@@ -2,13 +2,14 @@
 
 namespace Dashed\DashedMarketing\Services;
 
-use Throwable;
-use RuntimeException;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Model;
-use Dashed\DashedMarketing\Models\SeoAudit;
 use Dashed\DashedCore\Models\CustomStructuredData;
 use Dashed\DashedMarketing\Models\ContentApplyLog;
+use Dashed\DashedMarketing\Models\SeoAudit;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use Throwable;
 
 class SeoAuditApplier
 {
@@ -25,7 +26,7 @@ class SeoAuditApplier
             throw new RuntimeException('Audit subject is no longer available');
         }
 
-        $result = new SeoAuditApplyResult();
+        $result = new SeoAuditApplyResult;
 
         $blockIds = (array) ($selectedIds['blocks'] ?? []);
         $faqIds = array_map('intval', (array) ($selectedIds['faqs'] ?? []));
@@ -355,7 +356,7 @@ class SeoAuditApplier
     protected function htmlToTiptapDoc(string $html): array
     {
         try {
-            $doc = \Filament\Forms\Components\RichEditor\RichContentRenderer::make($html)->toArray();
+            $doc = RichContentRenderer::make($html)->toArray();
             if (is_array($doc) && ! empty($doc)) {
                 return $doc;
             }

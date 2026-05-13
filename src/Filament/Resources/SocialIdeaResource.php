@@ -2,35 +2,35 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Filament\Actions\BulkAction;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Illuminate\Support\Collection;
 use Dashed\DashedCore\Classes\Sites;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\CheckboxList;
-use Dashed\DashedMarketing\Models\SocialIdea;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
-use Dashed\DashedMarketing\Jobs\GenerateBulkPostsFromIdeasJob;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\EditSocialIdea;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\ListSocialIdeas;
-use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSocialIdea;
+use Dashed\DashedMarketing\Jobs\GenerateBulkPostsFromIdeasJob;
+use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialIdea;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use UnitEnum;
 
 class SocialIdeaResource extends Resource
 {
@@ -139,7 +139,7 @@ class SocialIdeaResource extends Resource
 
                                 return $class::query()
                                     ->where(function ($q) use ($search, $class) {
-                                        $model = new $class();
+                                        $model = new $class;
                                         foreach (['name', 'title'] as $col) {
                                             if (\Illuminate\Support\Facades\Schema::hasColumn($model->getTable(), $col)) {
                                                 $q->orWhere($col, 'like', "%{$search}%");

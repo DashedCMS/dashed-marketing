@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateSocialCampaign extends CreateRecord
 {

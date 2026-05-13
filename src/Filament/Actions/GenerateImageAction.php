@@ -2,21 +2,21 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Illuminate\Support\Str;
-use Filament\Actions\Action;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\HtmlString;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Illuminate\Support\Facades\Schema;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Forms\Components\Placeholder;
 use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions as SchemaActions;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class GenerateImageAction extends Action
 {
@@ -283,7 +283,7 @@ class GenerateImageAction extends Action
                             return [];
                         }
 
-                        $model = new $class();
+                        $model = new $class;
 
                         return $class::query()
                             ->where(function ($q) use ($search, $model) {

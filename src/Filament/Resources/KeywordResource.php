@@ -2,23 +2,23 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
-use Filament\Tables;
+use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
+use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Models\Keyword;
 use Filament\Actions;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
-use Illuminate\Support\Facades\DB;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-use Dashed\DashedMarketing\Models\Keyword;
-use Filament\Forms\Components\Placeholder;
-use Dashed\DashedMarketing\Models\ContentCluster;
-use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
+use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
+use UnitEnum;
 
 class KeywordResource extends Resource
 {

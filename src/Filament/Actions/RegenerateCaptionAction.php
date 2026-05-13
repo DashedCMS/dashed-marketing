@@ -2,13 +2,13 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Filament\Actions\Action;
 use Dashed\DashedAi\Facades\Ai;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Models\SocialChannel;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
 
 class RegenerateCaptionAction
 {
@@ -134,7 +134,7 @@ class RegenerateCaptionAction
             $subject = $record->subject_type::find($record->subject_id);
         }
 
-        $contextBuilder = new SocialContextBuilder();
+        $contextBuilder = new SocialContextBuilder;
         $context = $contextBuilder->build($type, is_array($channels) ? $channels : [], $subject);
 
         $channelRules = '';

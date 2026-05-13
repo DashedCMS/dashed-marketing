@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateContentDraft extends CreateRecord
 {

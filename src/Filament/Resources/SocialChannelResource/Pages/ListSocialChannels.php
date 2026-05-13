@@ -2,9 +2,9 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages;
 
+use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
-use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource;
 
 class ListSocialChannels extends ListRecords
 {

@@ -2,16 +2,18 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Support\FaqHeadingDetector;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
-use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class GenerateOutlineContentJob implements ShouldQueue
 {
@@ -26,9 +28,7 @@ class GenerateOutlineContentJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(public int $auditId)
-    {
-    }
+    public function __construct(public int $auditId) {}
 
     public function handle(): void
     {
@@ -60,7 +60,7 @@ class GenerateOutlineContentJob implements ShouldQueue
             if ($text === '') {
                 continue;
             }
-            if (\Dashed\DashedMarketing\Support\FaqHeadingDetector::isFaq($text)) {
+            if (FaqHeadingDetector::isFaq($text)) {
                 continue;
             }
 
@@ -162,7 +162,7 @@ class GenerateOutlineContentJob implements ShouldQueue
         $seededKeywords = [];
 
         try {
-            $seededKeywords = \Dashed\DashedMarketing\Models\Keyword::query()
+            $seededKeywords = Keyword::query()
                 ->where('locale', $locale)
                 ->where(function ($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'rejected');

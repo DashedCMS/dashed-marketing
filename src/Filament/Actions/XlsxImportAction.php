@@ -4,8 +4,8 @@ namespace Dashed\DashedMarketing\Filament\Actions;
 
 use Filament\Actions\ImportAction;
 use Filament\Forms\Components\FileUpload;
-use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 
 /**
  * Drop-in replacement for Filament's ImportAction that also accepts xlsx
@@ -118,7 +118,7 @@ class XlsxImportAction extends ImportAction
         $tmpDir = sys_get_temp_dir();
         $csvPath = $tmpDir.DIRECTORY_SEPARATOR.'dashed-import-'.uniqid('', true).'.csv';
 
-        $reader = new XlsxReader();
+        $reader = new XlsxReader;
         $reader->open($sourcePath);
 
         $handle = fopen($csvPath, 'wb');

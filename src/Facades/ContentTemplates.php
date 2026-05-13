@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Facades;
 
-use Illuminate\Support\Facades\Facade;
 use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
+use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static void register(string $contentType, string $templateClass)

@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftSection;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class RegenerateSectionHeadingJob implements ShouldQueue
 {
@@ -25,9 +25,7 @@ class RegenerateSectionHeadingJob implements ShouldQueue
 
     public int $timeout = 45;
 
-    public function __construct(public int $sectionId)
-    {
-    }
+    public function __construct(public int $sectionId) {}
 
     public function handle(): void
     {

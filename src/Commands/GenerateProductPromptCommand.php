@@ -2,8 +2,8 @@
 
 namespace Dashed\DashedMarketing\Commands;
 
-use Illuminate\Console\Command;
 use Dashed\DashedMarketing\Services\ProductPromptGenerator;
+use Illuminate\Console\Command;
 
 class GenerateProductPromptCommand extends Command
 {

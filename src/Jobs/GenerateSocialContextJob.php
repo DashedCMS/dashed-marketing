@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Dashed\DashedCore\Models\User;
-use Illuminate\Queue\SerializesModels;
-use Filament\Notifications\Notification;
-use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedCore\Models\Customsetting;
+use Dashed\DashedCore\Models\User;
+use Dashed\DashedMarketing\Services\SocialContextSourceCollector;
+use Filament\Notifications\Notification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Dashed\DashedMarketing\Services\SocialContextSourceCollector;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class GenerateSocialContextJob implements ShouldQueue
 {
@@ -29,12 +29,11 @@ class GenerateSocialContextJob implements ShouldQueue
     public function __construct(
         public int|string $siteId,
         public int $userId,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {
-        $collector = new SocialContextSourceCollector();
+        $collector = new SocialContextSourceCollector;
         $context = $collector->collect($this->siteId);
 
         $response = Ai::json($this->buildPrompt($context));

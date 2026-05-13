@@ -2,43 +2,45 @@
 
 namespace Dashed\DashedMarketing\Filament\Resources;
 
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Actions\DeleteAction;
-use Illuminate\Support\HtmlString;
 use Dashed\DashedCore\Classes\Sites;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\CheckboxList;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Filament\Forms\Components\DateTimePicker;
-use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedCore\Filament\Concerns\HasLastEditedColumn;
 use Dashed\DashedMarketing\Filament\Actions\RegenerateCaptionAction;
 use Dashed\DashedMarketing\Filament\Actions\RegenerateImagePromptAction;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\EditSocialPost;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\ListSocialPosts;
-use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSocialPost;
+use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\HtmlString;
+use UnitEnum;
 
 class SocialPostResource extends Resource
 {
-    use \Dashed\DashedCore\Filament\Concerns\HasLastEditedColumn;
+    use HasLastEditedColumn;
 
     protected static ?string $model = SocialPost::class;
 
@@ -354,7 +356,7 @@ class SocialPostResource extends Resource
                                 $helper = 'Mislukt';
                             } elseif ($postedAtRaw) {
                                 try {
-                                    $helper = 'Gepost op '.\Illuminate\Support\Carbon::parse($postedAtRaw)
+                                    $helper = 'Gepost op '.Carbon::parse($postedAtRaw)
                                         ->timezone('Europe/Amsterdam')
                                         ->format('d-m-Y H:i');
                                 } catch (\Throwable $e) {

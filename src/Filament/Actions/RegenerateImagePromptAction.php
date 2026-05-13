@@ -2,16 +2,16 @@
 
 namespace Dashed\DashedMarketing\Filament\Actions;
 
-use Filament\Actions\Action;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
+use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Services\ProductPromptGenerator;
+use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
-use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Dashed\DashedMarketing\Models\SocialPost;
-use Dashed\DashedMarketing\Services\SocialContextBuilder;
-use Dashed\DashedMarketing\Services\ProductPromptGenerator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class RegenerateImagePromptAction
 {
@@ -30,7 +30,7 @@ class RegenerateImagePromptAction
                     ->helperText('Voor seizoenen/feestdagen vult het systeem automatisch concrete iconografie in. Laat leeg voor een neutrale productshot.'),
                 Textarea::make('product_context')
                     ->label('Productinfo (sterk aanbevolen)')
-                    ->placeholder("Bijv: Lovora Family Figurine - gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.")
+                    ->placeholder('Bijv: Lovora Family Figurine - gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.')
                     ->helperText('Naam, materiaal, finish, maten, designtaal, USP. Hoe specifieker, hoe meer de prompt over JOUW product gaat in plaats van een generiek figuurtje. Auto-aangevuld vanuit gekoppeld product/page als beschikbaar.')
                     ->default(fn ($livewire) => self::buildProductContextDefault($livewire->record ?? null))
                     ->rows(4),
@@ -282,7 +282,7 @@ class RegenerateImagePromptAction
             $subject = $record->subject_type::find($record->subject_id);
         }
 
-        $contextBuilder = new SocialContextBuilder();
+        $contextBuilder = new SocialContextBuilder;
         $context = $contextBuilder->build($type, is_array($channels) ? $channels : [], $subject);
 
         $captionSection = $caption !== '' ? "## Caption van de post\n{$caption}" : '';

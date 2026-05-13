@@ -2,15 +2,15 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
-use Illuminate\Bus\Queueable;
 use Dashed\DashedAi\Facades\Ai;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftFaq;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class GenerateDraftFaqsJob implements ShouldQueue
 {
@@ -25,9 +25,7 @@ class GenerateDraftFaqsJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public int $draftId)
-    {
-    }
+    public function __construct(public int $draftId) {}
 
     public function handle(): void
     {
