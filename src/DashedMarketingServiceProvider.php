@@ -28,6 +28,7 @@ use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource;
 use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
+use Dashed\DashedMarketing\Filament\Widgets\SocialPostPendingStat;
 use Dashed\DashedMarketing\Listeners\EnrolFormSubmitterInFlowListener;
 use Dashed\DashedMarketing\Managers\ContentTemplateRegistry;
 use Dashed\DashedMarketing\Managers\KeywordDataManager;
@@ -40,6 +41,7 @@ use Dashed\DashedMarketing\Templates\ProductCategoryTemplate;
 use Dashed\DashedMarketing\Templates\ProductTemplate;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
+use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -52,6 +54,10 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         cms()->registerNavigationGroup('Marketing', 60);
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        // Resource header widgets — explicit Livewire registration so Filament v4
+        // can resolve the component alias used on list pages.
+        Livewire::component('dashed.dashed-marketing.filament.widgets.social-post-pending-stat', SocialPostPendingStat::class);
 
         // Wire the form-submission → marketing-flow enrolment listener. Skipped
         // when dashed-forms isn't installed on the host so this provider can
