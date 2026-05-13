@@ -441,7 +441,9 @@ class SocialPostResource extends Resource
                     ->label('Ingepland')
                     ->dateTime('d-m-Y H:i', 'Europe/Amsterdam')
                     ->sortable(),
+                static::lastEditedColumn(),
             ])
+            ->modifyQueryUsing(fn ($query) => static::modifyTableQueryForLastEdited($query))
             ->filters([
                 SelectFilter::make('type')
                     ->label('Type')
