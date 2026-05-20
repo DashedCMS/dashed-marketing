@@ -159,12 +159,22 @@ TXT;
      *
      * @param  array<string, mixed>  $context
      */
-    public static function outlineContent(array $context, string $heading, int $headingLevel, string $h1, string $summary): string
+    /**
+     * @param  array<string, mixed>  $context
+     * @param  array<int, string>  $avoidPhrases
+     */
+    public static function outlineContent(array $context, string $heading, int $headingLevel, string $h1, string $summary, array $avoidPhrases = []): string
     {
         $instruction = $context['user_instruction'] ? "Instructie: {$context['user_instruction']}\n\n" : '';
         $brand = $context['brand'];
         $seededKeywords = array_values(array_unique(array_map('trim', (array) ($context['seeded_keywords'] ?? []))));
         $seededJson = json_encode($seededKeywords, JSON_UNESCAPED_UNICODE);
+
+        $avoidBlock = '';
+        if ($avoidPhrases !== []) {
+            $avoidJson = json_encode(array_values(array_filter($avoidPhrases)), JSON_UNESCAPED_UNICODE);
+            $avoidBlock = "\n\nDeze zinnen/inhoud staan al in andere secties van dezelfde pagina, NIET herhalen of parafraseren:\n{$avoidJson}\n";
+        }
 
         return <<<TXT
 {$instruction}Schrijf body HTML voor één sectie van een pagina.
@@ -180,7 +190,7 @@ Merk-context:
 {$brand}
 
 Keywords om natuurlijk in te verwerken:
-{$seededJson}
+{$seededJson}{$avoidBlock}
 
 Regels (hard):
 - Retourneer HTML body in veld "body".

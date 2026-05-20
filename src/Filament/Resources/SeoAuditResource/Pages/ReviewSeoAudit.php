@@ -76,6 +76,28 @@ class ReviewSeoAudit extends Page
 
     public string $newKeywordPriority = 'medium';
 
+    /**
+     * Per-type quick-add inputs (één veldje per kopje in de UI). Houdt de
+     * generieke onderaan-formulier voor wanneer je intent/priority handmatig
+     * wilt zetten, deze veldjes zijn voor snel keyword toevoegen.
+     *
+     * @var array<string, string>
+     */
+    public array $newKeywordByType = [
+        'primary' => '',
+        'secondary' => '',
+        'longtail' => '',
+        'lsi' => '',
+        'gap' => '',
+    ];
+
+    /**
+     * Bulk-selectie voor verwijderen. Bevat keyword-ids.
+     *
+     * @var array<int, int>
+     */
+    public array $selectedKeywords = [];
+
     public function mount(SeoAudit $record): void
     {
         $this->record = $record;
@@ -432,16 +454,6 @@ class ReviewSeoAudit extends Page
 
     public function addKeyword(): void
     {
-        $keyword = trim($this->newKeyword);
-        if ($keyword === '') {
-            Notification::make()
-                ->title('Vul een keyword in')
-                ->warning()
-                ->send();
-
-            return;
-        }
-
         $allowedTypes = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
         $allowedIntents = ['informational', 'commercial', 'transactional', 'navigational'];
         $allowedPriorities = ['high', 'medium', 'low'];
@@ -450,26 +462,17 @@ class ReviewSeoAudit extends Page
         $intent = in_array($this->newKeywordIntent, $allowedIntents, true) ? $this->newKeywordIntent : null;
         $priority = in_array($this->newKeywordPriority, $allowedPriorities, true) ? $this->newKeywordPriority : 'medium';
 
-        $exists = $this->record->keywords()
-            ->whereRaw('LOWER(keyword) = ?', [mb_strtolower($keyword)])
-            ->exists();
-
-        if ($exists) {
+        $keywords = $this->splitKeywordInput($this->newKeyword);
+        if ($keywords === []) {
             Notification::make()
-                ->title('Deze keyword staat er al')
+                ->title('Vul een keyword in')
                 ->warning()
                 ->send();
 
             return;
         }
 
-        $this->record->keywords()->create([
-            'keyword' => mb_substr($keyword, 0, 500),
-            'type' => $type,
-            'intent' => $intent,
-            'priority' => $priority,
-            'notes' => 'Handmatig toegevoegd',
-        ]);
+        [$added, $duplicates] = $this->createKeywords($keywords, $type, $intent ?? 'informational', $priority);
 
         $this->newKeyword = '';
         $this->newKeywordType = 'gap';
@@ -478,10 +481,7 @@ class ReviewSeoAudit extends Page
 
         $this->record->refresh();
 
-        Notification::make()
-            ->title('Keyword toegevoegd')
-            ->success()
-            ->send();
+        $this->notifyKeywordResult($added, $duplicates);
     }
 
     public function removeKeyword(int $id): void
@@ -494,11 +494,228 @@ class ReviewSeoAudit extends Page
         $label = $keyword->keyword;
         $keyword->delete();
 
+        // Houd selectie consistent: als de id in de bulk-selectie zat, eruit.
+        $this->selectedKeywords = array_values(array_filter(
+            $this->selectedKeywords,
+            fn ($selectedId) => (int) $selectedId !== (int) $id,
+        ));
+
         $this->record->refresh();
 
         Notification::make()
             ->title('Keyword verwijderd')
             ->body($label)
+            ->success()
+            ->send();
+    }
+
+    /**
+     * Snel keyword toevoegen aan een bepaald kopje (primary/secondary/etc.).
+     * Pakt de input uit $newKeywordByType[$type] en valt voor intent +
+     * priority terug op zinvolle defaults. Voor handmatige intent/priority
+     * blijft het uitgebreidere formulier onderaan beschikbaar.
+     */
+    public function addKeywordToType(string $type): void
+    {
+        $allowedTypes = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
+        if (! in_array($type, $allowedTypes, true)) {
+            return;
+        }
+
+        $keywords = $this->splitKeywordInput((string) ($this->newKeywordByType[$type] ?? ''));
+        if ($keywords === []) {
+            Notification::make()
+                ->title('Vul een keyword in')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $intentByType = [
+            'primary' => 'commercial',
+            'secondary' => 'commercial',
+            'longtail' => 'informational',
+            'lsi' => 'informational',
+            'gap' => 'informational',
+        ];
+        $priorityByType = [
+            'primary' => 'high',
+            'secondary' => 'medium',
+            'longtail' => 'medium',
+            'lsi' => 'low',
+            'gap' => 'low',
+        ];
+
+        [$added, $duplicates] = $this->createKeywords($keywords, $type, $intentByType[$type], $priorityByType[$type]);
+
+        $this->newKeywordByType[$type] = '';
+        $this->record->refresh();
+
+        $this->notifyKeywordResult($added, $duplicates, $type);
+    }
+
+    /**
+     * Splits een input-string op komma's en/of newlines, trimt elke entry,
+     * dedupliceert case-insensitive en gooit lege strings weg.
+     *
+     * @return array<int, string>
+     */
+    protected function splitKeywordInput(string $raw): array
+    {
+        $parts = preg_split('/[,\n\r]+/u', $raw) ?: [];
+        $parts = array_map('trim', $parts);
+        $parts = array_filter($parts, fn ($s) => $s !== '');
+
+        $seen = [];
+        $unique = [];
+        foreach ($parts as $part) {
+            $key = mb_strtolower($part);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $unique[] = $part;
+        }
+
+        return $unique;
+    }
+
+    /**
+     * Bulk-create keywords. Slaat bestaande (case-insensitive) over en
+     * geeft [aantal toegevoegd, aantal duplicates] terug.
+     *
+     * @param  array<int, string>  $keywords
+     * @return array{0:int, 1:array<int, string>}
+     */
+    protected function createKeywords(array $keywords, string $type, string $intent, string $priority): array
+    {
+        if ($keywords === []) {
+            return [0, []];
+        }
+
+        $existing = $this->record->keywords()
+            ->whereIn('keyword', $keywords)
+            ->orWhereIn('keyword', array_map('mb_strtolower', $keywords))
+            ->pluck('keyword')
+            ->map(fn ($k) => mb_strtolower((string) $k))
+            ->all();
+
+        $added = 0;
+        $duplicates = [];
+
+        foreach ($keywords as $keyword) {
+            if (in_array(mb_strtolower($keyword), $existing, true)) {
+                $duplicates[] = $keyword;
+
+                continue;
+            }
+
+            $this->record->keywords()->create([
+                'keyword' => mb_substr($keyword, 0, 500),
+                'type' => $type,
+                'intent' => $intent,
+                'priority' => $priority,
+                'notes' => 'Handmatig toegevoegd',
+            ]);
+
+            $existing[] = mb_strtolower($keyword);
+            $added++;
+        }
+
+        return [$added, $duplicates];
+    }
+
+    /**
+     * @param  array<int, string>  $duplicates
+     */
+    protected function notifyKeywordResult(int $added, array $duplicates, ?string $type = null): void
+    {
+        if ($added === 0 && $duplicates === []) {
+            return;
+        }
+
+        if ($added === 0) {
+            Notification::make()
+                ->title('Alle keywords stonden er al')
+                ->body(implode(', ', $duplicates))
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $title = $type !== null
+            ? sprintf('%d keyword(s) toegevoegd aan %s', $added, $type)
+            : sprintf('%d keyword(s) toegevoegd', $added);
+
+        $body = $duplicates !== []
+            ? 'Overgeslagen (al aanwezig): ' . implode(', ', $duplicates)
+            : null;
+
+        $notification = Notification::make()->title($title)->success();
+        if ($body !== null) {
+            $notification->body($body);
+        }
+        $notification->send();
+    }
+
+    /**
+     * Toggle select-all voor één kopje: als alle keywords van dit type al
+     * geselecteerd zijn deselecteert hij ze, anders selecteert hij ze allemaal.
+     */
+    public function toggleSelectKeywordsOfType(string $type): void
+    {
+        $allowedTypes = ['primary', 'secondary', 'longtail', 'lsi', 'gap'];
+        if (! in_array($type, $allowedTypes, true)) {
+            return;
+        }
+
+        $ids = $this->record->keywords()
+            ->where('type', $type)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($ids === []) {
+            return;
+        }
+
+        $current = array_map('intval', $this->selectedKeywords);
+        $allSelected = array_diff($ids, $current) === [];
+
+        if ($allSelected) {
+            // Verwijder alle ids van dit type uit de selectie.
+            $this->selectedKeywords = array_values(array_diff($current, $ids));
+        } else {
+            // Voeg ontbrekende ids van dit type toe.
+            $this->selectedKeywords = array_values(array_unique(array_merge($current, $ids)));
+        }
+    }
+
+    /**
+     * Verwijder alle geselecteerde keywords in één keer. Werkt op
+     * $selectedKeywords (ids) die via checkboxes per kopje gevuld worden.
+     */
+    public function removeSelectedKeywords(): void
+    {
+        $ids = array_values(array_filter(array_map('intval', $this->selectedKeywords)));
+        if ($ids === []) {
+            Notification::make()
+                ->title('Selecteer eerst keywords')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $deleted = $this->record->keywords()->whereIn('id', $ids)->delete();
+
+        $this->selectedKeywords = [];
+        $this->record->refresh();
+
+        Notification::make()
+            ->title($deleted . ' keyword(s) verwijderd')
             ->success()
             ->send();
     }

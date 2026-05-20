@@ -56,6 +56,12 @@ class GenerateOutlineContentJob implements ShouldQueue
         $ctx = $this->buildContext($audit);
         $sort = 0;
 
+        // Tracking-map: suggestion-id => ['heading','level','body']. Wordt
+        // gebruikt in de dedupe-pass om gedupliceerde zinnen tussen blokken
+        // op te sporen en die blokken eenmalig opnieuw te genereren met een
+        // expliciete "vermijd"-lijst.
+        $generated = [];
+
         foreach ($headings as $heading) {
             $level = (int) ($heading['level'] ?? 2);
             $text = trim((string) ($heading['text'] ?? ''));
@@ -66,35 +72,12 @@ class GenerateOutlineContentJob implements ShouldQueue
                 continue;
             }
 
-            $response = [];
-
-            try {
-                $response = Ai::json(
-                    SeoAuditPromptBuilder::outlineContent(
-                        $ctx,
-                        $text,
-                        $level,
-                        (string) ($outline->h1 ?? ''),
-                        (string) ($outline->summary ?? ''),
-                    )
-                ) ?? [];
-            } catch (\Throwable $e) {
-                $response = [];
-            }
-
-            $body = '';
-            foreach (['body', 'html', 'content', 'text'] as $key) {
-                if (! empty($response[$key]) && is_string($response[$key])) {
-                    $body = trim($response[$key]);
-
-                    break;
-                }
-            }
+            $body = $this->generateBody($ctx, $text, $level, (string) ($outline->h1 ?? ''), (string) ($outline->summary ?? ''));
 
             $tag = 'h'.$level;
             $html = "<{$tag}>".e($text)."</{$tag}>".$body;
 
-            $audit->blockSuggestions()->create([
+            $suggestion = $audit->blockSuggestions()->create([
                 'block_index' => null,
                 'block_key' => 'outline.'.$sort,
                 'block_type' => 'content',
@@ -106,13 +89,196 @@ class GenerateOutlineContentJob implements ShouldQueue
                 'status' => 'pending',
             ]);
 
+            $generated[$suggestion->id] = [
+                'heading' => $text,
+                'level' => $level,
+                'body' => $body,
+            ];
+
             $sort++;
         }
+
+        $this->dedupeAcrossBlocks($audit, $outline, $ctx, $generated);
 
         $outline->update([
             'content_generated_at' => now(),
             'content_generating_at' => null,
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $ctx
+     * @param  array<int, string>  $avoidPhrases
+     */
+    protected function generateBody(array $ctx, string $heading, int $level, string $h1, string $summary, array $avoidPhrases = []): string
+    {
+        try {
+            $response = Ai::json(
+                SeoAuditPromptBuilder::outlineContent($ctx, $heading, $level, $h1, $summary, $avoidPhrases)
+            ) ?? [];
+        } catch (\Throwable $e) {
+            $response = [];
+        }
+
+        foreach (['body', 'html', 'content', 'text'] as $key) {
+            if (! empty($response[$key]) && is_string($response[$key])) {
+                return trim($response[$key]);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Pakt alle gegenereerde blok-bodies, zoekt zinnen die meermaals
+     * voorkomen tussen verschillende blokken, en hergenereert alleen die
+     * blokken met de duplicaten als expliciete "niet herhalen"-lijst.
+     * Eén pass: als regeneratie nog duplicaten bevat blijft het zo, want
+     * een ongelimiteerde loop zou kunnen vastlopen.
+     *
+     * @param  array<int, array{heading: string, level: int, body: string}>  $generated
+     */
+    protected function dedupeAcrossBlocks(SeoAudit $audit, $outline, array $ctx, array $generated): void
+    {
+        if (count($generated) < 2) {
+            return;
+        }
+
+        // Index: genormaliseerde zin => [suggestion_id, suggestion_id, ...]
+        $sentenceOwners = [];
+        foreach ($generated as $id => $data) {
+            foreach ($this->extractSentences($data['body']) as $sentence) {
+                $key = $this->normalizeSentence($sentence);
+                if (mb_strlen($key) < 50) {
+                    // Te korte fragmenten zijn vaak generiek (bv. "Bij ons
+                    // kun je terecht"). Negeer.
+                    continue;
+                }
+                $sentenceOwners[$key]['raw'] ??= $sentence;
+                $sentenceOwners[$key]['ids'][] = $id;
+            }
+        }
+
+        // Duplicaten verzamelen per blok.
+        $avoidByBlock = [];
+        foreach ($sentenceOwners as $entry) {
+            $owners = array_unique($entry['ids']);
+            if (count($owners) < 2) {
+                continue;
+            }
+            foreach ($owners as $id) {
+                $avoidByBlock[$id][] = $entry['raw'];
+            }
+        }
+
+        if ($avoidByBlock === []) {
+            return;
+        }
+
+        // Bepaal welk blok elke duplicaat-zin mag houden (eerste in
+        // outline-volgorde) en welke moeten regenereren met die zin als
+        // avoid-instructie.
+        $blockOrder = array_keys($generated);
+        $orderIndex = array_flip($blockOrder);
+
+        // Voor elke gedupliceerde zin: kies de "winner" (eerste blok in
+        // outline-volgorde). De overige blokken krijgen de zin als avoid.
+        $regenerateAvoids = [];
+        foreach ($sentenceOwners as $entry) {
+            $owners = array_values(array_unique($entry['ids']));
+            if (count($owners) < 2) {
+                continue;
+            }
+            usort($owners, fn ($a, $b) => ($orderIndex[$a] ?? 0) <=> ($orderIndex[$b] ?? 0));
+            $winner = array_shift($owners);
+            foreach ($owners as $loserId) {
+                $regenerateAvoids[$loserId][] = $entry['raw'];
+            }
+            // Winner zelf hergenereert niet, dus expliciet leegmaken.
+            $regenerateAvoids[$winner] = $regenerateAvoids[$winner] ?? [];
+            if (isset($avoidByBlock[$winner])) {
+                // Houd alleen avoids over die NIET in deze winnaar zelf zaten.
+            }
+        }
+
+        foreach ($regenerateAvoids as $suggestionId => $avoidList) {
+            $avoidList = array_values(array_unique($avoidList));
+            if ($avoidList === []) {
+                continue;
+            }
+
+            $data = $generated[$suggestionId] ?? null;
+            if (! $data) {
+                continue;
+            }
+
+            $newBody = $this->generateBody(
+                $ctx,
+                $data['heading'],
+                $data['level'],
+                (string) ($outline->h1 ?? ''),
+                (string) ($outline->summary ?? ''),
+                $avoidList,
+            );
+
+            if ($newBody === '') {
+                // Regeneratie faalde - laat originele body staan, alleen
+                // de duplicate-zinnen eruit strippen als hard fallback.
+                $newBody = $this->stripPhrases($data['body'], $avoidList);
+                if ($newBody === '') {
+                    continue;
+                }
+            }
+
+            $tag = 'h'.$data['level'];
+            $html = "<{$tag}>".e($data['heading'])."</{$tag}>".$newBody;
+
+            $audit->blockSuggestions()->whereKey($suggestionId)->update([
+                'suggested_value' => $html,
+                'reason' => 'Op basis van outline heading: '.$data['heading'].' (hergegenereerd om duplicate content te vermijden)',
+            ]);
+        }
+    }
+
+    /**
+     * Snijdt HTML body op in zinnen door tags te strippen en op punt/!/?
+     * te splitsen. Geeft alleen zinnen ≥ 40 chars terug.
+     *
+     * @return array<int, string>
+     */
+    protected function extractSentences(string $html): array
+    {
+        $plain = trim(preg_replace('/\s+/u', ' ', strip_tags($html)) ?? '');
+        if ($plain === '') {
+            return [];
+        }
+
+        $parts = preg_split('/(?<=[\.\!\?])\s+(?=[A-Z0-9])/u', $plain) ?: [];
+
+        return array_values(array_filter(array_map('trim', $parts), fn ($s) => mb_strlen($s) >= 40));
+    }
+
+    protected function normalizeSentence(string $sentence): string
+    {
+        $s = mb_strtolower($sentence);
+        $s = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $s) ?? '';
+        $s = preg_replace('/\s+/u', ' ', $s) ?? '';
+
+        return trim($s);
+    }
+
+    /**
+     * @param  array<int, string>  $phrases
+     */
+    protected function stripPhrases(string $html, array $phrases): string
+    {
+        $clean = $html;
+        foreach ($phrases as $phrase) {
+            $needle = preg_quote($phrase, '/');
+            $clean = preg_replace('/' . $needle . '/iu', '', $clean) ?? $clean;
+        }
+
+        return trim($clean);
     }
 
     public function failed(\Throwable $exception): void

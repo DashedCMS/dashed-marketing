@@ -154,14 +154,73 @@
 
         {{-- Keywords tab --}}
         <div x-show="tab === 'keywords'" class="space-y-4">
+            @if(! empty($selectedKeywords))
+                <div class="fi-section sticky top-0 z-10 flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-3 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-400/20">
+                    <span class="text-sm text-amber-900 dark:text-amber-100">
+                        {{ count($selectedKeywords) }} keyword(s) geselecteerd
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <x-filament::button
+                            wire:click="$set('selectedKeywords', [])"
+                            color="gray"
+                            size="sm"
+                        >
+                            Deselecteren
+                        </x-filament::button>
+                        <x-filament::button
+                            wire:click="removeSelectedKeywords"
+                            wire:confirm="{{ count($selectedKeywords) }} geselecteerde keywords verwijderen?"
+                            color="danger"
+                            icon="heroicon-o-trash"
+                            size="sm"
+                        >
+                            Verwijder selectie
+                        </x-filament::button>
+                    </div>
+                </div>
+            @endif
+
+            @php
+                $keywordTypeLabels = [
+                    'primary' => 'Primary',
+                    'secondary' => 'Secondary',
+                    'longtail' => 'Long-tail',
+                    'lsi' => 'LSI',
+                    'gap' => 'Gap',
+                ];
+            @endphp
+
             @foreach(['primary','secondary','longtail','lsi','gap'] as $type)
-                @php $items = $record->keywords->where('type', $type); @endphp
-                @if($items->isNotEmpty())
-                    <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                        <h3 class="mb-2 text-sm font-semibold uppercase text-gray-950 dark:text-white">{{ $type }}</h3>
-                        <div class="flex flex-wrap gap-2">
+                @php
+                    $items = $record->keywords->where('type', $type);
+                    $typeIds = $items->pluck('id')->map(fn ($id) => (int) $id)->all();
+                    $selectedIds = array_map('intval', $selectedKeywords ?? []);
+                    $allSelected = $typeIds !== [] && array_diff($typeIds, $selectedIds) === [];
+                @endphp
+                <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                    <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-sm font-semibold uppercase text-gray-950 dark:text-white">{{ $keywordTypeLabels[$type] }}</h3>
+                        @if($items->isNotEmpty())
+                            <button
+                                type="button"
+                                wire:click="toggleSelectKeywordsOfType('{{ $type }}')"
+                                class="text-xs font-medium text-amber-700 hover:underline dark:text-amber-300"
+                            >
+                                {{ $allSelected ? 'Deselecteer alle' : 'Selecteer alle (' . count($typeIds) . ')' }}
+                            </button>
+                        @endif
+                    </div>
+
+                    @if($items->isNotEmpty())
+                        <div class="mb-3 flex flex-wrap gap-2">
                             @foreach($items as $k)
-                                <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-white/10 dark:text-gray-100">
+                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 has-[:checked]:bg-amber-100 has-[:checked]:ring-1 has-[:checked]:ring-amber-300 dark:bg-white/10 dark:text-gray-100 dark:has-[:checked]:bg-amber-500/20 dark:has-[:checked]:ring-amber-400/40">
+                                    <input
+                                        type="checkbox"
+                                        value="{{ $k->id }}"
+                                        wire:model.live="selectedKeywords"
+                                        class="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                    />
                                     <span>
                                         {{ $k->keyword }}
                                         @if($k->intent)<span class="ml-1 text-xs text-gray-500">· {{ $k->intent }}</span>@endif
@@ -169,7 +228,7 @@
                                     </span>
                                     <button
                                         type="button"
-                                        wire:click="removeKeyword({{ $k->id }})"
+                                        wire:click.stop="removeKeyword({{ $k->id }})"
                                         wire:confirm="Keyword '{{ $k->keyword }}' verwijderen?"
                                         class="-mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-500/20 dark:hover:text-red-300"
                                         title="Verwijder keyword"
@@ -178,22 +237,38 @@
                                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                         </svg>
                                     </button>
-                                </span>
+                                </label>
                             @endforeach
                         </div>
+                    @else
+                        <p class="mb-3 text-xs text-gray-500">Nog geen keywords in {{ $keywordTypeLabels[$type] }}.</p>
+                    @endif
+
+                    <div class="flex flex-col gap-2 border-t border-gray-100 pt-3 dark:border-white/5 sm:flex-row sm:items-center">
+                        <input
+                            wire:model="newKeywordByType.{{ $type }}"
+                            wire:keydown.enter="addKeywordToType('{{ $type }}')"
+                            placeholder="Voeg keyword toe aan {{ $keywordTypeLabels[$type] }} (komma-gescheiden voor meerdere)"
+                            class="block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white"
+                        />
+                        <x-filament::button
+                            wire:click="addKeywordToType('{{ $type }}')"
+                            icon="heroicon-o-plus"
+                            color="gray"
+                            size="sm"
+                        >
+                            Toevoegen
+                        </x-filament::button>
                     </div>
-                @endif
+                </div>
             @endforeach
-            @if($record->keywords->isEmpty())
-                <p class="text-sm text-gray-500">Nog geen keywords. Voeg er hieronder een toe of vernieuw de audit.</p>
-            @endif
 
             <div class="fi-section rounded-xl bg-white p-5 ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                <h3 class="mb-3 text-sm font-semibold text-gray-950 dark:text-white">Keyword handmatig toevoegen</h3>
+                <h3 class="mb-3 text-sm font-semibold text-gray-950 dark:text-white">Keyword handmatig toevoegen (uitgebreid)</h3>
                 <div class="grid gap-3 md:grid-cols-4">
                     <div class="md:col-span-2">
                         <label class="text-xs font-medium uppercase text-gray-500">Keyword</label>
-                        <input wire:model="newKeyword" placeholder="Bijv. duurzame leren tas" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
+                        <input wire:model="newKeyword" placeholder="Bijv. duurzame leren tas (of meerdere, komma-gescheiden)" class="mt-1 block w-full rounded-lg border-gray-300 bg-white p-2 text-sm text-gray-950 dark:border-white/10 dark:bg-gray-950 dark:text-white" />
                     </div>
                     <div>
                         <label class="text-xs font-medium uppercase text-gray-500">Type</label>
