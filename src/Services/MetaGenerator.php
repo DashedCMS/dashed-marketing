@@ -4,8 +4,8 @@ namespace Dashed\DashedMarketing\Services;
 
 use Throwable;
 use Dashed\DashedAi\Facades\Ai;
-use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Log;
+use Spatie\Translatable\HasTranslations;
 use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 /**
@@ -118,6 +118,7 @@ final class MetaGenerator
             }
 
             $current = '';
+
             try {
                 $current = (string) $metadata->getTranslation($attr, $locale);
             } catch (Throwable) {
@@ -183,6 +184,7 @@ final class MetaGenerator
                 } catch (Throwable) {
                     $metaTitle = '';
                 }
+
                 try {
                     $metaDescription = (string) $metadata->getTranslation('description', $locale);
                 } catch (Throwable) {
@@ -194,6 +196,7 @@ final class MetaGenerator
         }
 
         $brand = '';
+
         try {
             if (class_exists(SocialContextBuilder::class)) {
                 $brand = (string) app(SocialContextBuilder::class)->build('seo');

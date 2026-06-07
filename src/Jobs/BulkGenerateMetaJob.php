@@ -4,11 +4,11 @@ namespace Dashed\DashedMarketing\Jobs;
 
 use Throwable;
 use Illuminate\Bus\Queueable;
-use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
 use Dashed\DashedCore\Classes\Locales;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Spatie\Translatable\HasTranslations;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
@@ -47,6 +47,7 @@ final class BulkGenerateMetaJob implements ShouldQueue
     public function handle(): void
     {
         $registry = [];
+
         try {
             $registry = (array) cms()->builder('routeModels');
         } catch (Throwable $e) {
@@ -130,7 +131,7 @@ final class BulkGenerateMetaJob implements ShouldQueue
     protected function modelSupportsMeta(string $class): bool
     {
         try {
-            $instance = new $class;
+            $instance = new $class();
         } catch (Throwable) {
             return false;
         }
