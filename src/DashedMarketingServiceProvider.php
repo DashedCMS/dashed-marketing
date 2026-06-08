@@ -84,6 +84,11 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
         cms()->builder('summaryContributors', [MarketingSummaryContributor::class]);
 
+        cms()->builder('dashboardWidgets', [
+            'marketing-social-pending'  => ['widget' => \Dashed\DashedMarketing\Filament\Widgets\SocialPostPendingStat::class, 'label' => 'Social posts in afwachting', 'width' => 2,      'sort' => 60],
+            'marketing-social-calendar' => ['widget' => \Dashed\DashedMarketing\Filament\Widgets\SocialCalendarWidget::class,    'label' => 'Social media kalender',   'width' => 'full', 'sort' => 65],
+        ]);
+
         cms()->registerSettingsPage(
             SocialSettingsPage::class,
             'Social media',
