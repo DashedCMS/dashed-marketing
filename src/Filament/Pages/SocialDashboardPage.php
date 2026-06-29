@@ -18,7 +18,7 @@ class SocialDashboardPage extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Social media';
 
     protected static ?string $navigationLabel = 'Social dashboard';
 

@@ -46,7 +46,7 @@ class SocialPostResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-share';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Social media';
 
     protected static ?string $navigationLabel = 'Social posts';
 

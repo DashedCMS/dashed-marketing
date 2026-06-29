@@ -30,7 +30,7 @@ class SocialCampaignResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Social media';
 
     protected static ?string $navigationLabel = 'Campagnes';
 

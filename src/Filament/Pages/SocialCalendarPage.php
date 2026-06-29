@@ -11,7 +11,7 @@ class SocialCalendarPage extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static string|UnitEnum|null $navigationGroup = 'Social media';
 
     protected static ?string $navigationLabel = 'Social kalender';
 
