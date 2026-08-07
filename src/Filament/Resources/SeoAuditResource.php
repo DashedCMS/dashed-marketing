@@ -84,7 +84,7 @@ class SeoAuditResource extends Resource
                     ->label(__('Toegepast'))
                     ->dateTime('d-m-Y H:i')
                     ->sortable()
-                    ->placeholder(__('-')),
+                    ->placeholder('-'),
             ])
             ->filters([
                 SelectFilter::make('subject_type')

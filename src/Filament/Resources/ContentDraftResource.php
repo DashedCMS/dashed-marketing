@@ -601,7 +601,7 @@ TXT;
                     ->label(__('Cluster'))
                     ->searchable()
                     ->sortable()
-                    ->placeholder(__('-')),
+                    ->placeholder('-'),
                 TextColumn::make('created_at')
                     ->label(__('Aangemaakt'))
                     ->dateTime('d-m-Y H:i')
