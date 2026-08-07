@@ -51,6 +51,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
 
     public function bootingPackage()
     {
+        cms()->registerNavigationGroup('Content marketing', 55);
         cms()->registerNavigationGroup('Social media', 60);
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');

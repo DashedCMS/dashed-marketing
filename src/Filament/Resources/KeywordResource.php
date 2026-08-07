@@ -32,7 +32,7 @@ class KeywordResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Zoekwoorden';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static string|UnitEnum|null $navigationGroup = 'Content marketing';
 
     protected static ?int $navigationSort = 3;
 
