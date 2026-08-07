@@ -332,7 +332,7 @@ class SocialPostResource extends Resource
                         $channels = $record && is_array($record->channels) ? $record->channels : [];
                         if (empty($channels)) {
                             $perChannelFields[] = Placeholder::make('no_channels')
-                                ->label(__(''))
+                                ->label('')
                                 ->content(new HtmlString('<em>Geen kanalen geselecteerd.</em>'))
                                 ->columnSpanFull();
 
@@ -395,7 +395,7 @@ class SocialPostResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image_path')
-                    ->label(__(''))
+                    ->label('')
                     ->height(48)
                     ->square()
                     ->getStateUsing(function (SocialPost $record): ?string {

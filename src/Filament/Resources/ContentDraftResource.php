@@ -53,7 +53,7 @@ class ContentDraftResource extends Resource
     {
         return $schema->schema([
             Placeholder::make('live_status_poller')
-                ->label(__(''))
+                ->label('')
                 ->visible(fn ($record) => $record?->status === 'writing')
                 ->content(fn ($record) => new HtmlString('<div wire:poll.5s="pollDraft" class="rounded-md bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800 p-3 text-sm text-info-700 dark:text-info-300"><strong>Bezig met schrijven…</strong> bodies worden op de achtergrond gegenereerd. Deze pagina ververst automatisch elke 5 seconden tot het klaar is.</div>'))
                 ->columnSpanFull(),
@@ -374,7 +374,7 @@ TXT;
                     Repeater::make('linkCandidates')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label(__(''))
+                        ->label('')
                         ->columns(6)
                         ->schema([
                             Select::make('subject_type')
@@ -482,12 +482,12 @@ TXT;
                     Repeater::make('sections')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label(__(''))
+                        ->label('')
                         ->schema([
                             TextInput::make('heading')->label(__('Titel'))->required(),
                             Textarea::make('intent')->label(__('Waar gaat deze sectie over'))->rows(2),
                             Placeholder::make('error_message_display')
-                                ->label(__(''))
+                                ->label('')
                                 ->visible(fn ($get) => ! empty($get('error_message')))
                                 ->content(fn ($get) => new HtmlString('<div class="rounded-md bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 p-3 text-sm text-danger-700 dark:text-danger-300"><strong>Laatste fout:</strong> '.e($get('error_message')).'</div>'))
                                 ->columnSpanFull(),
@@ -566,7 +566,7 @@ TXT;
                     Repeater::make('faqs')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label(__(''))
+                        ->label('')
                         ->schema([
                             TextInput::make('question')->label(__('Vraag'))->required(),
                             Textarea::make('answer')->label(__('Antwoord'))->rows(3)->required(),

@@ -52,7 +52,7 @@ class SocialPillarResource extends Resource
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(100)
-                            ->suffix(__('%')),
+                            ->suffix('%'),
                         ColorPicker::make('color')
                             ->label(__('Kleur')),
                         Textarea::make('description')
@@ -75,7 +75,7 @@ class SocialPillarResource extends Resource
                     ->sortable(),
                 TextColumn::make('target_percentage')
                     ->label(__('Doel %'))
-                    ->suffix(__('%'))
+                    ->suffix('%')
                     ->sortable(),
                 TextColumn::make('description')
                     ->label(__('Beschrijving'))
