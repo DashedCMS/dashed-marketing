@@ -91,8 +91,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                     $user = User::find($this->userId);
                     if ($user !== null) {
                         Notification::make()
-                            ->title('Geen ideeën gegenereerd')
-                            ->body('De AI leverde geen geldige suggesties. Probeer een specifiekere focus.')
+                            ->title(__('Geen ideeën gegenereerd'))
+                            ->body(__('De AI leverde geen geldige suggesties. Probeer een specifiekere focus.'))
                             ->warning()
                             ->sendToDatabase($user);
                     }
@@ -144,8 +144,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                 $user = User::find($this->userId);
                 if ($user !== null) {
                     Notification::make()
-                        ->title("{$created} social media ideeën aangemaakt")
-                        ->body($this->focus ? "Focus: {$this->focus}" : "Periode: {$this->period} weken")
+                        ->title(__(':aantal social media ideeën aangemaakt', ['aantal' => $created]))
+                        ->body($this->focus ? __('Focus: :focus', ['focus' => $this->focus]) : __('Periode: :weken weken', ['weken' => $this->period]))
                         ->icon('heroicon-o-sparkles')
                         ->success()
                         ->sendToDatabase($user);
@@ -204,8 +204,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
             $user = User::find($this->userId);
             if ($user !== null) {
                 Notification::make()
-                    ->title('Genereren mislukt')
-                    ->body('De AI-job kon niet worden voltooid. Check de logs.')
+                    ->title(__('Genereren mislukt'))
+                    ->body(__('De AI-job kon niet worden voltooid. Check de logs.'))
                     ->danger()
                     ->sendToDatabase($user);
             }

@@ -41,26 +41,26 @@ class KeywordResource extends Resource
         return $schema->components([
             TextInput::make('keyword')->required(),
             Select::make('locale')
-                ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                 ->default(config('app.locale', 'nl'))
                 ->required(),
             Select::make('search_intent')->options([
-                'informational' => 'Informational',
-                'commercial' => 'Commercial',
-                'transactional' => 'Transactional',
-                'navigational' => 'Navigational',
+                'informational' => __('Informational'),
+                'commercial' => __('Commercial'),
+                'transactional' => __('Transactional'),
+                'navigational' => __('Navigational'),
             ]),
             Select::make('difficulty')->options([
-                'easy' => 'Easy',
-                'medium' => 'Medium',
-                'hard' => 'Hard',
+                'easy' => __('Easy'),
+                'medium' => __('Medium'),
+                'hard' => __('Hard'),
             ]),
             TextInput::make('volume_exact')->numeric(),
             TextInput::make('cpc')->numeric()->step(0.01),
             Select::make('status')->options([
-                'new' => 'Nieuw',
-                'approved' => 'Goedgekeurd',
-                'rejected' => 'Afgewezen',
+                'new' => __('Nieuw'),
+                'approved' => __('Goedgekeurd'),
+                'rejected' => __('Afgewezen'),
             ])->required()->default('new'),
         ]);
     }
@@ -72,12 +72,12 @@ class KeywordResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('keyword')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('locale')->badge()->sortable(),
-                Tables\Columns\TextColumn::make('volume_exact')->label('Volume')->sortable(),
-                Tables\Columns\TextColumn::make('search_intent')->badge()->label('Intent')->sortable(),
+                Tables\Columns\TextColumn::make('volume_exact')->label(__('Volume'))->sortable(),
+                Tables\Columns\TextColumn::make('search_intent')->badge()->label(__('Intent'))->sortable(),
                 Tables\Columns\TextColumn::make('difficulty')->badge()->sortable(),
                 Tables\Columns\TextColumn::make('cpc')->money('eur')->sortable(),
-                Tables\Columns\TextColumn::make('contentClusters.name')->label('Cluster')->badge(),
-                Tables\Columns\TextColumn::make('matched_subject_type')->label('Match')->formatStateUsing(
+                Tables\Columns\TextColumn::make('contentClusters.name')->label(__('Cluster'))->badge(),
+                Tables\Columns\TextColumn::make('matched_subject_type')->label(__('Match'))->formatStateUsing(
                     fn ($state, $record) => $state ? class_basename($state).' #'.$record->matched_subject_id : '-',
                 ),
                 Tables\Columns\TextColumn::make('source')->badge(),
@@ -85,8 +85,8 @@ class KeywordResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('show_rejected')
-                    ->label('Toon afgewezen')
-                    ->placeholder('Verbergen (standaard)')
+                    ->label(__('Toon afgewezen'))
+                    ->placeholder(__('Verbergen (standaard)'))
                     ->trueLabel('Alleen afgewezen')
                     ->falseLabel('Exclusief afgewezen')
                     ->queries(
@@ -95,28 +95,28 @@ class KeywordResource extends Resource
                         blank: fn ($query) => $query->where('status', '!=', 'rejected'),
                     ),
                 Tables\Filters\SelectFilter::make('locale')
-                    ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                    ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                     ->default(config('app.locale', 'nl')),
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(['new' => 'Nieuw', 'approved' => 'Goedgekeurd', 'rejected' => 'Afgewezen']),
+                    ->options(['new' => __('Nieuw'), 'approved' => __('Goedgekeurd'), 'rejected' => __('Afgewezen')]),
                 Tables\Filters\SelectFilter::make('search_intent')
-                    ->label('Intent')
+                    ->label(__('Intent'))
                     ->options([
-                        'informational' => 'Informational',
-                        'commercial' => 'Commercial',
-                        'transactional' => 'Transactional',
-                        'navigational' => 'Navigational',
+                        'informational' => __('Informational'),
+                        'commercial' => __('Commercial'),
+                        'transactional' => __('Transactional'),
+                        'navigational' => __('Navigational'),
                     ]),
                 Tables\Filters\SelectFilter::make('difficulty')
                     ->options([
-                        'easy' => 'Easy',
-                        'medium' => 'Medium',
-                        'hard' => 'Hard',
+                        'easy' => __('Easy'),
+                        'medium' => __('Medium'),
+                        'hard' => __('Hard'),
                     ]),
                 Tables\Filters\Filter::make('cpc')
                     ->schema([
-                        TextInput::make('cpc_min')->label('CPC vanaf')->numeric()->step(0.01),
-                        TextInput::make('cpc_max')->label('CPC tot')->numeric()->step(0.01),
+                        TextInput::make('cpc_min')->label(__('CPC vanaf'))->numeric()->step(0.01),
+                        TextInput::make('cpc_max')->label(__('CPC tot'))->numeric()->step(0.01),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
@@ -143,13 +143,13 @@ class KeywordResource extends Resource
             ])
             ->recordActions([
                 Actions\Action::make('approve')
-                    ->label('Goedkeuren')
+                    ->label(__('Goedkeuren'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Keyword $record) => $record->status !== 'approved')
                     ->action(fn (Keyword $record) => $record->update(['status' => 'approved'])),
                 Actions\Action::make('reject')
-                    ->label('Afwijzen')
+                    ->label(__('Afwijzen'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (Keyword $record) => $record->status !== 'rejected')
@@ -160,17 +160,17 @@ class KeywordResource extends Resource
             ->toolbarActions([
                 Actions\BulkActionGroup::make([
                     Actions\BulkAction::make('approve')
-                        ->label('Goedkeuren')
+                        ->label(__('Goedkeuren'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(fn ($records) => $records->each->update(['status' => 'approved'])),
                     Actions\BulkAction::make('reject')
-                        ->label('Afwijzen')
+                        ->label(__('Afwijzen'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->action(fn ($records) => $records->each->update(['status' => 'rejected'])),
                     Actions\BulkAction::make('attach_cluster')
-                        ->label('Koppel aan cluster')
+                        ->label(__('Koppel aan cluster'))
                         ->icon('heroicon-o-rectangle-stack')
                         ->color('primary')
                         ->schema(function ($records) {
@@ -179,10 +179,10 @@ class KeywordResource extends Resource
 
                             return [
                                 Radio::make('koppel_modus')
-                                    ->label('Modus')
+                                    ->label(__('Modus'))
                                     ->options([
-                                        'new' => 'Nieuwe cluster aanmaken',
-                                        'existing' => 'Toevoegen aan bestaande cluster',
+                                        'new' => __('Nieuwe cluster aanmaken'),
+                                        'existing' => __('Toevoegen aan bestaande cluster'),
                                     ])
                                     ->default('new')
                                     ->required()
@@ -191,27 +191,27 @@ class KeywordResource extends Resource
                                 Section::make()
                                     ->visible(fn ($get) => $get('koppel_modus') === 'new')
                                     ->schema([
-                                        TextInput::make('name')->label('Naam')->required(),
+                                        TextInput::make('name')->label(__('Naam'))->required(),
                                         Select::make('content_type')
-                                            ->label('Type')
+                                            ->label(__('Type'))
                                             ->options([
-                                                'blog' => 'Blog',
-                                                'landing_page' => 'Landingspagina',
-                                                'category' => 'Categoriepagina',
-                                                'faq' => 'FAQ pagina',
-                                                'product' => 'Productpagina',
-                                                'other' => 'Anders',
+                                                'blog' => __('Blog'),
+                                                'landing_page' => __('Landingspagina'),
+                                                'category' => __('Categoriepagina'),
+                                                'faq' => __('FAQ pagina'),
+                                                'product' => __('Productpagina'),
+                                                'other' => __('Anders'),
                                             ])
                                             ->required()
                                             ->default('blog'),
                                         Select::make('locale')
-                                            ->label('Taal')
-                                            ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                                            ->label(__('Taal'))
+                                            ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                                             ->default($locale)
                                             ->required(),
-                                        Textarea::make('description')->label('Beschrijving')->rows(2),
+                                        Textarea::make('description')->label(__('Beschrijving'))->rows(2),
                                         Select::make('keywords')
-                                            ->label('Zoekwoorden')
+                                            ->label(__('Zoekwoorden'))
                                             ->multiple()
                                             ->options(Keyword::whereIn('id', $ids)->pluck('keyword', 'id'))
                                             ->default($ids)
@@ -222,7 +222,7 @@ class KeywordResource extends Resource
                                     ->visible(fn ($get) => $get('koppel_modus') === 'existing')
                                     ->schema([
                                         Select::make('cluster_id')
-                                            ->label('Bestaande cluster')
+                                            ->label(__('Bestaande cluster'))
                                             ->options(
                                                 ContentCluster::where('locale', $locale)
                                                     ->orderBy('name')
@@ -231,7 +231,7 @@ class KeywordResource extends Resource
                                             ->required()
                                             ->live(),
                                         Placeholder::make('current_keywords')
-                                            ->label('Huidige keywords in cluster')
+                                            ->label(__('Huidige keywords in cluster'))
                                             ->content(function ($get) {
                                                 $id = $get('cluster_id');
                                                 if (! $id) {
@@ -242,7 +242,7 @@ class KeywordResource extends Resource
                                                 return $cluster?->keywords->pluck('keyword')->implode(', ') ?: '-';
                                             }),
                                         Select::make('keywords_to_add')
-                                            ->label('Toe te voegen keywords')
+                                            ->label(__('Toe te voegen keywords'))
                                             ->multiple()
                                             ->options(Keyword::whereIn('id', $ids)->pluck('keyword', 'id'))
                                             ->default($ids)
@@ -263,7 +263,7 @@ class KeywordResource extends Resource
                                     $cluster->keywords()->attach($data['keywords']);
                                 });
                                 Notification::make()
-                                    ->title('Cluster "'.$data['name'].'" aangemaakt met '.count($data['keywords']).' keywords')
+                                    ->title(__('Cluster ":naam" aangemaakt met :aantal keywords', ['naam' => $data['name'], 'aantal' => count($data['keywords'])]))
                                     ->success()
                                     ->send();
 
@@ -273,7 +273,7 @@ class KeywordResource extends Resource
                             $cluster = ContentCluster::findOrFail($data['cluster_id']);
                             $cluster->keywords()->syncWithoutDetaching($data['keywords_to_add']);
                             Notification::make()
-                                ->title(count($data['keywords_to_add']).' keywords toegevoegd aan "'.$cluster->name.'"')
+                                ->title(__(':aantal keywords toegevoegd aan ":naam"', ['aantal' => count($data['keywords_to_add']), 'naam' => $cluster->name]))
                                 ->success()
                                 ->send();
                         })

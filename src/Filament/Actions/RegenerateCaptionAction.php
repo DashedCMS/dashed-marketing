@@ -25,15 +25,15 @@ class RegenerateCaptionAction
     private static function base(string $name, string $fieldPath, ?string $channelSlug): Action
     {
         return Action::make($name)
-            ->label('(Her)genereer met AI')
+            ->label(__('(Her)genereer met AI'))
             ->icon('heroicon-m-sparkles')
             ->color('primary')
-            ->modalHeading('Caption opnieuw genereren')
-            ->modalSubmitActionLabel('Genereer')
+            ->modalHeading(__('Caption opnieuw genereren'))
+            ->modalSubmitActionLabel(__('Genereer'))
             ->schema([
                 Textarea::make('instructions')
-                    ->label('Instructies (optioneel)')
-                    ->placeholder('Bijv: maak 20% korter, gebruik een vraag als opener, focus op duurzaamheid')
+                    ->label(__('Instructies (optioneel)'))
+                    ->placeholder(__('Bijv: maak 20% korter, gebruik een vraag als opener, focus op duurzaamheid'))
                     ->rows(4),
             ])
             ->action(function (array $data, $livewire) use ($channelSlug) {
@@ -55,8 +55,8 @@ class RegenerateCaptionAction
 
                 if ($newCaption === null) {
                     Notification::make()
-                        ->title('Genereren mislukt')
-                        ->body('De AI gaf geen bruikbare caption terug.')
+                        ->title(__('Genereren mislukt'))
+                        ->body(__('De AI gaf geen bruikbare caption terug.'))
                         ->danger()
                         ->send();
 
@@ -84,8 +84,8 @@ class RegenerateCaptionAction
                 }
 
                 Notification::make()
-                    ->title($record ? 'Caption gegenereerd en opgeslagen' : 'Caption gegenereerd')
-                    ->body($record ? null : 'Sla de post op om de caption permanent te bewaren.')
+                    ->title($record ? __('Caption gegenereerd en opgeslagen') : __('Caption gegenereerd'))
+                    ->body($record ? null : __('Sla de post op om de caption permanent te bewaren.'))
                     ->success()
                     ->send();
             });

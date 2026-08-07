@@ -65,7 +65,7 @@ class SocialCalendarWidget extends Widget
         ]);
 
         Notification::make()
-            ->title('Post herscheduled')
+            ->title(__('Post herscheduled'))
             ->success()
             ->send();
     }

@@ -59,15 +59,15 @@ class SocialSettingsPage extends Page implements HasSchemas
         $hasProvider = Ai::hasProvider();
 
         return Action::make('generateSocialContext')
-            ->label('AI context genereren')
+            ->label(__('AI context genereren'))
             ->icon('heroicon-o-sparkles')
             ->color('primary')
             ->disabled(! $hasProvider)
-            ->tooltip($hasProvider ? null : 'Configureer eerst een AI provider in AI Settings.')
+            ->tooltip($hasProvider ? null : __('Configureer eerst een AI provider in AI Settings.'))
             ->requiresConfirmation()
-            ->modalHeading('AI context genereren?')
-            ->modalDescription('Dit dispatcht een job per site. Lege velden worden automatisch ingevuld op basis van je website content. Bestaande waarden blijven staan.')
-            ->modalSubmitActionLabel('Genereer')
+            ->modalHeading(__('AI context genereren?'))
+            ->modalDescription(__('Dit dispatcht een job per site. Lege velden worden automatisch ingevuld op basis van je website content. Bestaande waarden blijven staan.'))
+            ->modalSubmitActionLabel(__('Genereer'))
             ->action(function () {
                 $sites = Sites::getSites();
 
@@ -76,8 +76,8 @@ class SocialSettingsPage extends Page implements HasSchemas
                 }
 
                 Notification::make()
-                    ->title('AI context generatie gestart')
-                    ->body('Job gestart voor '.count($sites).' site(s). Je krijgt een melding zodra elke site klaar is.')
+                    ->title(__('AI context generatie gestart'))
+                    ->body(__('Job gestart voor :aantal site(s). Je krijgt een melding zodra elke site klaar is.', ['aantal' => count($sites)]))
                     ->success()
                     ->send();
             });
@@ -101,54 +101,54 @@ class SocialSettingsPage extends Page implements HasSchemas
             ->toArray();
 
         return $schema->schema([
-            Section::make('Publicatie adapter')
+            Section::make(__('Publicatie adapter'))
                 ->schema([
                     Select::make('social_publishing_adapter')
-                        ->label('Publicatie adapter')
+                        ->label(__('Publicatie adapter'))
                         ->options(PublishingAdapterRegistry::all())
                         ->default('manual')
                         ->required()
-                        ->helperText('Selecteer hoe social posts gepubliceerd worden. \'Handmatig\' markeert alleen als gepost zonder externe API-call.'),
+                        ->helperText(__('Selecteer hoe social posts gepubliceerd worden. \'Handmatig\' markeert alleen als gepost zonder externe API-call.')),
                 ]),
 
-            Section::make('Actieve kanalen')
-                ->description('Vink aan welke kanalen je daadwerkelijk gebruikt. Alleen aangevinkte kanalen worden meegegeven aan de AI als context en verschijnen als selectie-optie bij nieuwe posts.')
+            Section::make(__('Actieve kanalen'))
+                ->description(__('Vink aan welke kanalen je daadwerkelijk gebruikt. Alleen aangevinkte kanalen worden meegegeven aan de AI als context en verschijnen als selectie-optie bij nieuwe posts.'))
                 ->schema([
                     CheckboxList::make('social_channels')
-                        ->label('Kanalen')
+                        ->label(__('Kanalen'))
                         ->options($channelOptions)
                         ->columns(2),
                 ]),
 
-            Section::make('AI context')
+            Section::make(__('AI context'))
                 ->schema([
                     Actions::make([
                         $this->generateSocialContextAction(),
                     ]),
                     Textarea::make('social_target_audience')
-                        ->label('Doelgroep')
-                        ->helperText('Beschrijf je doelgroep voor social media posts.')
+                        ->label(__('Doelgroep'))
+                        ->helperText(__('Beschrijf je doelgroep voor social media posts.'))
                         ->rows(3),
                     Textarea::make('social_usps')
-                        ->label('Unique Selling Points')
-                        ->helperText('De belangrijkste USPs van je product/dienst.')
+                        ->label(__('Unique Selling Points'))
+                        ->helperText(__('De belangrijkste USPs van je product/dienst.'))
                         ->rows(3),
                 ]),
 
-            Section::make('Meldingen')
+            Section::make(__('Meldingen'))
                 ->schema([
                     TextInput::make('social_notification_email')
-                        ->label('Notificatie e-mailadres')
+                        ->label(__('Notificatie e-mailadres'))
                         ->email()
-                        ->helperText('Laat leeg om het standaard beheerder e-mailadres te gebruiken.'),
+                        ->helperText(__('Laat leeg om het standaard beheerder e-mailadres te gebruiken.')),
                     Toggle::make('social_notify_due')
-                        ->label('Dagelijkse herinnering voor posts die vandaag geplaatst moeten worden'),
+                        ->label(__('Dagelijkse herinnering voor posts die vandaag geplaatst moeten worden')),
                     Toggle::make('social_notify_missed')
-                        ->label('Melding bij gemiste posts'),
+                        ->label(__('Melding bij gemiste posts')),
                     Toggle::make('social_notify_weekly_gaps')
-                        ->label('Wekelijkse melding bij lege slots'),
+                        ->label(__('Wekelijkse melding bij lege slots')),
                     Toggle::make('social_notify_holidays')
-                        ->label('Herinnering bij aankomende feestdagen'),
+                        ->label(__('Herinnering bij aankomende feestdagen')),
                 ]),
         ])->statePath('data');
     }
@@ -170,7 +170,7 @@ class SocialSettingsPage extends Page implements HasSchemas
         }
 
         Notification::make()
-            ->title('Social media instellingen opgeslagen')
+            ->title(__('Social media instellingen opgeslagen'))
             ->success()
             ->send();
 

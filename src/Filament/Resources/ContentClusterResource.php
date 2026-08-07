@@ -44,52 +44,52 @@ class ContentClusterResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Content cluster')
+                Section::make(__('Content cluster'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Naam')
+                            ->label(__('Naam'))
                             ->required()
                             ->maxLength(255),
                         Select::make('content_type')
-                            ->label('Type')
+                            ->label(__('Type'))
                             ->options([
-                                'blog' => 'Blog',
-                                'landing_page' => 'Landingspagina',
-                                'category' => 'Categoriepagina',
-                                'faq' => 'FAQ pagina',
-                                'product' => 'Productpagina',
-                                'other' => 'Anders',
+                                'blog' => __('Blog'),
+                                'landing_page' => __('Landingspagina'),
+                                'category' => __('Categoriepagina'),
+                                'faq' => __('FAQ pagina'),
+                                'product' => __('Productpagina'),
+                                'other' => __('Anders'),
                             ])
                             ->required(),
                         Select::make('locale')
-                            ->label('Taal')
-                            ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                            ->label(__('Taal'))
+                            ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                             ->default(config('app.locale', 'nl'))
                             ->required()
                             ->live(),
                         Select::make('status')
-                            ->label('Status')
+                            ->label(__('Status'))
                             ->options([
-                                'planned' => 'Gepland',
-                                'in_progress' => 'In uitvoering',
-                                'done' => 'Klaar',
+                                'planned' => __('Gepland'),
+                                'in_progress' => __('In uitvoering'),
+                                'done' => __('Klaar'),
                             ])
                             ->default('planned'),
                         TextInput::make('theme')
-                            ->label('Thema')
+                            ->label(__('Thema'))
                             ->maxLength(255),
                         Textarea::make('description')
-                            ->label('Beschrijving')
+                            ->label(__('Beschrijving'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                Section::make('Zoekwoorden')
+                Section::make(__('Zoekwoorden'))
                     ->schema([
                         Select::make('keywords')
-                            ->label('Gekoppelde zoekwoorden')
+                            ->label(__('Gekoppelde zoekwoorden'))
                             ->multiple()
                             ->relationship('keywords', 'keyword')
                             ->preload()
@@ -118,17 +118,17 @@ class ContentClusterResource extends Resource
                     ])
                     ->columnSpanFull(),
 
-                Section::make('Content concepten (preview)')
-                    ->description('Bewerk de AI-voorstellen of verwijder ongewenste, en maak er in bulk drafts van.')
+                Section::make(__('Content concepten (preview)'))
+                    ->description(__('Bewerk de AI-voorstellen of verwijder ongewenste, en maak er in bulk drafts van.'))
                     ->visible(fn ($record) => $record !== null)
                     ->schema([
                         Repeater::make('pending_concepts')
                             ->label(false)
                             ->schema([
-                                TextInput::make('title')->label('Titel')->required(),
-                                Textarea::make('description')->label('Beschrijving')->rows(2),
+                                TextInput::make('title')->label(__('Titel'))->required(),
+                                Textarea::make('description')->label(__('Beschrijving'))->rows(2),
                                 Select::make('suggested_target_type')
-                                    ->label('Target type')
+                                    ->label(__('Target type'))
                                     ->options(function () {
                                         $options = [];
 
@@ -146,8 +146,8 @@ class ContentClusterResource extends Resource
                                     ->required()
                                     ->live(),
                                 Select::make('target_id')
-                                    ->label('Target record')
-                                    ->placeholder('Nieuw record aanmaken')
+                                    ->label(__('Target record'))
+                                    ->placeholder(__('Nieuw record aanmaken'))
                                     ->options(function ($get) {
                                         $typeKey = $get('suggested_target_type');
                                         if (! $typeKey) {
@@ -175,15 +175,15 @@ class ContentClusterResource extends Resource
                                     })
                                     ->nullable(),
                                 Select::make('keyword_ids')
-                                    ->label('Gekoppelde keywords')
+                                    ->label(__('Gekoppelde keywords'))
                                     ->multiple()
                                     ->options(fn ($record) => $record ? $record->keywords()->pluck('keyword', 'id') : [])
                                     ->preload(),
                                 Repeater::make('h2_sections')
-                                    ->label('H2 outline')
+                                    ->label(__('H2 outline'))
                                     ->schema([
-                                        TextInput::make('heading')->label('Heading')->required(),
-                                        Textarea::make('intent')->label('Intent')->rows(2),
+                                        TextInput::make('heading')->label(__('Heading'))->required(),
+                                        Textarea::make('intent')->label(__('Intent'))->rows(2),
                                     ])
                                     ->reorderable()
                                     ->addable()
@@ -209,42 +209,42 @@ class ContentClusterResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Naam')
+                    ->label(__('Naam'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('theme')
-                    ->label('Thema'),
+                    ->label(__('Thema')),
                 TextColumn::make('content_type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->content_type_label)
                     ->color(fn ($record) => $record->content_type_color),
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->status_label)
                     ->color(fn ($record) => $record->status_color),
                 TextColumn::make('contentDrafts_count')
-                    ->label('Concepten')
+                    ->label(__('Concepten'))
                     ->counts('contentDrafts'),
             ])
             ->filters([
                 SelectFilter::make('content_type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->options([
-                        'blog' => 'Blog',
-                        'landing_page' => 'Landingspagina',
-                        'category' => 'Categoriepagina',
-                        'faq' => 'FAQ pagina',
-                        'product' => 'Productpagina',
-                        'other' => 'Anders',
+                        'blog' => __('Blog'),
+                        'landing_page' => __('Landingspagina'),
+                        'category' => __('Categoriepagina'),
+                        'faq' => __('FAQ pagina'),
+                        'product' => __('Productpagina'),
+                        'other' => __('Anders'),
                     ]),
                 SelectFilter::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->options([
-                        'planned' => 'Gepland',
-                        'in_progress' => 'In uitvoering',
-                        'done' => 'Klaar',
+                        'planned' => __('Gepland'),
+                        'in_progress' => __('In uitvoering'),
+                        'done' => __('Klaar'),
                     ]),
             ])
             ->defaultSort('created_at', 'desc')

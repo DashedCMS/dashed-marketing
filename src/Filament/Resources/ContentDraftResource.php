@@ -53,17 +53,17 @@ class ContentDraftResource extends Resource
     {
         return $schema->schema([
             Placeholder::make('live_status_poller')
-                ->label('')
+                ->label(__(''))
                 ->visible(fn ($record) => $record?->status === 'writing')
                 ->content(fn ($record) => new HtmlString('<div wire:poll.5s="pollDraft" class="rounded-md bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800 p-3 text-sm text-info-700 dark:text-info-300"><strong>Bezig met schrijven…</strong> bodies worden op de achtergrond gegenereerd. Deze pagina ververst automatisch elke 5 seconden tot het klaar is.</div>'))
                 ->columnSpanFull(),
 
-            Section::make('Algemeen')
+            Section::make(__('Algemeen'))
                 ->columns(1)
                 ->columnSpanFull()
                 ->schema([
                     TextInput::make('name')
-                        ->label('Titel (H1)')
+                        ->label(__('Titel (H1)'))
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
@@ -73,22 +73,22 @@ class ContentDraftResource extends Resource
                             }
                         }),
                     TextInput::make('slug')
-                        ->label('Slug')
+                        ->label(__('Slug'))
                         ->required()
                         ->maxLength(255),
                     TextInput::make('meta_title')
-                        ->label('Meta title (SEO)')
-                        ->helperText('50-60 tekens. Wordt bij publiceren naar de metadata-title van het doelrecord geschreven.')
+                        ->label(__('Meta title (SEO)'))
+                        ->helperText(__('50-60 tekens. Wordt bij publiceren naar de metadata-title van het doelrecord geschreven.'))
                         ->maxLength(150)
                         ->nullable(),
                     Textarea::make('meta_description')
-                        ->label('Meta description (SEO)')
-                        ->helperText('140-160 tekens. Wordt bij publiceren naar de metadata-description van het doelrecord geschreven.')
+                        ->label(__('Meta description (SEO)'))
+                        ->helperText(__('140-160 tekens. Wordt bij publiceren naar de metadata-description van het doelrecord geschreven.'))
                         ->rows(2)
                         ->maxLength(250)
                         ->nullable(),
                     Select::make('subject_type')
-                        ->label('Target type')
+                        ->label(__('Target type'))
                         ->options(function () {
                             $options = [];
 
@@ -109,8 +109,8 @@ class ContentDraftResource extends Resource
                         ->nullable()
                         ->live(),
                     Select::make('subject_id')
-                        ->label('Target record')
-                        ->placeholder('Zoek of laat leeg voor nieuw record')
+                        ->label(__('Target record'))
+                        ->placeholder(__('Zoek of laat leeg voor nieuw record'))
                         ->searchable()
                         ->preload()
                         ->nullable()
@@ -126,34 +126,34 @@ class ContentDraftResource extends Resource
                             return $record ? self::recordLabel($record) : null;
                         }),
                     Select::make('locale')
-                        ->label('Taal')
+                        ->label(__('Taal'))
                         ->options([
-                            'nl' => 'Nederlands',
-                            'en' => 'Engels',
-                            'de' => 'Duits',
-                            'fr' => 'Frans',
+                            'nl' => __('Nederlands'),
+                            'en' => __('Engels'),
+                            'de' => __('Duits'),
+                            'fr' => __('Frans'),
                         ])
                         ->required()
                         ->default('nl'),
                     Select::make('status')
-                        ->label('Status')
+                        ->label(__('Status'))
                         ->options([
-                            'concept' => 'Concept',
-                            'pending' => 'In wachtrij',
-                            'planning' => 'Planning...',
-                            'writing' => 'Schrijven...',
-                            'ready' => 'Klaar',
-                            'applied' => 'Toegepast',
-                            'failed' => 'Mislukt',
+                            'concept' => __('Concept'),
+                            'pending' => __('In wachtrij'),
+                            'planning' => __('Planning...'),
+                            'writing' => __('Schrijven...'),
+                            'ready' => __('Klaar'),
+                            'applied' => __('Toegepast'),
+                            'failed' => __('Mislukt'),
                         ])
                         ->default('concept')
                         ->disabled(),
                 ]),
 
-            Section::make('Zoekwoorden')
+            Section::make(__('Zoekwoorden'))
                 ->schema([
                     Select::make('keywords')
-                        ->label('Gekoppelde zoekwoorden')
+                        ->label(__('Gekoppelde zoekwoorden'))
                         ->multiple()
                         ->relationship('keywords', 'keyword')
                         ->preload()
@@ -167,18 +167,18 @@ class ContentDraftResource extends Resource
                 ])
                 ->columnSpanFull(),
 
-            Section::make('Interne link-kandidaten')
-                ->description('Deze links gebruikt de AI in de bodies. Koppel een model uit het CMS (title en url komen dan live mee), of vul een losse URL in.')
+            Section::make(__('Interne link-kandidaten'))
+                ->description(__('Deze links gebruikt de AI in de bodies. Koppel een model uit het CMS (title en url komen dan live mee), of vul een losse URL in.'))
                 ->collapsible()
                 ->collapsed()
                 ->headerActions([
                     Action::make('seed_link_candidates')
-                        ->label('Vul uit routes')
+                        ->label(__('Vul uit routes'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('gray')
                         ->requiresConfirmation()
-                        ->modalHeading('Vul link-kandidaten uit routes')
-                        ->modalDescription('Dit leest alle route-modellen voor de locale van deze draft en vervangt de huidige lijst.')
+                        ->modalHeading(__('Vul link-kandidaten uit routes'))
+                        ->modalDescription(__('Dit leest alle route-modellen voor de locale van deze draft en vervangt de huidige lijst.'))
                         ->visible(fn ($record) => $record !== null)
                         ->action(function ($record) {
                             $locale = $record->locale ?? app()->getLocale();
@@ -198,27 +198,27 @@ class ContentDraftResource extends Resource
                             }
 
                             Notification::make()
-                                ->title(count($candidates).' link-kandidaten geladen uit routes')
+                                ->title(__(':aantal link-kandidaten geladen uit routes', ['aantal' => count($candidates)]))
                                 ->success()
                                 ->send();
 
                             return redirect(request()->header('Referer') ?: url()->current());
                         }),
                     Action::make('ai_pick_link_candidates')
-                        ->label('AI-selectie op onderwerp')
+                        ->label(__('AI-selectie op onderwerp'))
                         ->icon('heroicon-o-sparkles')
                         ->color('primary')
                         ->visible(fn ($record) => $record !== null)
-                        ->modalHeading('Laat AI relevante interne links kiezen')
-                        ->modalDescription('Geef een onderwerp op. AI selecteert uit alle beschikbare route-modellen de meest relevante pagina\'s en zet die als link-kandidaten.')
+                        ->modalHeading(__('Laat AI relevante interne links kiezen'))
+                        ->modalDescription(__('Geef een onderwerp op. AI selecteert uit alle beschikbare route-modellen de meest relevante pagina\'s en zet die als link-kandidaten.'))
                         ->schema([
                             Textarea::make('topic')
-                                ->label('Onderwerp')
-                                ->placeholder('Bijv. Leren tassen voor vrouwen, duurzame mode, zakelijk reizen')
+                                ->label(__('Onderwerp'))
+                                ->placeholder(__('Bijv. Leren tassen voor vrouwen, duurzame mode, zakelijk reizen'))
                                 ->rows(3)
                                 ->required(),
                             TextInput::make('max')
-                                ->label('Maximaal aantal links')
+                                ->label(__('Maximaal aantal links'))
                                 ->numeric()
                                 ->default(10)
                                 ->minValue(1)
@@ -230,7 +230,7 @@ class ContentDraftResource extends Resource
 
                             if (empty($pool)) {
                                 Notification::make()
-                                    ->title('Geen route-modellen gevonden voor deze locale')
+                                    ->title(__('Geen route-modellen gevonden voor deze locale'))
                                     ->warning()
                                     ->send();
 
@@ -302,7 +302,7 @@ TXT;
                                     $response = Ai::json($prompt) ?? [];
                                 } catch (\Throwable $e) {
                                     Notification::make()
-                                        ->title('AI-aanroep mislukt, fallback op tekstmatch')
+                                        ->title(__('AI-aanroep mislukt, fallback op tekstmatch'))
                                         ->body($e->getMessage())
                                         ->warning()
                                         ->send();
@@ -322,8 +322,8 @@ TXT;
 
                             if (empty($picked)) {
                                 Notification::make()
-                                    ->title('Geen matches gevonden voor dit onderwerp')
-                                    ->body('Probeer het breder of specifieker te formuleren.')
+                                    ->title(__('Geen matches gevonden voor dit onderwerp'))
+                                    ->body(__('Probeer het breder of specifieker te formuleren.'))
                                     ->warning()
                                     ->send();
 
@@ -343,27 +343,27 @@ TXT;
                             }
 
                             Notification::make()
-                                ->title(count($picked).' link-kandidaten geselecteerd')
-                                ->body('Bekijk en pas ze desgewenst nog aan voor je regenereert.')
+                                ->title(__(':aantal link-kandidaten geselecteerd', ['aantal' => count($picked)]))
+                                ->body(__('Bekijk en pas ze desgewenst nog aan voor je regenereert.'))
                                 ->success()
                                 ->send();
 
                             return redirect(request()->header('Referer') ?: url()->current());
                         }),
                     Action::make('clear_link_candidates')
-                        ->label('Verwijder alles')
+                        ->label(__('Verwijder alles'))
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Alle link-kandidaten verwijderen?')
-                        ->modalDescription('Dit haalt elke link-kandidaat van deze draft weg. Bij de eerstvolgende generatie valt de AI terug op de globale route-lijst.')
+                        ->modalHeading(__('Alle link-kandidaten verwijderen?'))
+                        ->modalDescription(__('Dit haalt elke link-kandidaat van deze draft weg. Bij de eerstvolgende generatie valt de AI terug op de globale route-lijst.'))
                         ->visible(fn ($record) => $record !== null && $record->linkCandidates()->exists())
                         ->action(function ($record) {
                             $count = $record->linkCandidates()->count();
                             $record->linkCandidates()->delete();
 
                             Notification::make()
-                                ->title("{$count} link-kandidaten verwijderd")
+                                ->title(__(':aantal link-kandidaten verwijderd', ['aantal' => $count]))
                                 ->success()
                                 ->send();
 
@@ -374,12 +374,12 @@ TXT;
                     Repeater::make('linkCandidates')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label('')
+                        ->label(__(''))
                         ->columns(6)
                         ->schema([
                             Select::make('subject_type')
-                                ->label('Koppel aan model (optioneel)')
-                                ->helperText('Laat leeg voor een losse URL.')
+                                ->label(__('Koppel aan model (optioneel)'))
+                                ->helperText(__('Laat leeg voor een losse URL.'))
                                 ->options(function () {
                                     $options = [];
 
@@ -404,8 +404,8 @@ TXT;
                                 ->afterStateUpdated(fn ($set) => $set('subject_id', null))
                                 ->columnSpan(2),
                             Select::make('subject_id')
-                                ->label('Specifiek record')
-                                ->placeholder('Zoek record...')
+                                ->label(__('Specifiek record'))
+                                ->placeholder(__('Zoek record...'))
                                 ->searchable()
                                 ->preload()
                                 ->nullable()
@@ -454,17 +454,17 @@ TXT;
                                 })
                                 ->columnSpan(2),
                             TextInput::make('title')
-                                ->label('Titel')
+                                ->label(__('Titel'))
                                 ->required()
                                 ->columnSpan(2),
                             TextInput::make('url')
-                                ->label('URL')
+                                ->label(__('URL'))
                                 ->required()
                                 ->maxLength(2048)
                                 ->columnSpan(4),
                             TextInput::make('type')
-                                ->label('Type')
-                                ->placeholder('Page, Product, ...')
+                                ->label(__('Type'))
+                                ->placeholder(__('Page, Product, ...'))
                                 ->columnSpan(2),
                         ])
                         ->reorderableWithButtons()
@@ -477,22 +477,22 @@ TXT;
                 ])
                 ->columnSpanFull(),
 
-            Section::make('Structuur en inhoud')
+            Section::make(__('Structuur en inhoud'))
                 ->schema([
                     Repeater::make('sections')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label('')
+                        ->label(__(''))
                         ->schema([
-                            TextInput::make('heading')->label('Titel')->required(),
-                            Textarea::make('intent')->label('Waar gaat deze sectie over')->rows(2),
+                            TextInput::make('heading')->label(__('Titel'))->required(),
+                            Textarea::make('intent')->label(__('Waar gaat deze sectie over'))->rows(2),
                             Placeholder::make('error_message_display')
-                                ->label('')
+                                ->label(__(''))
                                 ->visible(fn ($get) => ! empty($get('error_message')))
                                 ->content(fn ($get) => new HtmlString('<div class="rounded-md bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 p-3 text-sm text-danger-700 dark:text-danger-300"><strong>Laatste fout:</strong> '.e($get('error_message')).'</div>'))
                                 ->columnSpanFull(),
                             RichEditor::make('body')
-                                ->label('Inhoud')
+                                ->label(__('Inhoud'))
                                 ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList', 'undo'])
                                 ->columnSpanFull(),
                         ])
@@ -503,7 +503,7 @@ TXT;
                         ->deletable()
                         ->extraItemActions([
                             Action::make('regenerate_heading')
-                                ->label('Herschrijf heading')
+                                ->label(__('Herschrijf heading'))
                                 ->icon('heroicon-o-arrow-path')
                                 ->color('gray')
                                 ->action(function (array $arguments, $livewire) {
@@ -515,7 +515,7 @@ TXT;
                                     $sectionId = $state['id'] ?? null;
                                     if (! $sectionId) {
                                         Notification::make()
-                                            ->title('Sla eerst op voor je een bestaande sectie regenereert')
+                                            ->title(__('Sla eerst op voor je een bestaande sectie regenereert'))
                                             ->warning()
                                             ->send();
 
@@ -523,13 +523,13 @@ TXT;
                                     }
                                     RegenerateSectionHeadingJob::dispatch((int) $sectionId);
                                     Notification::make()
-                                        ->title('Heading wordt vernieuwd op de achtergrond')
-                                        ->body('Ververs de pagina over een moment.')
+                                        ->title(__('Heading wordt vernieuwd op de achtergrond'))
+                                        ->body(__('Ververs de pagina over een moment.'))
                                         ->success()
                                         ->send();
                                 }),
                             Action::make('generate_body')
-                                ->label('Genereer inhoud')
+                                ->label(__('Genereer inhoud'))
                                 ->icon('heroicon-o-sparkles')
                                 ->color('primary')
                                 ->action(function (array $arguments, $livewire) {
@@ -541,7 +541,7 @@ TXT;
                                     $sectionId = $state['id'] ?? null;
                                     if (! $sectionId) {
                                         Notification::make()
-                                            ->title('Sla eerst op voor je inhoud genereert')
+                                            ->title(__('Sla eerst op voor je inhoud genereert'))
                                             ->warning()
                                             ->send();
 
@@ -549,8 +549,8 @@ TXT;
                                     }
                                     GenerateSectionBodyJob::dispatch((int) $sectionId);
                                     Notification::make()
-                                        ->title('Inhoud wordt gegenereerd')
-                                        ->body('Ververs de pagina over een moment.')
+                                        ->title(__('Inhoud wordt gegenereerd'))
+                                        ->body(__('Ververs de pagina over een moment.'))
                                         ->success()
                                         ->send();
                                 }),
@@ -559,17 +559,17 @@ TXT;
                 ])
                 ->columnSpanFull(),
 
-            Section::make('FAQs')
-                ->description('Worden automatisch gegenereerd aan het eind van de content-generatie.')
+            Section::make(__('FAQs'))
+                ->description(__('Worden automatisch gegenereerd aan het eind van de content-generatie.'))
                 ->collapsible()
                 ->schema([
                     Repeater::make('faqs')
                         ->relationship()
                         ->orderColumn('sort_order')
-                        ->label('')
+                        ->label(__(''))
                         ->schema([
-                            TextInput::make('question')->label('Vraag')->required(),
-                            Textarea::make('answer')->label('Antwoord')->rows(3)->required(),
+                            TextInput::make('question')->label(__('Vraag'))->required(),
+                            Textarea::make('answer')->label(__('Antwoord'))->rows(3)->required(),
                         ])
                         ->reorderableWithButtons()
                         ->collapsible()
@@ -587,47 +587,47 @@ TXT;
         return $table
             ->columns([
                 TextColumn::make('keyword')
-                    ->label('Keyword')
+                    ->label(__('Keyword'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('locale')
-                    ->label('Taal'),
+                    ->label(__('Taal')),
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->status_label)
                     ->color(fn ($record) => $record->status_color),
                 TextColumn::make('contentCluster.name')
-                    ->label('Cluster')
+                    ->label(__('Cluster'))
                     ->searchable()
                     ->sortable()
-                    ->placeholder('-'),
+                    ->placeholder(__('-')),
                 TextColumn::make('created_at')
-                    ->label('Aangemaakt')
+                    ->label(__('Aangemaakt'))
                     ->dateTime('d-m-Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('content_cluster_id')
-                    ->label('Cluster')
+                    ->label(__('Cluster'))
                     ->relationship('contentCluster', 'name')
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->options([
-                        'pending' => 'In wachtrij',
-                        'planning' => 'Planning...',
-                        'writing' => 'Schrijven...',
-                        'ready' => 'Klaar',
-                        'applied' => 'Toegepast',
-                        'failed' => 'Mislukt',
+                        'pending' => __('In wachtrij'),
+                        'planning' => __('Planning...'),
+                        'writing' => __('Schrijven...'),
+                        'ready' => __('Klaar'),
+                        'applied' => __('Toegepast'),
+                        'failed' => __('Mislukt'),
                     ]),
                 SelectFilter::make('locale')
-                    ->label('Taal')
+                    ->label(__('Taal'))
                     ->options([
-                        'nl' => 'Nederlands',
-                        'en' => 'Engels',
+                        'nl' => __('Nederlands'),
+                        'en' => __('Engels'),
                     ]),
             ])
             ->defaultSort('created_at', 'desc')

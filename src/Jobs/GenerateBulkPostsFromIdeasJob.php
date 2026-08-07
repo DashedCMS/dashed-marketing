@@ -82,8 +82,8 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             $user = User::find($this->userId);
             if ($user !== null) {
                 Notification::make()
-                    ->title("{$dispatched} posts staan in de wachtrij")
-                    ->body('De posts worden op de achtergrond gegenereerd via AI.')
+                    ->title(__(':aantal posts staan in de wachtrij', ['aantal' => $dispatched]))
+                    ->body(__('De posts worden op de achtergrond gegenereerd via AI.'))
                     ->icon('heroicon-o-paper-airplane')
                     ->success()
                     ->sendToDatabase($user);
@@ -102,8 +102,8 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             $user = User::find($this->userId);
             if ($user !== null) {
                 Notification::make()
-                    ->title('Bulk genereren mislukt')
-                    ->body('De bulk-job kon niet worden voltooid. Check de logs.')
+                    ->title(__('Bulk genereren mislukt'))
+                    ->body(__('De bulk-job kon niet worden voltooid. Check de logs.'))
                     ->danger()
                     ->sendToDatabase($user);
             }

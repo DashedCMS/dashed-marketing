@@ -66,7 +66,7 @@ class GenerateDrafts extends Page
             GenerateContentDraftJob::dispatch($row['id'], $override);
         }
 
-        Notification::make()->title('Generatie gestart voor '.count($this->preview).' keywords')->success()->send();
+        Notification::make()->title(__('Generatie gestart voor :aantal keywords', ['aantal' => count($this->preview)]))->success()->send();
         $this->redirect(KeywordResource::getUrl('index'));
     }
 }

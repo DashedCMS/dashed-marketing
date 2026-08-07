@@ -22,19 +22,19 @@ class ListKeywords extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Voeg keyword toe'),
+                ->label(__('Voeg keyword toe')),
 
             XlsxImportAction::make('import_keywords')
-                ->label('Importeer CSV/Excel')
+                ->label(__('Importeer CSV/Excel'))
                 ->icon('heroicon-o-arrow-up-tray')
                 ->importer(KeywordImporter::class),
 
             Actions\Action::make('enrich')
-                ->label('Verrijk via API')
+                ->label(__('Verrijk via API'))
                 ->icon('heroicon-o-sparkles')
                 ->schema([
                     Select::make('locale')
-                        ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                        ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                         ->default(config('app.locale', 'nl'))
                         ->required(),
                 ])
@@ -42,8 +42,8 @@ class ListKeywords extends ListRecords
                     $manager = app(KeywordDataManager::class);
                     if ($manager->provider()->name() === 'manual') {
                         Notification::make()
-                            ->title('Geen keyword data provider actief')
-                            ->body('Installeer een provider-package om automatisch te verrijken.')
+                            ->title(__('Geen keyword data provider actief'))
+                            ->body(__('Installeer een provider-package om automatisch te verrijken.'))
                             ->warning()
                             ->send();
 
@@ -57,33 +57,33 @@ class ListKeywords extends ListRecords
                             ->where('keyword', $kw)
                             ->update(array_filter($row) + ['enriched_at' => now(), 'source' => 'api']);
                     }
-                    Notification::make()->title('Verrijking klaar')->success()->send();
+                    Notification::make()->title(__('Verrijking klaar'))->success()->send();
                 }),
 
             Actions\Action::make('cluster')
-                ->label('Cluster keywords')
+                ->label(__('Cluster keywords'))
                 ->icon('heroicon-o-squares-2x2')
                 ->schema([
                     Select::make('locale')
-                        ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                        ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                         ->default(config('app.locale', 'nl'))
                         ->required(),
                     Select::make('mode')
-                        ->label('Modus')
+                        ->label(__('Modus'))
                         ->options([
-                            'full' => 'Herclusteren (verwijdert bestaande clusters voor deze taal)',
-                            'incremental' => 'Inpassen in bestaande clusters',
+                            'full' => __('Herclusteren (verwijdert bestaande clusters voor deze taal)'),
+                            'incremental' => __('Inpassen in bestaande clusters'),
                         ])
                         ->required()
                         ->default('incremental'),
                 ])
                 ->action(function (array $data) {
                     ClusterKeywordsJob::dispatch($data['locale'], $data['mode']);
-                    Notification::make()->title('Clustering gestart')->success()->send();
+                    Notification::make()->title(__('Clustering gestart'))->success()->send();
                 }),
 
             Actions\Action::make('generate_drafts')
-                ->label('Genereer drafts')
+                ->label(__('Genereer drafts'))
                 ->icon('heroicon-o-document-plus')
                 ->url(fn () => KeywordResource::getUrl('generate')),
         ];

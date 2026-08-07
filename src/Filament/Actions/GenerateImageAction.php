@@ -216,25 +216,25 @@ class GenerateImageAction extends Action
 
         $styleOptions = config('dashed-marketing.image_generation.style_presets', []);
 
-        $this->label('Genereer afbeelding met AI')
+        $this->label(__('Genereer afbeelding met AI'))
             ->icon('heroicon-o-photo')
             ->color('info')
             ->modalWidth('3xl')
             ->form(fn ($record): array => [
                 Select::make('ratio')
-                    ->label('Beeldverhouding')
+                    ->label(__('Beeldverhouding'))
                     ->options($ratioOptions)
                     ->default('4:5')
                     ->required(),
 
                 Select::make('style_preset')
-                    ->label('Stijl')
+                    ->label(__('Stijl'))
                     ->options($styleOptions)
                     ->default('lifestyle')
                     ->required(),
 
                 Select::make('image_count')
-                    ->label('Aantal afbeeldingen')
+                    ->label(__('Aantal afbeeldingen'))
                     ->options(array_combine(range(1, 6), range(1, 6)))
                     ->default(1)
                     ->required()
@@ -260,8 +260,8 @@ class GenerateImageAction extends Action
                     }),
 
                 Select::make('subject_type')
-                    ->label('Onderwerp type')
-                    ->helperText('Kies het type om een gekoppeld item en zijn afbeeldingen te gebruiken.')
+                    ->label(__('Onderwerp type'))
+                    ->helperText(__('Kies het type om een gekoppeld item en zijn afbeeldingen te gebruiken.'))
                     ->options($this->routeModelOptions())
                     ->default(fn () => $record?->subject_type)
                     ->nullable()
@@ -272,7 +272,7 @@ class GenerateImageAction extends Action
                     }),
 
                 Select::make('subject_id')
-                    ->label('Specifiek onderwerp')
+                    ->label(__('Specifiek onderwerp'))
                     ->nullable()
                     ->searchable()
                     ->live()
@@ -311,8 +311,8 @@ class GenerateImageAction extends Action
                     ->visible(fn (callable $get) => (bool) $get('subject_type')),
 
                 Select::make('subject_image')
-                    ->label('Kies afbeelding uit onderwerp')
-                    ->helperText('Geselecteerde afbeelding vult automatisch de referentieafbeelding URL hieronder.')
+                    ->label(__('Kies afbeelding uit onderwerp'))
+                    ->helperText(__('Geselecteerde afbeelding vult automatisch de referentieafbeelding URL hieronder.'))
                     ->options(function (callable $get) use ($record) {
                         $subject = $this->resolveSubject($record, $get('subject_type'), $get('subject_id'));
 
@@ -334,20 +334,20 @@ class GenerateImageAction extends Action
                     }),
 
                 Placeholder::make('subject_image_preview')
-                    ->label('Voorbeeld')
+                    ->label(__('Voorbeeld'))
                     ->content(fn (callable $get) => $get('subject_image')
                         ? new HtmlString('<img src="'.e($get('subject_image')).'" style="max-height:180px;border-radius:8px;" />')
                         : '-')
                     ->visible(fn (callable $get) => (bool) $get('subject_image')),
 
                 TextInput::make('reference_image')
-                    ->label('Referentieafbeelding URL (optioneel)')
-                    ->helperText('Met referentieafbeelding wordt fal nano-banana/edit gebruikt - de input wordt 1-op-1 behouden.')
+                    ->label(__('Referentieafbeelding URL (optioneel)'))
+                    ->helperText(__('Met referentieafbeelding wordt fal nano-banana/edit gebruikt - de input wordt 1-op-1 behouden.'))
                     ->url()
                     ->nullable(),
 
                 Toggle::make('same_prompt')
-                    ->label('Zelfde prompt voor alle afbeeldingen')
+                    ->label(__('Zelfde prompt voor alle afbeeldingen'))
                     ->default(true)
                     ->live()
                     ->afterStateUpdated(function ($state, callable $get, callable $set) use ($record): void {
@@ -361,17 +361,17 @@ class GenerateImageAction extends Action
 
                 SchemaActions::make([
                     Action::make('aiFillSamePrompt')
-                        ->label('Vul prompt met AI')
+                        ->label(__('Vul prompt met AI'))
                         ->icon('heroicon-o-sparkles')
                         ->color('info')
                         ->visible(fn () => Ai::hasProvider())
-                        ->modalHeading('Image prompt genereren met AI')
-                        ->modalSubmitActionLabel('Genereer')
+                        ->modalHeading(__('Image prompt genereren met AI'))
+                        ->modalSubmitActionLabel(__('Genereer'))
                         ->schema([
                             Textarea::make('instructions')
-                                ->label('Instructies voor de afbeelding (optioneel)')
-                                ->placeholder('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld')
-                                ->helperText('Hoe gedetailleerder, hoe beter de prompt aansluit op wat je wilt zien.')
+                                ->label(__('Instructies voor de afbeelding (optioneel)'))
+                                ->placeholder(__('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld'))
+                                ->helperText(__('Hoe gedetailleerder, hoe beter de prompt aansluit op wat je wilt zien.'))
                                 ->rows(4),
                         ])
                         ->action(function (array $data, callable $get, callable $set) use ($record): void {
@@ -393,7 +393,7 @@ class GenerateImageAction extends Action
                             $generated = $prompts[0] ?? null;
                             if (! $generated) {
                                 Notification::make()
-                                    ->title('AI gaf geen geldige prompt terug')
+                                    ->title(__('AI gaf geen geldige prompt terug'))
                                     ->warning()
                                     ->send();
 
@@ -407,8 +407,8 @@ class GenerateImageAction extends Action
                             }
 
                             Notification::make()
-                                ->title($record ? 'Prompt ingevuld en opgeslagen' : 'Prompt ingevuld')
-                                ->body($record ? null : 'Sla de post op om de prompt permanent te bewaren.')
+                                ->title($record ? __('Prompt ingevuld en opgeslagen') : __('Prompt ingevuld'))
+                                ->body($record ? null : __('Sla de post op om de prompt permanent te bewaren.'))
                                 ->success()
                                 ->send();
                         }),
@@ -416,8 +416,8 @@ class GenerateImageAction extends Action
                     ->visible(fn (callable $get) => (bool) $get('same_prompt')),
 
                 Textarea::make('same_prompt_text')
-                    ->label('Image prompt')
-                    ->helperText('Wordt gebruikt voor elke gegenereerde afbeelding. Zelf invullen om eigen instructies mee te geven, of gebruik de knop "Vul prompt met AI" om een suggestie te laten maken op basis van de caption en eventuele extra instructies.')
+                    ->label(__('Image prompt'))
+                    ->helperText(__('Wordt gebruikt voor elke gegenereerde afbeelding. Zelf invullen om eigen instructies mee te geven, of gebruik de knop "Vul prompt met AI" om een suggestie te laten maken op basis van de caption en eventuele extra instructies.'))
                     ->default(fn () => (string) ($record?->image_prompt ?? ''))
                     ->rows(3)
                     ->required(fn (callable $get) => (bool) $get('same_prompt'))
@@ -425,17 +425,17 @@ class GenerateImageAction extends Action
 
                 SchemaActions::make([
                     Action::make('aiFillPrompts')
-                        ->label('Vul prompts met AI')
+                        ->label(__('Vul prompts met AI'))
                         ->icon('heroicon-o-sparkles')
                         ->color('info')
                         ->visible(fn () => Ai::hasProvider())
-                        ->modalHeading('Image prompts genereren met AI')
-                        ->modalSubmitActionLabel('Genereer')
+                        ->modalHeading(__('Image prompts genereren met AI'))
+                        ->modalSubmitActionLabel(__('Genereer'))
                         ->schema([
                             Textarea::make('instructions')
-                                ->label('Instructies voor de afbeeldingen (optioneel)')
-                                ->placeholder('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld')
-                                ->helperText('Wordt voor alle prompts gebruikt. Bestaande tekst in de promptvelden wordt ook meegenomen als context.')
+                                ->label(__('Instructies voor de afbeeldingen (optioneel)'))
+                                ->placeholder(__('Bijv: cinematisch, donkere achtergrond, close-up op product, geen mensen in beeld'))
+                                ->helperText(__('Wordt voor alle prompts gebruikt. Bestaande tekst in de promptvelden wordt ook meegenomen als context.'))
                                 ->rows(4),
                         ])
                         ->action(function (array $data, callable $get, callable $set) use ($record): void {
@@ -463,7 +463,7 @@ class GenerateImageAction extends Action
 
                             if (empty($prompts)) {
                                 Notification::make()
-                                    ->title('AI gaf geen geldige prompts terug')
+                                    ->title(__('AI gaf geen geldige prompts terug'))
                                     ->warning()
                                     ->send();
 
@@ -478,8 +478,8 @@ class GenerateImageAction extends Action
                             }
 
                             Notification::make()
-                                ->title($record ? 'Prompts ingevuld en eerste opgeslagen als seed' : 'Prompts ingevuld')
-                                ->body($record ? null : 'Sla de post op om de prompts permanent te bewaren.')
+                                ->title($record ? __('Prompts ingevuld en eerste opgeslagen als seed') : __('Prompts ingevuld'))
+                                ->body($record ? null : __('Sla de post op om de prompts permanent te bewaren.'))
                                 ->success()
                                 ->send();
                         }),
@@ -487,11 +487,11 @@ class GenerateImageAction extends Action
                     ->visible(fn (callable $get) => ! (bool) $get('same_prompt')),
 
                 Repeater::make('prompts')
-                    ->label('Prompts per afbeelding')
-                    ->helperText('Eén prompt per afbeelding. Gebruik de knop "Vul prompts met AI" hierboven om alle velden in één keer door AI te laten suggereren op basis van de caption en de inhoud van het gekoppelde onderwerp.')
+                    ->label(__('Prompts per afbeelding'))
+                    ->helperText(__('Eén prompt per afbeelding. Gebruik de knop "Vul prompts met AI" hierboven om alle velden in één keer door AI te laten suggereren op basis van de caption en de inhoud van het gekoppelde onderwerp.'))
                     ->schema([
                         Textarea::make('text')
-                            ->label('Prompt')
+                            ->label(__('Prompt'))
                             ->rows(3)
                             ->required(),
                     ])
@@ -503,7 +503,7 @@ class GenerateImageAction extends Action
             ->action(function (array $data, $record): void {
                 if (! $record) {
                     Notification::make()
-                        ->title('Geen post geselecteerd')
+                        ->title(__('Geen post geselecteerd'))
                         ->danger()
                         ->send();
 
@@ -512,8 +512,8 @@ class GenerateImageAction extends Action
 
                 if (! $record->image_prompt) {
                     Notification::make()
-                        ->title('Geen afbeelding prompt')
-                        ->body('Sla de post eerst op met een AI-gegenereerde caption om een afbeelding prompt te krijgen.')
+                        ->title(__('Geen afbeelding prompt'))
+                        ->body(__('Sla de post eerst op met een AI-gegenereerde caption om een afbeelding prompt te krijgen.'))
                         ->warning()
                         ->send();
 
@@ -551,8 +551,8 @@ class GenerateImageAction extends Action
 
                 if (empty(array_filter($promptList))) {
                     Notification::make()
-                        ->title('Geen prompts')
-                        ->body('Er zijn geen prompts om te genereren - vul ze in of zet "Zelfde prompt" aan.')
+                        ->title(__('Geen prompts'))
+                        ->body(__('Er zijn geen prompts om te genereren - vul ze in of zet "Zelfde prompt" aan.'))
                         ->warning()
                         ->send();
 
@@ -570,8 +570,8 @@ class GenerateImageAction extends Action
                 }
 
                 Notification::make()
-                    ->title(count($promptList).' afbeelding(en) in de wachtrij')
-                    ->body('De afbeeldingen worden op de achtergrond gegenereerd en aan deze post toegevoegd.')
+                    ->title(__(':aantal afbeelding(en) in de wachtrij', ['aantal' => count($promptList)]))
+                    ->body(__('De afbeeldingen worden op de achtergrond gegenereerd en aan deze post toegevoegd.'))
                     ->success()
                     ->send();
             });

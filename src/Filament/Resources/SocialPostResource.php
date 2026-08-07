@@ -121,54 +121,54 @@ class SocialPostResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Post inhoud')
+                Section::make(__('Post inhoud'))
                     ->schema([
                         Select::make('type')
-                            ->label('Type post')
+                            ->label(__('Type post'))
                             ->options(static::getTypeOptions())
                             ->default('post')
                             ->required()
                             ->live()
                             ->afterStateUpdated(fn (callable $set) => $set('channels', [])),
                         CheckboxList::make('channels')
-                            ->label('Kanalen')
+                            ->label(__('Kanalen'))
                             ->options(fn (callable $get) => static::getChannelOptions($get('type')))
                             ->columns(2)
                             ->columnSpanFull()
                             ->required(),
                         Select::make('status')
-                            ->label('Status')
+                            ->label(__('Status'))
                             ->options(SocialPost::STATUSES)
                             ->required()
                             ->default('concept'),
                         Textarea::make('caption')
-                            ->label('Caption (standaard)')
-                            ->helperText('Gebruikt voor alle kanalen, tenzij "Caption per kanaal aanpassen" aan staat.')
+                            ->label(__('Caption (standaard)'))
+                            ->helperText(__('Gebruikt voor alle kanalen, tenzij "Caption per kanaal aanpassen" aan staat.'))
                             ->rows(5)
                             ->columnSpanFull()
                             ->hintAction(RegenerateCaptionAction::forDefault()),
                         Toggle::make('captions_per_channel')
-                            ->label('Caption per kanaal aanpassen')
-                            ->helperText('Wanneer aan: elk kanaal krijgt zijn eigen caption hieronder. Wanneer uit: de standaard caption wordt overal gebruikt.')
+                            ->label(__('Caption per kanaal aanpassen'))
+                            ->helperText(__('Wanneer aan: elk kanaal krijgt zijn eigen caption hieronder. Wanneer uit: de standaard caption wordt overal gebruikt.'))
                             ->default(false)
                             ->live()
                             ->columnSpanFull(),
                         TagsInput::make('hashtags')
-                            ->label('Hashtags')
-                            ->placeholder('#hashtag')
+                            ->label(__('Hashtags'))
+                            ->placeholder(__('#hashtag'))
                             ->columnSpanFull(),
                         Textarea::make('alt_text')
-                            ->label('Alt-tekst afbeelding')
+                            ->label(__('Alt-tekst afbeelding'))
                             ->rows(2)
                             ->columnSpanFull(),
                         TextInput::make('image_prompt')
-                            ->label('Afbeelding prompt (AI)')
-                            ->helperText('Wordt gebruikt door "Genereer afbeelding met AI" als basisprompt. Pas aan om volgende generaties te sturen.')
+                            ->label(__('Afbeelding prompt (AI)'))
+                            ->helperText(__('Wordt gebruikt door "Genereer afbeelding met AI" als basisprompt. Pas aan om volgende generaties te sturen.'))
                             ->columnSpanFull()
                             ->hintAction(RegenerateImagePromptAction::make()),
                         Placeholder::make('generated_images_preview')
-                            ->label('Afbeeldingen')
-                            ->helperText('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund - gebruik de knoppen om volgorde te veranderen.')
+                            ->label(__('Afbeeldingen'))
+                            ->helperText(__('Upload nieuwe afbeeldingen via "Upload afbeelding" of laat AI ze genereren via "Genereer afbeelding met AI". Sleep nog niet ondersteund - gebruik de knoppen om volgorde te veranderen.'))
                             ->content(function (?SocialPost $record): HtmlString|string {
                                 if (! $record) {
                                     return new HtmlString('<em>Sla de post eerst op om afbeeldingen toe te voegen.</em>');
@@ -240,7 +240,7 @@ class SocialPostResource extends Resource
                     ->columns(2)
                     ->columnSpanFull(),
 
-                Section::make('Captions per kanaal')
+                Section::make(__('Captions per kanaal'))
                     ->schema(function (?SocialPost $record, callable $get): array {
                         $channelSlugs = $get('channels') ?? [];
 
@@ -279,44 +279,44 @@ class SocialPostResource extends Resource
                     ->live()
                     ->columnSpanFull(),
 
-                Section::make('Publicatie status')
+                Section::make(__('Publicatie status'))
                     ->schema([
                         Placeholder::make('external_status')
-                            ->label('Extern ID')
+                            ->label(__('Extern ID'))
                             ->content(fn (?SocialPost $record) => $record?->external_id ?? '-'),
                         Placeholder::make('failed_platforms_display')
-                            ->label('Gefaalde kanalen')
+                            ->label(__('Gefaalde kanalen'))
                             ->content(fn (?SocialPost $record) => $record?->failed_platforms ? implode(', ', $record->failed_platforms) : 'Geen')
                             ->visible(fn (?SocialPost $record) => ! empty($record?->failed_platforms)),
                         Placeholder::make('retry_count_display')
-                            ->label('Pogingen')
+                            ->label(__('Pogingen'))
                             ->content(fn (?SocialPost $record) => $record?->retry_count ?? 0),
                     ])
                     ->visible(fn (?SocialPost $record) => $record?->external_id !== null)
                     ->collapsed()
                     ->columnSpanFull(),
 
-                Section::make('Planning')
+                Section::make(__('Planning'))
                     ->schema([
                         Select::make('pillar_id')
-                            ->label('Content pijler')
+                            ->label(__('Content pijler'))
                             ->relationship('pillar', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Select::make('campaign_id')
-                            ->label('Campagne')
+                            ->label(__('Campagne'))
                             ->relationship('campaign', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         DateTimePicker::make('scheduled_at')
-                            ->label('Ingepland op')
+                            ->label(__('Ingepland op'))
                             ->timezone('Europe/Amsterdam')
                             ->seconds(false)
                             ->nullable(),
                         DateTimePicker::make('posted_at')
-                            ->label('Gepost op')
+                            ->label(__('Gepost op'))
                             ->timezone('Europe/Amsterdam')
                             ->seconds(false)
                             ->nullable(),
@@ -324,15 +324,15 @@ class SocialPostResource extends Resource
                     ->columns(2)
                     ->columnSpanFull(),
 
-                Section::make('Per kanaal')
-                    ->description('De gepubliceerde URL en status per kanaal. Vul de URL aan zodra je de post op het betreffende platform hebt geplaatst.')
+                Section::make(__('Per kanaal'))
+                    ->description(__('De gepubliceerde URL en status per kanaal. Vul de URL aan zodra je de post op het betreffende platform hebt geplaatst.'))
                     ->schema(function (?SocialPost $record): array {
                         $perChannelFields = [];
 
                         $channels = $record && is_array($record->channels) ? $record->channels : [];
                         if (empty($channels)) {
                             $perChannelFields[] = Placeholder::make('no_channels')
-                                ->label('')
+                                ->label(__(''))
                                 ->content(new HtmlString('<em>Geen kanalen geselecteerd.</em>'))
                                 ->columnSpanFull();
 
@@ -368,7 +368,7 @@ class SocialPostResource extends Resource
                                 ->label($label)
                                 ->url()
                                 ->nullable()
-                                ->placeholder('https://...')
+                                ->placeholder(__('https://...'))
                                 ->helperText($helper)
                                 ->columnSpanFull();
                         }
@@ -378,10 +378,10 @@ class SocialPostResource extends Resource
                     ->collapsed()
                     ->columnSpanFull(),
 
-                Section::make('Performance')
+                Section::make(__('Performance'))
                     ->schema([
                         KeyValue::make('performance_data')
-                            ->label('Prestaties')
+                            ->label(__('Prestaties'))
                             ->nullable()
                             ->columnSpanFull(),
                     ])
@@ -395,7 +395,7 @@ class SocialPostResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('image_path')
-                    ->label('')
+                    ->label(__(''))
                     ->height(48)
                     ->square()
                     ->getStateUsing(function (SocialPost $record): ?string {
@@ -406,12 +406,12 @@ class SocialPostResource extends Resource
                         return static::imageUrl($first);
                     }),
                 TextColumn::make('type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.types.{$state}.label", $state) : '-')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('channels')
-                    ->label('Kanalen')
+                    ->label(__('Kanalen'))
                     ->getStateUsing(function (SocialPost $record): string {
                         $raw = $record->channels;
                         $channels = is_array($raw)
@@ -428,19 +428,19 @@ class SocialPostResource extends Resource
                     })
                     ->wrap(),
                 TextColumn::make('caption')
-                    ->label('Caption')
+                    ->label(__('Caption'))
                     ->limit(60)
                     ->searchable(),
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->badge()
                     ->formatStateUsing(fn ($state) => SocialPost::STATUSES[$state] ?? $state)
                     ->color(fn ($state) => SocialPost::STATUS_COLORS[$state] ?? 'gray'),
                 TextColumn::make('pillar.name')
-                    ->label('Pijler')
+                    ->label(__('Pijler'))
                     ->sortable(),
                 TextColumn::make('scheduled_at')
-                    ->label('Ingepland')
+                    ->label(__('Ingepland'))
                     ->dateTime('d-m-Y H:i', 'Europe/Amsterdam')
                     ->sortable(),
                 static::lastEditedColumn(),
@@ -448,26 +448,26 @@ class SocialPostResource extends Resource
             ->modifyQueryUsing(fn ($query) => static::modifyTableQueryForLastEdited($query))
             ->filters([
                 SelectFilter::make('type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->options(static::getTypeOptions()),
                 SelectFilter::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->options(SocialPost::STATUSES),
                 SelectFilter::make('pillar_id')
-                    ->label('Pijler')
+                    ->label(__('Pijler'))
                     ->relationship('pillar', 'name'),
             ])
             ->defaultSort('scheduled_at', 'desc')
             ->recordActions([
                 EditAction::make(),
                 Action::make('duplicate')
-                    ->label('Dupliceren')
+                    ->label(__('Dupliceren'))
                     ->icon('heroicon-o-document-duplicate')
                     ->color('gray')
                     ->requiresConfirmation()
-                    ->modalHeading('Social post dupliceren')
-                    ->modalDescription('Maakt een kopie aan met de status "Concept". Caption, kanalen, pijler, onderwerp en afbeeldingen worden meegenomen; planning, publicatie-status en analytics worden gereset.')
-                    ->modalSubmitActionLabel('Dupliceren')
+                    ->modalHeading(__('Social post dupliceren'))
+                    ->modalDescription(__('Maakt een kopie aan met de status "Concept". Caption, kanalen, pijler, onderwerp en afbeeldingen worden meegenomen; planning, publicatie-status en analytics worden gereset.'))
+                    ->modalSubmitActionLabel(__('Dupliceren'))
                     ->action(function (SocialPost $record): void {
                         // Reset alle velden die aan een specifieke publicatie
                         // zijn gekoppeld; de duplicaat moet als verse concept
@@ -490,19 +490,19 @@ class SocialPostResource extends Resource
                         $copy->save();
 
                         Notification::make()
-                            ->title('Social post gedupliceerd')
-                            ->body('De kopie staat klaar als concept en kan apart bewerkt en gepland worden.')
+                            ->title(__('Social post gedupliceerd'))
+                            ->body(__('De kopie staat klaar als concept en kan apart bewerkt en gepland worden.'))
                             ->success()
                             ->send();
                     }),
                 Action::make('markPosted')
-                    ->label('Markeer als gepost')
+                    ->label(__('Markeer als gepost'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (SocialPost $record) => $record->status !== 'posted')
                     ->form([
                         TextInput::make('post_url')
-                            ->label('Post URL (optioneel)')
+                            ->label(__('Post URL (optioneel)'))
                             ->url()
                             ->nullable(),
                     ])

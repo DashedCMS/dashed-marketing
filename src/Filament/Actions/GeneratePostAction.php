@@ -26,7 +26,7 @@ class GeneratePostAction extends Action
     {
         parent::setUp();
 
-        $this->label('Genereer post met AI')
+        $this->label(__('Genereer post met AI'))
             ->icon('heroicon-o-sparkles')
             ->color('primary')
             ->form($this->buildForm())
@@ -53,8 +53,8 @@ class GeneratePostAction extends Action
                 );
 
                 Notification::make()
-                    ->title('Post generatie gestart')
-                    ->body('De post wordt op de achtergrond aangemaakt.')
+                    ->title(__('Post generatie gestart'))
+                    ->body(__('De post wordt op de achtergrond aangemaakt.'))
                     ->success()
                     ->send();
             });
@@ -77,7 +77,7 @@ class GeneratePostAction extends Action
 
         return [
             Select::make('type')
-                ->label('Type post')
+                ->label(__('Type post'))
                 ->options($typeOptions)
                 ->default('post')
                 ->required()
@@ -85,8 +85,8 @@ class GeneratePostAction extends Action
                 ->afterStateUpdated(fn (callable $set) => $set('channels', [])),
 
             CheckboxList::make('channels')
-                ->label('Kanalen')
-                ->helperText('Kies één of meer kanalen waar deze post op geplaatst kan worden. Alleen kanalen die het gekozen type accepteren worden getoond.')
+                ->label(__('Kanalen'))
+                ->helperText(__('Kies één of meer kanalen waar deze post op geplaatst kan worden. Alleen kanalen die het gekozen type accepteren worden getoond.'))
                 ->options(function (callable $get): array {
                     $type = $get('type') ?: 'post';
 
@@ -102,16 +102,16 @@ class GeneratePostAction extends Action
                 ->required(),
 
             Select::make('subject_model_class')
-                ->label('Onderwerp type')
+                ->label(__('Onderwerp type'))
                 ->options($routeModelOptions)
                 ->nullable()
                 ->reactive()
-                ->placeholder('Geen specifiek onderwerp'),
+                ->placeholder(__('Geen specifiek onderwerp')),
 
             Select::make('subject_model_id')
-                ->label('Specifiek onderwerp')
+                ->label(__('Specifiek onderwerp'))
                 ->nullable()
-                ->placeholder('Selecteer een item...')
+                ->placeholder(__('Selecteer een item...'))
                 ->searchable()
                 ->getSearchResultsUsing(function (string $search, callable $get) {
                     $class = $get('subject_model_class');
@@ -158,30 +158,30 @@ class GeneratePostAction extends Action
                 ->visible(fn (callable $get) => (bool) $get('subject_model_class')),
 
             Select::make('pillar_id')
-                ->label('Content pijler')
+                ->label(__('Content pijler'))
                 ->relationship('pillar', 'name')
                 ->nullable(),
 
             Select::make('campaign_id')
-                ->label('Campagne')
+                ->label(__('Campagne'))
                 ->relationship('campaign', 'name')
                 ->nullable(),
 
             TextInput::make('tone_override')
-                ->label('Toon override')
-                ->placeholder('Bijv: grappig en informeel')
+                ->label(__('Toon override'))
+                ->placeholder(__('Bijv: grappig en informeel'))
                 ->nullable(),
 
             DateTimePicker::make('scheduled_at')
-                ->label('Inplannen op')
+                ->label(__('Inplannen op'))
                 ->nullable(),
 
             Toggle::make('include_keywords')
-                ->label('Verwerk goedgekeurde keywords')
+                ->label(__('Verwerk goedgekeurde keywords'))
                 ->default(false),
 
             Textarea::make('extra_instructions')
-                ->label('Extra instructies')
+                ->label(__('Extra instructies'))
                 ->rows(3)
                 ->nullable(),
         ];

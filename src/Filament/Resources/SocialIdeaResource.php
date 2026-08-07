@@ -70,22 +70,22 @@ class SocialIdeaResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Idee')
+                Section::make(__('Idee'))
                     ->schema([
                         TextInput::make('title')
-                            ->label('Titel')
+                            ->label(__('Titel'))
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
                         Select::make('type')
-                            ->label('Type post')
+                            ->label(__('Type post'))
                             ->options(array_map(fn ($t) => $t['label'], config('dashed-marketing.types', [])))
                             ->default('post')
                             ->nullable()
                             ->live()
                             ->afterStateUpdated(fn (callable $set) => $set('channels', [])),
                         CheckboxList::make('channels')
-                            ->label('Kanalen')
+                            ->label(__('Kanalen'))
                             ->options(function (callable $get): array {
                                 $type = $get('type') ?: 'post';
 
@@ -100,18 +100,18 @@ class SocialIdeaResource extends Resource
                             ->columns(2)
                             ->columnSpanFull(),
                         Select::make('status')
-                            ->label('Status')
+                            ->label(__('Status'))
                             ->options(SocialIdea::STATUSES)
                             ->required()
                             ->default('idea'),
                         Select::make('pillar_id')
-                            ->label('Content pijler')
+                            ->label(__('Content pijler'))
                             ->relationship('pillar', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Select::make('subject_type')
-                            ->label('Onderwerp type')
+                            ->label(__('Onderwerp type'))
                             ->options(function () {
                                 $options = [];
                                 foreach (cms()->builder('routeModels') ?? [] as $modelConfig) {
@@ -126,9 +126,9 @@ class SocialIdeaResource extends Resource
                             ->nullable()
                             ->live()
                             ->afterStateUpdated(fn (callable $set) => $set('subject_id', null))
-                            ->placeholder('Geen specifiek onderwerp'),
+                            ->placeholder(__('Geen specifiek onderwerp')),
                         Select::make('subject_id')
-                            ->label('Specifiek onderwerp')
+                            ->label(__('Specifiek onderwerp'))
                             ->nullable()
                             ->searchable()
                             ->getSearchResultsUsing(function (string $search, callable $get) {
@@ -163,10 +163,10 @@ class SocialIdeaResource extends Resource
                             })
                             ->visible(fn (callable $get) => (bool) $get('subject_type')),
                         TagsInput::make('tags')
-                            ->label('Tags')
+                            ->label(__('Tags'))
                             ->nullable(),
                         Textarea::make('notes')
-                            ->label('Notities')
+                            ->label(__('Notities'))
                             ->rows(4)
                             ->columnSpanFull(),
                     ])
@@ -180,16 +180,16 @@ class SocialIdeaResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('title')
-                    ->label('Titel')
+                    ->label(__('Titel'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->formatStateUsing(fn ($state) => $state ? config("dashed-marketing.types.{$state}.label", $state) : '-')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('channels')
-                    ->label('Kanalen')
+                    ->label(__('Kanalen'))
                     ->getStateUsing(function (SocialIdea $record): string {
                         $raw = $record->channels;
                         $channels = is_array($raw)
@@ -206,7 +206,7 @@ class SocialIdeaResource extends Resource
                     })
                     ->wrap(),
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->badge()
                     ->formatStateUsing(fn ($state) => SocialIdea::STATUSES[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
@@ -218,25 +218,25 @@ class SocialIdeaResource extends Resource
                     })
                     ->sortable(),
                 TextColumn::make('pillar.name')
-                    ->label('Pijler')
+                    ->label(__('Pijler'))
                     ->sortable(['pillar_id']),
             ])
             ->filters([
                 SelectFilter::make('type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->options(array_map(fn ($t) => $t['label'], config('dashed-marketing.types', []))),
                 SelectFilter::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->options(SocialIdea::STATUSES),
                 SelectFilter::make('pillar_id')
-                    ->label('Pijler')
+                    ->label(__('Pijler'))
                     ->relationship('pillar', 'name'),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 EditAction::make(),
                 Action::make('maakPost')
-                    ->label('Maak post')
+                    ->label(__('Maak post'))
                     ->icon('heroicon-o-sparkles')
                     ->color('primary')
                     ->action(function (SocialIdea $record): void {
@@ -253,8 +253,8 @@ class SocialIdeaResource extends Resource
 
                         if (empty($channels)) {
                             Notification::make()
-                                ->title('Geen kanalen beschikbaar')
-                                ->body('Stel kanalen in op het idee of voeg kanalen toe in de marketing config.')
+                                ->title(__('Geen kanalen beschikbaar'))
+                                ->body(__('Stel kanalen in op het idee of voeg kanalen toe in de marketing config.'))
                                 ->danger()
                                 ->send();
 
@@ -284,8 +284,8 @@ class SocialIdeaResource extends Resource
                         $record->update(['status' => 'in_production']);
 
                         Notification::make()
-                            ->title('Post generatie gestart')
-                            ->body('De AI maakt de post op de achtergrond aan.')
+                            ->title(__('Post generatie gestart'))
+                            ->body(__('De AI maakt de post op de achtergrond aan.'))
                             ->success()
                             ->send();
                     }),
@@ -294,18 +294,18 @@ class SocialIdeaResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('generate_posts')
-                        ->label('Genereer posts van selectie')
+                        ->label(__('Genereer posts van selectie'))
                         ->icon('heroicon-o-paper-airplane')
                         ->color('primary')
                         ->requiresConfirmation()
-                        ->modalDescription('Voor elk geselecteerd idee wordt een post gegenereerd via AI. Dit draait in de achtergrond.')
+                        ->modalDescription(__('Voor elk geselecteerd idee wordt een post gegenereerd via AI. Dit draait in de achtergrond.'))
                         ->action(function (Collection $records): void {
                             $ids = $records->pluck('id')->all();
                             GenerateBulkPostsFromIdeasJob::dispatch($ids, auth()->id());
 
                             Notification::make()
-                                ->title(count($ids).' posts gepland')
-                                ->body('Je krijgt een notificatie zodra ze klaar zijn.')
+                                ->title(__(':aantal posts gepland', ['aantal' => count($ids)]))
+                                ->body(__('Je krijgt een notificatie zodra ze klaar zijn.'))
                                 ->success()
                                 ->send();
                         })

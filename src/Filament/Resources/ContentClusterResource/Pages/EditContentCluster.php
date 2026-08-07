@@ -27,25 +27,25 @@ class EditContentCluster extends EditRecord
     {
         return [
             Action::make('generate_concepts')
-                ->label('Genereer concepten')
+                ->label(__('Genereer concepten'))
                 ->icon('heroicon-o-sparkles')
                 ->color('primary')
                 ->schema([
                     TextInput::make('count')
-                        ->label('Aantal concepten')
+                        ->label(__('Aantal concepten'))
                         ->numeric()
                         ->minValue(1)
                         ->maxValue(50)
                         ->default(4)
                         ->required(),
                     Textarea::make('briefing')
-                        ->label('Briefing (optioneel)')
+                        ->label(__('Briefing (optioneel)'))
                         ->maxLength(500)
                         ->rows(3),
                 ])
                 ->requiresConfirmation(fn () => ! empty($this->record->pending_concepts))
                 ->modalDescription(fn () => ! empty($this->record->pending_concepts)
-                    ? 'Er staan al concepten. Deze worden overschreven door de nieuwe generatie.'
+                    ? __('Er staan al concepten. Deze worden overschreven door de nieuwe generatie.')
                     : null)
                 ->action(function (array $data) {
                     GenerateClusterConceptsJob::dispatch(
@@ -54,13 +54,13 @@ class EditContentCluster extends EditRecord
                         $data['briefing'] ?? null,
                     );
                     Notification::make()
-                        ->title('Concepten worden gegenereerd')
-                        ->body('Ververs de pagina om resultaten te zien')
+                        ->title(__('Concepten worden gegenereerd'))
+                        ->body(__('Ververs de pagina om resultaten te zien'))
                         ->success()
                         ->send();
                 }),
             Action::make('make_drafts')
-                ->label('Maak drafts van concepten')
+                ->label(__('Maak drafts van concepten'))
                 ->icon('heroicon-o-document-plus')
                 ->color('success')
                 ->disabled(fn () => empty($this->record->pending_concepts))
@@ -119,7 +119,7 @@ class EditContentCluster extends EditRecord
                     $cluster->update(['pending_concepts' => null]);
 
                     Notification::make()
-                        ->title("{$created} drafts aangemaakt - content wordt op de achtergrond gegenereerd")
+                        ->title(__(':aantal drafts aangemaakt - content wordt op de achtergrond gegenereerd', ['aantal' => $created]))
                         ->success()
                         ->send();
 
@@ -130,7 +130,7 @@ class EditContentCluster extends EditRecord
                     ]));
                 }),
             Action::make('view_drafts')
-                ->label('Bekijk concepten')
+                ->label(__('Bekijk concepten'))
                 ->icon('heroicon-o-list-bullet')
                 ->color('gray')
                 ->url(fn () => ContentDraftResource::getUrl('index', [

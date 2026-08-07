@@ -16,36 +16,36 @@ class KeywordImporter extends Importer
     {
         return [
             ImportColumn::make('keyword')
-                ->label('Zoekwoord')
+                ->label(__('Zoekwoord'))
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:255'])
                 ->guess(['keyword', 'zoekwoord', 'term'])
                 ->example('theelichthouder'),
 
             ImportColumn::make('volume_exact')
-                ->label('Volume')
+                ->label(__('Volume'))
                 ->integer()
                 ->guess(['volume', 'volume_exact', 'search volume', 'searches'])
                 ->example('1200'),
 
             ImportColumn::make('search_intent')
-                ->label('Intent')
+                ->label(__('Intent'))
                 ->guess(['intent', 'search intent', 'search_intent'])
                 ->example('commercial'),
 
             ImportColumn::make('difficulty')
-                ->label('Difficulty')
+                ->label(__('Difficulty'))
                 ->guess(['difficulty', 'kd', 'keyword difficulty'])
                 ->example('medium'),
 
             ImportColumn::make('cpc')
-                ->label('CPC')
+                ->label(__('CPC'))
                 ->numeric(decimalPlaces: 2)
                 ->guess(['cpc'])
                 ->example('0.45'),
 
             ImportColumn::make('notes')
-                ->label('Notities')
+                ->label(__('Notities'))
                 ->guess(['notes', 'note', 'opmerking'])
                 ->example('Vervangt waxinelicht synoniem'),
         ];
@@ -55,15 +55,15 @@ class KeywordImporter extends Importer
     {
         return [
             Select::make('locale')
-                ->label('Taal')
-                ->options(['nl' => 'Nederlands', 'en' => 'English'])
+                ->label(__('Taal'))
+                ->options(['nl' => __('Nederlands'), 'en' => __('English')])
                 ->default(config('app.locale', 'nl'))
                 ->required(),
             Select::make('duplicate_strategy')
-                ->label('Bij dubbele zoekwoorden')
+                ->label(__('Bij dubbele zoekwoorden'))
                 ->options([
-                    'skip' => 'Overslaan',
-                    'update' => 'Bijwerken',
+                    'skip' => __('Overslaan'),
+                    'update' => __('Bijwerken'),
                 ])
                 ->default('skip')
                 ->required(),

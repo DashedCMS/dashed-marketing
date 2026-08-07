@@ -258,7 +258,7 @@ class ReviewSeoAudit extends Page
             );
         } catch (\Throwable $e) {
             Notification::make()
-                ->title('Toepassen mislukt')
+                ->title(__('Toepassen mislukt'))
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
@@ -298,7 +298,7 @@ class ReviewSeoAudit extends Page
     public function rejectMetaOne(int $id): void
     {
         $this->record->metaSuggestions()->where('id', $id)->update(['status' => 'rejected']);
-        Notification::make()->title('Meta voorstel afgewezen')->send();
+        Notification::make()->title(__('Meta voorstel afgewezen'))->send();
     }
 
     public function applyBlockOne(int $id): void
@@ -310,19 +310,19 @@ class ReviewSeoAudit extends Page
     public function rejectBlockOne(int $id): void
     {
         $this->record->blockSuggestions()->where('id', $id)->update(['status' => 'rejected']);
-        Notification::make()->title('Blok voorstel afgewezen')->send();
+        Notification::make()->title(__('Blok voorstel afgewezen'))->send();
     }
 
     public function acknowledgeLink(int $id): void
     {
         $this->record->internalLinkSuggestions()->where('id', $id)->update(['status' => 'acknowledged']);
-        Notification::make()->title('Link gemarkeerd als bekeken')->send();
+        Notification::make()->title(__('Link gemarkeerd als bekeken'))->send();
     }
 
     public function rejectLink(int $id): void
     {
         $this->record->internalLinkSuggestions()->where('id', $id)->update(['status' => 'rejected']);
-        Notification::make()->title('Link afgewezen')->send();
+        Notification::make()->title(__('Link afgewezen'))->send();
     }
 
     public function saveOutline(): void
@@ -341,7 +341,7 @@ class ReviewSeoAudit extends Page
             ]
         );
 
-        Notification::make()->title('Outline opgeslagen')->success()->send();
+        Notification::make()->title(__('Outline opgeslagen'))->success()->send();
     }
 
     public function addOutlineHeading(): void
@@ -365,7 +365,7 @@ class ReviewSeoAudit extends Page
 
         if (! $outline || empty($outline->headings)) {
             Notification::make()
-                ->title('Geen headings om content voor te genereren')
+                ->title(__('Geen headings om content voor te genereren'))
                 ->warning()
                 ->send();
 
@@ -374,8 +374,8 @@ class ReviewSeoAudit extends Page
 
         if ($outline->content_generating_at !== null) {
             Notification::make()
-                ->title('Content-generatie loopt al')
-                ->body('Even geduld - de voorstellen verschijnen zodra de job klaar is.')
+                ->title(__('Content-generatie loopt al'))
+                ->body(__('Even geduld - de voorstellen verschijnen zodra de job klaar is.'))
                 ->warning()
                 ->send();
 
@@ -388,8 +388,8 @@ class ReviewSeoAudit extends Page
         $this->outlineGenerating = true;
 
         Notification::make()
-            ->title('Content-generatie gestart')
-            ->body('De voorstellen verschijnen automatisch in de Blokken-tab zodra ze klaar zijn.')
+            ->title(__('Content-generatie gestart'))
+            ->body(__('De voorstellen verschijnen automatisch in de Blokken-tab zodra ze klaar zijn.'))
             ->success()
             ->send();
     }
@@ -402,7 +402,7 @@ class ReviewSeoAudit extends Page
 
         if ($anchor === '' || $url === '' || $context === '') {
             Notification::make()
-                ->title('Vul anker, URL en context in')
+                ->title(__('Vul anker, URL en context in'))
                 ->warning()
                 ->send();
 
@@ -420,7 +420,7 @@ class ReviewSeoAudit extends Page
         $selfPath = GenerateSeoAuditJob::normalizeLinkPath($subjectUrl);
         if ($selfPath !== '' && GenerateSeoAuditJob::normalizeLinkPath($url) === $selfPath) {
             Notification::make()
-                ->title('Interne links mogen niet naar dezelfde pagina wijzen')
+                ->title(__('Interne links mogen niet naar dezelfde pagina wijzen'))
                 ->warning()
                 ->send();
 
@@ -447,7 +447,7 @@ class ReviewSeoAudit extends Page
         $this->record->refresh();
 
         Notification::make()
-            ->title('Interne link toegevoegd')
+            ->title(__('Interne link toegevoegd'))
             ->success()
             ->send();
     }
@@ -465,7 +465,7 @@ class ReviewSeoAudit extends Page
         $keywords = $this->splitKeywordInput($this->newKeyword);
         if ($keywords === []) {
             Notification::make()
-                ->title('Vul een keyword in')
+                ->title(__('Vul een keyword in'))
                 ->warning()
                 ->send();
 
@@ -503,7 +503,7 @@ class ReviewSeoAudit extends Page
         $this->record->refresh();
 
         Notification::make()
-            ->title('Keyword verwijderd')
+            ->title(__('Keyword verwijderd'))
             ->body($label)
             ->success()
             ->send();
@@ -525,7 +525,7 @@ class ReviewSeoAudit extends Page
         $keywords = $this->splitKeywordInput((string) ($this->newKeywordByType[$type] ?? ''));
         if ($keywords === []) {
             Notification::make()
-                ->title('Vul een keyword in')
+                ->title(__('Vul een keyword in'))
                 ->warning()
                 ->send();
 
@@ -637,7 +637,7 @@ class ReviewSeoAudit extends Page
 
         if ($added === 0) {
             Notification::make()
-                ->title('Alle keywords stonden er al')
+                ->title(__('Alle keywords stonden er al'))
                 ->body(implode(', ', $duplicates))
                 ->warning()
                 ->send();
@@ -646,11 +646,11 @@ class ReviewSeoAudit extends Page
         }
 
         $title = $type !== null
-            ? sprintf('%d keyword(s) toegevoegd aan %s', $added, $type)
-            : sprintf('%d keyword(s) toegevoegd', $added);
+            ? __(':aantal keyword(s) toegevoegd aan :type', ['aantal' => $added, 'type' => $type])
+            : __(':aantal keyword(s) toegevoegd', ['aantal' => $added]);
 
         $body = $duplicates !== []
-            ? 'Overgeslagen (al aanwezig): ' . implode(', ', $duplicates)
+            ? __('Overgeslagen (al aanwezig): :lijst', ['lijst' => implode(', ', $duplicates)])
             : null;
 
         $notification = Notification::make()->title($title)->success();
@@ -702,7 +702,7 @@ class ReviewSeoAudit extends Page
         $ids = array_values(array_filter(array_map('intval', $this->selectedKeywords)));
         if ($ids === []) {
             Notification::make()
-                ->title('Selecteer eerst keywords')
+                ->title(__('Selecteer eerst keywords'))
                 ->warning()
                 ->send();
 
@@ -715,7 +715,7 @@ class ReviewSeoAudit extends Page
         $this->record->refresh();
 
         Notification::make()
-            ->title($deleted . ' keyword(s) verwijderd')
+            ->title(__(':aantal keyword(s) verwijderd', ['aantal' => $deleted]))
             ->success()
             ->send();
     }
@@ -726,7 +726,7 @@ class ReviewSeoAudit extends Page
             app(SeoAuditApplier::class)->rollbackAudit($this->record);
         } catch (\Throwable $e) {
             Notification::make()
-                ->title('Rollback mislukt')
+                ->title(__('Rollback mislukt'))
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
@@ -734,7 +734,7 @@ class ReviewSeoAudit extends Page
             return;
         }
 
-        Notification::make()->title('Audit teruggedraaid')->success()->send();
+        Notification::make()->title(__('Audit teruggedraaid'))->success()->send();
         $this->record->refresh();
     }
 
@@ -742,7 +742,7 @@ class ReviewSeoAudit extends Page
     {
         $log = ContentApplyLog::find($logId);
         if (! $log) {
-            Notification::make()->title('Log niet gevonden')->danger()->send();
+            Notification::make()->title(__('Log niet gevonden'))->danger()->send();
 
             return;
         }
@@ -751,7 +751,7 @@ class ReviewSeoAudit extends Page
             app(SeoAuditApplier::class)->revertOne($log);
         } catch (\Throwable $e) {
             Notification::make()
-                ->title('Revert mislukt')
+                ->title(__('Revert mislukt'))
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
@@ -759,7 +759,7 @@ class ReviewSeoAudit extends Page
             return;
         }
 
-        Notification::make()->title('Wijziging teruggedraaid')->success()->send();
+        Notification::make()->title(__('Wijziging teruggedraaid'))->success()->send();
     }
 
     public function regenerate(): void
@@ -771,8 +771,8 @@ class ReviewSeoAudit extends Page
             $this->record->instruction,
         );
         Notification::make()
-            ->title('Nieuwe audit gestart')
-            ->body('De bestaande audit wordt gearchiveerd. Ververs over een moment voor de nieuwe resultaten.')
+            ->title(__('Nieuwe audit gestart'))
+            ->body(__('De bestaande audit wordt gearchiveerd. Ververs over een moment voor de nieuwe resultaten.'))
             ->send();
     }
 

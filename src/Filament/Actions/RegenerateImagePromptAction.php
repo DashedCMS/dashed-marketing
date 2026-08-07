@@ -18,25 +18,25 @@ class RegenerateImagePromptAction
     public static function make(): Action
     {
         return Action::make('regenerateImagePrompt')
-            ->label('(Her)genereer met AI')
+            ->label(__('(Her)genereer met AI'))
             ->icon('heroicon-m-sparkles')
             ->color('primary')
-            ->modalHeading('Image prompt opnieuw genereren')
-            ->modalSubmitActionLabel('Genereer')
+            ->modalHeading(__('Image prompt opnieuw genereren'))
+            ->modalSubmitActionLabel(__('Genereer'))
             ->schema([
                 TextInput::make('theme')
-                    ->label('Thema / gelegenheid')
-                    ->placeholder('Bijv: Koningsdag, Kerst, Lente, Moederdag, Halloween')
-                    ->helperText('Voor seizoenen/feestdagen vult het systeem automatisch concrete iconografie in. Laat leeg voor een neutrale productshot.'),
+                    ->label(__('Thema / gelegenheid'))
+                    ->placeholder(__('Bijv: Koningsdag, Kerst, Lente, Moederdag, Halloween'))
+                    ->helperText(__('Voor seizoenen/feestdagen vult het systeem automatisch concrete iconografie in. Laat leeg voor een neutrale productshot.')),
                 Textarea::make('product_context')
-                    ->label('Productinfo (sterk aanbevolen)')
-                    ->placeholder('Bijv: Lovora Family Figurine - gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.')
-                    ->helperText('Naam, materiaal, finish, maten, designtaal, USP. Hoe specifieker, hoe meer de prompt over JOUW product gaat in plaats van een generiek figuurtje. Auto-aangevuld vanuit gekoppeld product/page als beschikbaar.')
+                    ->label(__('Productinfo (sterk aanbevolen)'))
+                    ->placeholder(__('Bijv: Lovora Family Figurine - gepersonaliseerde 3D-print van je gezin in matte cream PLA, 15cm hoog, minimalistisch silhouet, design afgeleid van Scandinavische modernisme. Belangrijkste verkooppunt: tastbaar familieportret als cadeau.'))
+                    ->helperText(__('Naam, materiaal, finish, maten, designtaal, USP. Hoe specifieker, hoe meer de prompt over JOUW product gaat in plaats van een generiek figuurtje. Auto-aangevuld vanuit gekoppeld product/page als beschikbaar.'))
                     ->default(fn ($livewire) => self::buildProductContextDefault($livewire->record ?? null))
                     ->rows(4),
                 Textarea::make('instructions')
-                    ->label('Extra instructies (optioneel)')
-                    ->placeholder('Bijv: donkerder, cinematisch, geen mensen, close-up op product')
+                    ->label(__('Extra instructies (optioneel)'))
+                    ->placeholder(__('Bijv: donkerder, cinematisch, geen mensen, close-up op product'))
                     ->rows(3),
             ])
             ->action(function (array $data, $livewire) {
@@ -63,8 +63,8 @@ class RegenerateImagePromptAction
 
                 if ($prompt === null) {
                     Notification::make()
-                        ->title('Genereren mislukt')
-                        ->body('De AI gaf geen bruikbare image prompt terug.')
+                        ->title(__('Genereren mislukt'))
+                        ->body(__('De AI gaf geen bruikbare image prompt terug.'))
                         ->danger()
                         ->send();
 
@@ -78,8 +78,8 @@ class RegenerateImagePromptAction
                 self::syncFormField($livewire, 'image_prompt', $prompt);
 
                 Notification::make()
-                    ->title($record ? 'Image prompt gegenereerd en opgeslagen' : 'Image prompt gegenereerd')
-                    ->body($record ? null : 'Sla de post op om de image prompt permanent te bewaren.')
+                    ->title($record ? __('Image prompt gegenereerd en opgeslagen') : __('Image prompt gegenereerd'))
+                    ->body($record ? null : __('Sla de post op om de image prompt permanent te bewaren.'))
                     ->success()
                     ->send();
             });

@@ -44,29 +44,29 @@ class SocialHolidayResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Feestdag')
+                Section::make(__('Feestdag'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Naam')
+                            ->label(__('Naam'))
                             ->required()
                             ->maxLength(255),
                         DatePicker::make('date')
-                            ->label('Datum')
+                            ->label(__('Datum'))
                             ->required(),
                         Select::make('country')
-                            ->label('Land')
+                            ->label(__('Land'))
                             ->options([
-                                'NL' => 'Nederland',
-                                'BE' => 'België',
-                                'DE' => 'Duitsland',
+                                'NL' => __('Nederland'),
+                                'BE' => __('België'),
+                                'DE' => __('Duitsland'),
                             ])
                             ->required()
                             ->default('NL'),
                         Toggle::make('auto_remind')
-                            ->label('Automatische herinnering')
+                            ->label(__('Automatische herinnering'))
                             ->default(true),
                         TextInput::make('remind_days_before')
-                            ->label('Herinnering X dagen van tevoren')
+                            ->label(__('Herinnering X dagen van tevoren'))
                             ->numeric()
                             ->minValue(1)
                             ->default(7),
@@ -81,29 +81,29 @@ class SocialHolidayResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Naam')
+                    ->label(__('Naam'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('date')
-                    ->label('Datum')
+                    ->label(__('Datum'))
                     ->date('d-m-Y')
                     ->sortable(),
                 TextColumn::make('country')
-                    ->label('Land'),
+                    ->label(__('Land')),
                 IconColumn::make('auto_remind')
-                    ->label('Herinnering')
+                    ->label(__('Herinnering'))
                     ->boolean(),
                 TextColumn::make('remind_days_before')
-                    ->label('Dagen van tevoren')
-                    ->suffix(' dagen'),
+                    ->label(__('Dagen van tevoren'))
+                    ->suffix(__(' dagen')),
             ])
             ->filters([
                 SelectFilter::make('country')
-                    ->label('Land')
+                    ->label(__('Land'))
                     ->options([
-                        'NL' => 'Nederland',
-                        'BE' => 'België',
-                        'DE' => 'Duitsland',
+                        'NL' => __('Nederland'),
+                        'BE' => __('België'),
+                        'DE' => __('Duitsland'),
                     ]),
             ])
             ->defaultSort('date', 'asc')

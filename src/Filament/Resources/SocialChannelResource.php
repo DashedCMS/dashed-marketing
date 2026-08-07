@@ -47,10 +47,10 @@ class SocialChannelResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Kanaal')
+                Section::make(__('Kanaal'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Naam')
+                            ->label(__('Naam'))
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -60,38 +60,38 @@ class SocialChannelResource extends Resource
                                 }
                             }),
                         TextInput::make('slug')
-                            ->label('Slug')
+                            ->label(__('Slug'))
                             ->required()
                             ->maxLength(255)
                             ->disabled(fn (?SocialChannel $record) => $record !== null)
                             ->dehydrated()
-                            ->helperText('Intern identifier. Kan na aanmaken niet worden gewijzigd.'),
+                            ->helperText(__('Intern identifier. Kan na aanmaken niet worden gewijzigd.')),
                         CheckboxList::make('accepted_types')
-                            ->label('Toegestane types')
+                            ->label(__('Toegestane types'))
                             ->options([
-                                'post' => 'Post',
-                                'reel' => 'Reel / Short',
-                                'story' => 'Story',
+                                'post' => __('Post'),
+                                'reel' => __('Reel / Short'),
+                                'story' => __('Story'),
                             ])
                             ->required()
                             ->minItems(1)
                             ->columns(3)
                             ->columnSpanFull(),
                         TextInput::make('order')
-                            ->label('Volgorde')
+                            ->label(__('Volgorde'))
                             ->numeric()
                             ->default(0),
                         Toggle::make('is_active')
-                            ->label('Actief')
+                            ->label(__('Actief'))
                             ->default(true),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                Section::make('Omnisocials koppeling')
+                Section::make(__('Omnisocials koppeling'))
                     ->schema([
                         Select::make('omnisocials_account_id')
-                            ->label('Omnisocials account')
+                            ->label(__('Omnisocials account'))
                             ->options(function () {
                                 $cached = Customsetting::get('omnisocials_accounts');
                                 $accounts = is_array($cached) ? $cached : (is_string($cached) ? json_decode($cached, true) : []);
@@ -112,37 +112,37 @@ class SocialChannelResource extends Resource
                                 $match = collect($accounts)->firstWhere('id', $state);
                                 $set('omnisocials_platform', $match['platform'] ?? null);
                             })
-                            ->helperText('Selecteer het Omnisocials account dat aan dit kanaal gekoppeld moet worden. Sync eerst accounts in Omnisocials instellingen.'),
+                            ->helperText(__('Selecteer het Omnisocials account dat aan dit kanaal gekoppeld moet worden. Sync eerst accounts in Omnisocials instellingen.')),
                         TextInput::make('omnisocials_platform')
-                            ->label('Omnisocials Platform')
+                            ->label(__('Omnisocials Platform'))
                             ->disabled()
                             ->dehydrated()
-                            ->helperText('Wordt automatisch ingevuld op basis van het geselecteerde account.'),
+                            ->helperText(__('Wordt automatisch ingevuld op basis van het geselecteerde account.')),
                     ])
                     ->columns(2)
                     ->columnSpanFull()
                     ->visible(fn () => DbSchema::hasColumn('dashed__social_channels', 'omnisocials_account_id')),
 
-                Section::make('Limieten en tips')
+                Section::make(__('Limieten en tips'))
                     ->schema([
                         TextInput::make('meta.caption_min')
-                            ->label('Caption min')
+                            ->label(__('Caption min'))
                             ->numeric()
                             ->default(0),
                         TextInput::make('meta.caption_max')
-                            ->label('Caption max')
+                            ->label(__('Caption max'))
                             ->numeric()
                             ->default(0),
                         TextInput::make('meta.hashtags_min')
-                            ->label('Hashtags min')
+                            ->label(__('Hashtags min'))
                             ->numeric()
                             ->default(0),
                         TextInput::make('meta.hashtags_max')
-                            ->label('Hashtags max')
+                            ->label(__('Hashtags max'))
                             ->numeric()
                             ->default(0),
                         Textarea::make('meta.tips')
-                            ->label('Tips')
+                            ->label(__('Tips'))
                             ->rows(2)
                             ->columnSpanFull(),
                     ])
@@ -157,25 +157,25 @@ class SocialChannelResource extends Resource
             ->defaultSort('order')
             ->columns([
                 TextColumn::make('name')
-                    ->label('Naam')
+                    ->label(__('Naam'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label(__('Slug'))
                     ->badge(),
                 TextColumn::make('accepted_types')
-                    ->label('Types')
+                    ->label(__('Types'))
                     ->badge(),
                 TextColumn::make('omnisocials_platform')
-                    ->label('Omnisocials')
+                    ->label(__('Omnisocials'))
                     ->badge()
                     ->color('info')
                     ->visible(fn () => DbSchema::hasColumn('dashed__social_channels', 'omnisocials_account_id')),
                 TextColumn::make('order')
-                    ->label('Volgorde')
+                    ->label(__('Volgorde'))
                     ->sortable(),
                 IconColumn::make('is_active')
-                    ->label('Actief')
+                    ->label(__('Actief'))
                     ->boolean(),
             ])
             ->recordActions([

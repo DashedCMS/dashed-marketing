@@ -43,11 +43,11 @@ class SeoAuditResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('subject_type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->sortable()
                     ->formatStateUsing(fn ($state) => class_basename((string) $state)),
                 TextColumn::make('subject_id')
-                    ->label('Onderwerp')
+                    ->label(__('Onderwerp'))
                     ->sortable()
                     ->searchable(query: function ($query, string $search) {
                         $query->where('subject_id', $search);
@@ -65,30 +65,30 @@ class SeoAuditResource extends Resource
                         return (string) $name;
                     }),
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->sortable()
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->status_label)
                     ->color(fn ($record) => $record->status_color),
                 TextColumn::make('overall_score')
-                    ->label('Score')
+                    ->label(__('Score'))
                     ->sortable()
                     ->badge()
                     ->color(fn ($state) => $state !== null && $state >= 80 ? 'success' : ($state !== null && $state >= 60 ? 'warning' : 'danger'))
                     ->default('-'),
                 TextColumn::make('created_at')
-                    ->label('Aangemaakt')
+                    ->label(__('Aangemaakt'))
                     ->dateTime('d-m-Y H:i')
                     ->sortable(),
                 TextColumn::make('applied_at')
-                    ->label('Toegepast')
+                    ->label(__('Toegepast'))
                     ->dateTime('d-m-Y H:i')
                     ->sortable()
-                    ->placeholder('-'),
+                    ->placeholder(__('-')),
             ])
             ->filters([
                 SelectFilter::make('subject_type')
-                    ->label('Type')
+                    ->label(__('Type'))
                     ->options(
                         fn () => SeoAudit::query()
                             ->distinct()
@@ -97,20 +97,20 @@ class SeoAuditResource extends Resource
                             ->toArray()
                     ),
                 SelectFilter::make('status')->options([
-                    'analyzing' => 'Analyseren',
-                    'ready' => 'Klaar',
-                    'partially_applied' => 'Gedeeltelijk toegepast',
-                    'fully_applied' => 'Volledig toegepast',
-                    'archived' => 'Gearchiveerd',
-                    'failed' => 'Mislukt',
+                    'analyzing' => __('Analyseren'),
+                    'ready' => __('Klaar'),
+                    'partially_applied' => __('Gedeeltelijk toegepast'),
+                    'fully_applied' => __('Volledig toegepast'),
+                    'archived' => __('Gearchiveerd'),
+                    'failed' => __('Mislukt'),
                 ]),
                 SelectFilter::make('score_bucket')
-                    ->label('Score')
+                    ->label(__('Score'))
                     ->options([
-                        'high' => '80-100 (goed)',
-                        'medium' => '60-79 (matig)',
-                        'low' => '0-59 (slecht)',
-                        'none' => 'Geen score',
+                        'high' => __('80-100 (goed)'),
+                        'medium' => __('60-79 (matig)'),
+                        'low' => __('0-59 (slecht)'),
+                        'none' => __('Geen score'),
                     ])
                     ->query(function ($query, array $data) {
                         $value = $data['value'] ?? null;
@@ -123,8 +123,8 @@ class SeoAuditResource extends Resource
                         };
                     }),
                 TernaryFilter::make('applied_at')
-                    ->label('Toegepast')
-                    ->placeholder('Alle')
+                    ->label(__('Toegepast'))
+                    ->placeholder(__('Alle'))
                     ->trueLabel('Toegepast')
                     ->falseLabel('Niet toegepast')
                     ->queries(
@@ -136,7 +136,7 @@ class SeoAuditResource extends Resource
             ->recordUrl(fn ($record) => static::getUrl('review', ['record' => $record->id]))
             ->recordActions([
                 Action::make('review')
-                    ->label('Review')
+                    ->label(__('Review'))
                     ->icon('heroicon-o-eye')
                     ->url(fn ($record) => static::getUrl('review', ['record' => $record->id])),
                 DeleteAction::make(),
@@ -144,12 +144,12 @@ class SeoAuditResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('archive')
-                        ->label('Archiveren')
+                        ->label(__('Archiveren'))
                         ->icon('heroicon-o-archive-box')
                         ->color('gray')
                         ->requiresConfirmation()
-                        ->modalHeading('Geselecteerde audits archiveren')
-                        ->modalDescription('Audits krijgen status archived; suggesties, logs en rollback-historie blijven bewaard.')
+                        ->modalHeading(__('Geselecteerde audits archiveren'))
+                        ->modalDescription(__('Audits krijgen status archived; suggesties, logs en rollback-historie blijven bewaard.'))
                         ->action(function (Collection $records) {
                             $count = 0;
                             foreach ($records as $record) {
@@ -160,18 +160,18 @@ class SeoAuditResource extends Resource
                                 $count++;
                             }
                             Notification::make()
-                                ->title("{$count} audits gearchiveerd")
+                                ->title(__(':aantal audits gearchiveerd', ['aantal' => $count]))
                                 ->success()
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('regenerate')
-                        ->label('Opnieuw genereren')
+                        ->label(__('Opnieuw genereren'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('info')
                         ->requiresConfirmation()
-                        ->modalHeading('Audits opnieuw genereren')
-                        ->modalDescription('Voor elk geselecteerd audit start een nieuwe analyse op hetzelfde onderwerp met dezelfde taal en instructie. Het bestaande audit wordt gearchiveerd.')
+                        ->modalHeading(__('Audits opnieuw genereren'))
+                        ->modalDescription(__('Voor elk geselecteerd audit start een nieuwe analyse op hetzelfde onderwerp met dezelfde taal en instructie. Het bestaande audit wordt gearchiveerd.'))
                         ->action(function (Collection $records) {
                             $count = 0;
                             foreach ($records as $record) {
@@ -188,19 +188,19 @@ class SeoAuditResource extends Resource
                                 $count++;
                             }
                             Notification::make()
-                                ->title("{$count} audits opnieuw gestart")
-                                ->body('De nieuwe analyses draaien op de achtergrond.')
+                                ->title(__(':aantal audits opnieuw gestart', ['aantal' => $count]))
+                                ->body(__('De nieuwe analyses draaien op de achtergrond.'))
                                 ->success()
                                 ->send();
                         })
                         ->deselectRecordsAfterCompletion(),
                     BulkAction::make('apply_all')
-                        ->label('Alles toepassen')
+                        ->label(__('Alles toepassen'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->modalHeading('Alle voorstellen toepassen voor geselecteerde audits')
-                        ->modalDescription('Let op: bij block/FAQ-apply worden bestaande blokken op de pagina eerst gewist voordat de suggesties worden geplaatst. Alleen audits met status ready, partially_applied of fully_applied worden verwerkt.')
+                        ->modalHeading(__('Alle voorstellen toepassen voor geselecteerde audits'))
+                        ->modalDescription(__('Let op: bij block/FAQ-apply worden bestaande blokken op de pagina eerst gewist voordat de suggesties worden geplaatst. Alleen audits met status ready, partially_applied of fully_applied worden verwerkt.'))
                         ->action(function (Collection $records) {
                             $applier = app(SeoAuditApplier::class);
                             $applied = 0;
@@ -223,7 +223,7 @@ class SeoAuditResource extends Resource
                             }
 
                             Notification::make()
-                                ->title("Bulk apply: {$applied} toegepast, {$skipped} overgeslagen, {$failed} mislukt")
+                                ->title(__('Bulk apply: :applied toegepast, :skipped overgeslagen, :failed mislukt', ['applied' => $applied, 'skipped' => $skipped, 'failed' => $failed]))
                                 ->success()
                                 ->send();
                         })

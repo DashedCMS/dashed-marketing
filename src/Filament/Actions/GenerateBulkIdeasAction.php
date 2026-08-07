@@ -20,22 +20,22 @@ class GenerateBulkIdeasAction extends Action
     {
         parent::setUp();
 
-        $this->label('Genereer ideeën met AI')
+        $this->label(__('Genereer ideeën met AI'))
             ->icon('heroicon-o-sparkles')
             ->color('warning')
             ->form([
                 Select::make('period')
-                    ->label('Periode')
+                    ->label(__('Periode'))
                     ->options([
-                        1 => '1 week',
-                        2 => '2 weken',
-                        4 => '4 weken',
+                        1 => __('1 week'),
+                        2 => __('2 weken'),
+                        4 => __('4 weken'),
                     ])
                     ->default(2)
                     ->required(),
 
                 TextInput::make('count')
-                    ->label('Aantal ideeën')
+                    ->label(__('Aantal ideeën'))
                     ->numeric()
                     ->minValue(3)
                     ->maxValue(30)
@@ -43,8 +43,8 @@ class GenerateBulkIdeasAction extends Action
                     ->required(),
 
                 Textarea::make('focus')
-                    ->label('Focus / thema (optioneel)')
-                    ->placeholder('Bijv: zomercollectie, Black Friday, duurzaamheid...')
+                    ->label(__('Focus / thema (optioneel)'))
+                    ->placeholder(__('Bijv: zomercollectie, Black Friday, duurzaamheid...'))
                     ->rows(2)
                     ->nullable(),
             ])
@@ -57,7 +57,7 @@ class GenerateBulkIdeasAction extends Action
                 );
 
                 Notification::make()
-                    ->title('Genereren gestart - ideeën verschijnen zodra de AI assistent klaar is')
+                    ->title(__('Genereren gestart - ideeën verschijnen zodra de AI assistent klaar is'))
                     ->success()
                     ->send();
             });

@@ -22,13 +22,13 @@ class EditSocialPost extends EditRecord
     {
         return [
             Action::make('publish')
-                ->label('Publiceer nu')
+                ->label(__('Publiceer nu'))
                 ->icon('heroicon-o-paper-airplane')
                 ->color('success')
                 ->visible(fn () => in_array($this->record->status, ['concept', 'approved', 'publish_failed']))
                 ->requiresConfirmation()
-                ->modalHeading('Post publiceren?')
-                ->modalDescription('De post wordt via de actieve adapter gepubliceerd naar de geselecteerde kanalen.')
+                ->modalHeading(__('Post publiceren?'))
+                ->modalDescription(__('De post wordt via de actieve adapter gepubliceerd naar de geselecteerde kanalen.'))
                 ->action(function () {
                     $this->record->update(['scheduled_at' => now()]);
                     $this->refreshFormData(['scheduled_at']);
@@ -36,12 +36,12 @@ class EditSocialPost extends EditRecord
                     PublishSocialPostJob::dispatch($this->record);
 
                     Notification::make()
-                        ->title('Publicatie gestart')
+                        ->title(__('Publicatie gestart'))
                         ->success()
                         ->send();
                 }),
             Action::make('retry')
-                ->label('Opnieuw proberen')
+                ->label(__('Opnieuw proberen'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
                 ->visible(fn () => $this->record->status === 'partially_posted')
@@ -51,25 +51,25 @@ class EditSocialPost extends EditRecord
                     PublishSocialPostJob::dispatch($this->record);
 
                     Notification::make()
-                        ->title('Retry gestart')
+                        ->title(__('Retry gestart'))
                         ->success()
                         ->send();
                 }),
             Action::make('sharePost')
-                ->label('Deel post')
+                ->label(__('Deel post'))
                 ->icon('heroicon-o-share')
                 ->color('info')
-                ->modalHeading('Deel post')
-                ->modalDescription('Kopieer de caption, download de afbeelding en open de post URL.')
+                ->modalHeading(__('Deel post'))
+                ->modalDescription(__('Kopieer de caption, download de afbeelding en open de post URL.'))
                 ->modalWidth('3xl')
                 ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Sluiten')
+                ->modalCancelActionLabel(__('Sluiten'))
                 ->modalContent(fn (SocialPost $record) => view(
                     'dashed-marketing::filament.modals.share-post',
                     ['record' => $record],
                 )),
             Action::make('refreshAnalytics')
-                ->label('Analytics verversen')
+                ->label(__('Analytics verversen'))
                 ->icon('heroicon-o-chart-bar')
                 ->color('gray')
                 ->visible(fn () => $this->record->external_id !== null)
@@ -79,7 +79,7 @@ class EditSocialPost extends EditRecord
                     }
 
                     Notification::make()
-                        ->title('Analytics worden opgehaald')
+                        ->title(__('Analytics worden opgehaald'))
                         ->success()
                         ->send();
                 }),
@@ -92,15 +92,15 @@ class EditSocialPost extends EditRecord
     protected function uploadImageAction(): Action
     {
         return Action::make('uploadImage')
-            ->label('Upload afbeelding')
+            ->label(__('Upload afbeelding'))
             ->icon('heroicon-o-arrow-up-tray')
             ->color('primary')
             ->modalWidth('lg')
-            ->modalHeading('Afbeelding(en) uploaden')
-            ->modalSubmitActionLabel('Uploaden')
+            ->modalHeading(__('Afbeelding(en) uploaden'))
+            ->modalSubmitActionLabel(__('Uploaden'))
             ->schema([
                 FileUpload::make('upload')
-                    ->label('Afbeelding(en)')
+                    ->label(__('Afbeelding(en)'))
                     ->multiple()
                     ->image()
                     ->disk('public')
@@ -126,7 +126,7 @@ class EditSocialPost extends EditRecord
                 $this->refreshFormData(['images', 'image_path']);
 
                 Notification::make()
-                    ->title(count($upload).' afbeelding(en) toegevoegd')
+                    ->title(__(':aantal afbeelding(en) toegevoegd', ['aantal' => count($upload)]))
                     ->success()
                     ->send();
             });

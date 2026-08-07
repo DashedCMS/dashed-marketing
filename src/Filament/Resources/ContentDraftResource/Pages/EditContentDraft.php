@@ -41,13 +41,13 @@ class EditContentDraft extends EditRecord
     {
         return [
             Action::make('generate_all_bodies')
-                ->label('Genereer alle inhoud')
+                ->label(__('Genereer alle inhoud'))
                 ->icon('heroicon-o-sparkles')
                 ->color('primary')
                 ->schema([
                     Toggle::make('overwrite')
-                        ->label('Overschrijf al gevulde secties')
-                        ->helperText('Uit: alleen lege secties worden gevuld.')
+                        ->label(__('Overschrijf al gevulde secties'))
+                        ->helperText(__('Uit: alleen lege secties worden gevuld.'))
                         ->default(false),
                 ])
                 ->action(function (array $data) {
@@ -78,18 +78,18 @@ class EditContentDraft extends EditRecord
                     $queued = count($jobs);
 
                     Notification::make()
-                        ->title("{$queued} secties worden één voor één gegenereerd, {$skipped} overgeslagen")
-                        ->body('Deze pagina ververst automatisch zodra de eerste body binnen is.')
+                        ->title(__(':queued secties worden één voor één gegenereerd, :skipped overgeslagen', ['queued' => $queued, 'skipped' => $skipped]))
+                        ->body(__('Deze pagina ververst automatisch zodra de eerste body binnen is.'))
                         ->success()
                         ->send();
                 }),
             Action::make('generate_meta')
-                ->label('Genereer SEO meta')
+                ->label(__('Genereer SEO meta'))
                 ->icon('heroicon-o-sparkles')
                 ->color('gray')
                 ->schema([
                     Toggle::make('overwrite')
-                        ->label('Overschrijf bestaande meta')
+                        ->label(__('Overschrijf bestaande meta'))
                         ->default(true),
                 ])
                 ->action(function (array $data) {
@@ -99,23 +99,23 @@ class EditContentDraft extends EditRecord
                     );
 
                     Notification::make()
-                        ->title('Meta title en description worden gegenereerd')
-                        ->body('Ververs de pagina over een moment.')
+                        ->title(__('Meta title en description worden gegenereerd'))
+                        ->body(__('Ververs de pagina over een moment.'))
                         ->success()
                         ->send();
                 }),
             Action::make('resync')
-                ->label(fn () => 'Opnieuw synchroniseren naar '.class_basename($this->record->subject_type ?? ''))
+                ->label(fn () => __('Opnieuw synchroniseren naar :naam', ['naam' => class_basename($this->record->subject_type ?? '')]))
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
                 ->visible(fn () => $this->record->subject_type && $this->record->subject_id)
-                ->modalDescription('De gekoppelde record wordt overschreven met de huidige draft-inhoud. Laat een veld leeg om dat bloktype niet mee te publiceren.')
+                ->modalDescription(__('De gekoppelde record wordt overschreven met de huidige draft-inhoud. Laat een veld leeg om dat bloktype niet mee te publiceren.'))
                 ->schema(self::blockChoiceSchema())
                 ->action(function (array $data) {
                     $draft = $this->record;
 
                     if (! $draft->subject_type || ! $draft->subject_id) {
-                        Notification::make()->title('Geen gekoppeld record')->danger()->send();
+                        Notification::make()->title(__('Geen gekoppeld record'))->danger()->send();
 
                         return;
                     }
@@ -126,7 +126,7 @@ class EditContentDraft extends EditRecord
 
                     if (! $target) {
                         if (! class_exists($class)) {
-                            Notification::make()->title('Onbekend target type')->danger()->send();
+                            Notification::make()->title(__('Onbekend target type'))->danger()->send();
 
                             return;
                         }
@@ -156,20 +156,20 @@ class EditContentDraft extends EditRecord
 
                     Notification::make()
                         ->title($recreated
-                            ? 'Oude record was verwijderd - nieuwe '.class_basename($class).' aangemaakt en gevuld'
-                            : 'Gesynchroniseerd naar '.class_basename($class))
+                            ? __('Oude record was verwijderd - nieuwe :naam aangemaakt en gevuld', ['naam' => class_basename($class)])
+                            : __('Gesynchroniseerd naar :naam', ['naam' => class_basename($class)]))
                         ->success()
                         ->send();
                 }),
 
             Action::make('publish')
-                ->label(fn () => $this->record->subject_id ? 'Naar ander record publiceren' : 'Publiceer')
+                ->label(fn () => $this->record->subject_id ? __('Naar ander record publiceren') : __('Publiceer'))
                 ->icon('heroicon-o-rocket-launch')
                 ->color('success')
                 ->visible(fn () => $this->record->status === 'ready')
                 ->schema([
                     Select::make('target_type')
-                        ->label('Target type')
+                        ->label(__('Target type'))
                         ->options(function () {
                             $options = [];
 
@@ -187,8 +187,8 @@ class EditContentDraft extends EditRecord
                         ->required()
                         ->live(),
                     Select::make('target_id')
-                        ->label('Bestaand record bijwerken')
-                        ->placeholder('Nieuw record aanmaken')
+                        ->label(__('Bestaand record bijwerken'))
+                        ->placeholder(__('Nieuw record aanmaken'))
                         ->searchable()
                         ->preload()
                         ->getSearchResultsUsing(fn (string $search, $get) => ContentDraftResource::searchTargetRecords(self::resolveTargetClass($get('target_type')), $search))
@@ -212,7 +212,7 @@ class EditContentDraft extends EditRecord
                     $class = is_array($entry) ? ($entry['class'] ?? null) : null;
 
                     if (! $class || ! class_exists($class)) {
-                        Notification::make()->title('Onbekend target type')->danger()->send();
+                        Notification::make()->title(__('Onbekend target type'))->danger()->send();
 
                         return;
                     }
@@ -245,12 +245,12 @@ class EditContentDraft extends EditRecord
                     ]);
 
                     Notification::make()
-                        ->title('Gepubliceerd naar '.class_basename($class))
+                        ->title(__('Gepubliceerd naar :naam', ['naam' => class_basename($class)]))
                         ->success()
                         ->send();
                 }),
             Action::make('reject')
-                ->label('Reject draft')
+                ->label(__('Reject draft'))
                 ->color('danger')
                 ->requiresConfirmation()
                 ->action(function () {
@@ -296,22 +296,22 @@ class EditContentDraft extends EditRecord
 
         return [
             Select::make('publish_header_block')
-                ->label('Header blok')
-                ->helperText('Leeg = geen header blok toevoegen.')
+                ->label(__('Header blok'))
+                ->helperText(__('Leeg = geen header blok toevoegen.'))
                 ->options($options)
                 ->searchable()
                 ->nullable()
                 ->default($defaults['header']),
             Select::make('publish_content_block')
-                ->label('Content blok per sectie')
-                ->helperText('Leeg = sectie-bodies worden niet mee gepubliceerd.')
+                ->label(__('Content blok per sectie'))
+                ->helperText(__('Leeg = sectie-bodies worden niet mee gepubliceerd.'))
                 ->options($options)
                 ->searchable()
                 ->nullable()
                 ->default($defaults['content']),
             Select::make('publish_faq_block')
-                ->label('FAQ blok')
-                ->helperText('Leeg = FAQs worden niet mee gepubliceerd.')
+                ->label(__('FAQ blok'))
+                ->helperText(__('Leeg = FAQs worden niet mee gepubliceerd.'))
                 ->options($options)
                 ->searchable()
                 ->nullable()

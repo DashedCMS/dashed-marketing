@@ -41,22 +41,22 @@ class SocialPillarResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Pijler')
+                Section::make(__('Pijler'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Naam')
+                            ->label(__('Naam'))
                             ->required()
                             ->maxLength(255),
                         TextInput::make('target_percentage')
-                            ->label('Doelpercentage (%)')
+                            ->label(__('Doelpercentage (%)'))
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(100)
-                            ->suffix('%'),
+                            ->suffix(__('%')),
                         ColorPicker::make('color')
-                            ->label('Kleur'),
+                            ->label(__('Kleur')),
                         Textarea::make('description')
-                            ->label('Beschrijving')
+                            ->label(__('Beschrijving'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
@@ -70,15 +70,15 @@ class SocialPillarResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Naam')
+                    ->label(__('Naam'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('target_percentage')
-                    ->label('Doel %')
-                    ->suffix('%')
+                    ->label(__('Doel %'))
+                    ->suffix(__('%'))
                     ->sortable(),
                 TextColumn::make('description')
-                    ->label('Beschrijving')
+                    ->label(__('Beschrijving'))
                     ->limit(60),
             ])
             ->recordActions([

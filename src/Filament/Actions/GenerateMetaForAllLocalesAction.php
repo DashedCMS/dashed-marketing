@@ -18,7 +18,7 @@ class GenerateMetaForAllLocalesAction
     public static function make(): Action
     {
         return Action::make('generate_meta_all_locales')
-            ->label('Genereer meta (alle talen)')
+            ->label(__('Genereer meta (alle talen)'))
             ->icon('heroicon-o-language')
             ->color('info')
             ->visible(function ($livewire) {
@@ -26,24 +26,24 @@ class GenerateMetaForAllLocalesAction
 
                 return $record !== null && $record->exists;
             })
-            ->modalHeading('Meta genereren voor alle talen')
-            ->modalDescription('AI genereert een meta-titel en meta-omschrijving voor elk geconfigureerde taal. Dit gebeurt op de achtergrond.')
-            ->modalSubmitActionLabel('Start generatie')
+            ->modalHeading(__('Meta genereren voor alle talen'))
+            ->modalDescription(__('AI genereert een meta-titel en meta-omschrijving voor elk geconfigureerde taal. Dit gebeurt op de achtergrond.'))
+            ->modalSubmitActionLabel(__('Start generatie'))
             ->schema([
                 Textarea::make('user_instruction')
-                    ->label('Instructie (optioneel)')
-                    ->placeholder('Bijv. focus op het keyword "fietsverzekering".')
+                    ->label(__('Instructie (optioneel)'))
+                    ->placeholder(__('Bijv. focus op het keyword "fietsverzekering".'))
                     ->rows(3),
                 Toggle::make('overwrite')
-                    ->label('Overschrijf bestaande meta')
-                    ->helperText('Standaard worden alleen lege velden ingevuld.')
+                    ->label(__('Overschrijf bestaande meta'))
+                    ->helperText(__('Standaard worden alleen lege velden ingevuld.'))
                     ->default(false),
             ])
             ->action(function (array $data, $livewire): void {
                 $record = $livewire?->record ?? null;
                 if (! $record || ! $record->exists) {
                     Notification::make()
-                        ->title('Geen record om te verwerken')
+                        ->title(__('Geen record om te verwerken'))
                         ->danger()
                         ->send();
 
@@ -61,8 +61,8 @@ class GenerateMetaForAllLocalesAction
                 );
 
                 Notification::make()
-                    ->title('Meta wordt gegenereerd')
-                    ->body('Wordt op de achtergrond gegenereerd voor alle talen. Ververs deze pagina zodra de job klaar is om het resultaat te zien.')
+                    ->title(__('Meta wordt gegenereerd'))
+                    ->body(__('Wordt op de achtergrond gegenereerd voor alle talen. Ververs deze pagina zodra de job klaar is om het resultaat te zien.'))
                     ->success()
                     ->send();
             });

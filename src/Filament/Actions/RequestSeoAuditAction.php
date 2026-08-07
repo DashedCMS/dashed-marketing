@@ -20,7 +20,7 @@ class RequestSeoAuditAction
     public static function make(): Action
     {
         return Action::make('request_seo_audit')
-            ->label('Genereer SEO audit')
+            ->label(__('Genereer SEO audit'))
             ->icon('heroicon-o-magnifying-glass-circle')
             ->color('info')
             ->visible(function ($livewire) {
@@ -28,7 +28,7 @@ class RequestSeoAuditAction
 
                 return $record !== null && $record->exists;
             })
-            ->modalHeading('SEO audit genereren')
+            ->modalHeading(__('SEO audit genereren'))
             ->modalDescription(function ($livewire) {
                 $record = $livewire?->record ?? null;
                 if (! $record) {
@@ -44,11 +44,11 @@ class RequestSeoAuditAction
                     ? 'Er ligt al een audit. Deze wordt gearchiveerd voor de nieuwe begint.'
                     : 'AI analyseert dit item op zeven SEO-domeinen. Je kunt daarna per voorstel accepteren of afwijzen.';
             })
-            ->modalSubmitActionLabel('Start analyse')
+            ->modalSubmitActionLabel(__('Start analyse'))
             ->schema([
                 Select::make('locale')
-                    ->label('Taal')
-                    ->helperText('De audit analyseert de pagina in deze taal en genereert alle suggesties (meta, content, FAQ, structured data) in deze taal.')
+                    ->label(__('Taal'))
+                    ->helperText(__('De audit analyseert de pagina in deze taal en genereert alle suggesties (meta, content, FAQ, structured data) in deze taal.'))
                     ->options(Locales::getLocalesArray())
                     ->default(function ($livewire) {
                         $active = method_exists($livewire, 'getActiveSchemaLocale')
@@ -59,15 +59,15 @@ class RequestSeoAuditAction
                     })
                     ->required(),
                 Textarea::make('instruction')
-                    ->label('Instructie (optioneel)')
-                    ->placeholder('Bijv. focus op lokale SEO Amsterdam.')
+                    ->label(__('Instructie (optioneel)'))
+                    ->placeholder(__('Bijv. focus op lokale SEO Amsterdam.'))
                     ->rows(3),
             ])
             ->action(function (array $data, $livewire) {
                 $record = $livewire->record ?? null;
                 if (! $record || ! $record->exists) {
                     Notification::make()
-                        ->title('Geen record om te analyseren')
+                        ->title(__('Geen record om te analyseren'))
                         ->danger()
                         ->send();
 
@@ -86,12 +86,12 @@ class RequestSeoAuditAction
                 );
 
                 Notification::make()
-                    ->title('SEO analyse gestart')
-                    ->body('Zodra klaar verschijnt het voorstel onder Marketing → SEO audits.')
+                    ->title(__('SEO analyse gestart'))
+                    ->body(__('Zodra klaar verschijnt het voorstel onder Marketing → SEO audits.'))
                     ->success()
                     ->actions([
                         Action::make('goto_list')
-                            ->label('Naar SEO audits')
+                            ->label(__('Naar SEO audits'))
                             ->url(SeoAuditResource::getUrl('index')),
                     ])
                     ->send();

@@ -44,24 +44,24 @@ class SocialCampaignResource extends Resource
     {
         return $schema
             ->schema([
-                Section::make('Campagne')
+                Section::make(__('Campagne'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Naam')
+                            ->label(__('Naam'))
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
                         DatePicker::make('start_date')
-                            ->label('Startdatum')
+                            ->label(__('Startdatum'))
                             ->required(),
                         DatePicker::make('end_date')
-                            ->label('Einddatum')
+                            ->label(__('Einddatum'))
                             ->required(),
                         Toggle::make('active')
-                            ->label('Actief')
+                            ->label(__('Actief'))
                             ->default(true),
                         Textarea::make('focus')
-                            ->label('Focus / doel')
+                            ->label(__('Focus / doel'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
@@ -75,27 +75,27 @@ class SocialCampaignResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Naam')
+                    ->label(__('Naam'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('start_date')
-                    ->label('Start')
+                    ->label(__('Start'))
                     ->date('d-m-Y')
                     ->sortable(),
                 TextColumn::make('end_date')
-                    ->label('Einde')
+                    ->label(__('Einde'))
                     ->date('d-m-Y')
                     ->sortable(),
                 IconColumn::make('active')
-                    ->label('Actief')
+                    ->label(__('Actief'))
                     ->boolean(),
                 TextColumn::make('focus')
-                    ->label('Focus')
+                    ->label(__('Focus'))
                     ->limit(60),
             ])
             ->filters([
                 TernaryFilter::make('active')
-                    ->label('Actief'),
+                    ->label(__('Actief')),
             ])
             ->defaultSort('start_date', 'desc')
             ->recordActions([

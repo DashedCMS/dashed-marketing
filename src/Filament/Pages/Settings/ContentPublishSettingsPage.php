@@ -41,24 +41,24 @@ class ContentPublishSettingsPage extends Page implements HasSchemas
         $options = ContentDraftPublisher::availableBlockOptions();
 
         return $schema->schema([
-            Section::make('Standaard blokken bij publiceren')
-                ->description('Deze keuzes worden vooringevuld in de publiceer-popup op elke content draft. Laat leeg om standaard geen blok van die soort toe te voegen.')
+            Section::make(__('Standaard blokken bij publiceren'))
+                ->description(__('Deze keuzes worden vooringevuld in de publiceer-popup op elke content draft. Laat leeg om standaard geen blok van die soort toe te voegen.'))
                 ->schema([
                     Select::make('marketing_publish_header_block')
-                        ->label('Header blok')
-                        ->helperText('Bovenaan het artikel komt dit blok met de titel.')
+                        ->label(__('Header blok'))
+                        ->helperText(__('Bovenaan het artikel komt dit blok met de titel.'))
                         ->options($options)
                         ->searchable()
                         ->nullable(),
                     Select::make('marketing_publish_content_block')
-                        ->label('Content blok')
-                        ->helperText('Eén blok per sectie met de heading en body.')
+                        ->label(__('Content blok'))
+                        ->helperText(__('Eén blok per sectie met de heading en body.'))
                         ->options($options)
                         ->searchable()
                         ->nullable(),
                     Select::make('marketing_publish_faq_block')
-                        ->label('FAQ blok')
-                        ->helperText('Aan het eind komt dit blok met de gegenereerde FAQs.')
+                        ->label(__('FAQ blok'))
+                        ->helperText(__('Aan het eind komt dit blok met de gegenereerde FAQs.'))
                         ->options($options)
                         ->searchable()
                         ->nullable(),
@@ -77,7 +77,7 @@ class ContentPublishSettingsPage extends Page implements HasSchemas
         }
 
         Notification::make()
-            ->title('Content publicatie instellingen opgeslagen')
+            ->title(__('Content publicatie instellingen opgeslagen'))
             ->success()
             ->send();
     }

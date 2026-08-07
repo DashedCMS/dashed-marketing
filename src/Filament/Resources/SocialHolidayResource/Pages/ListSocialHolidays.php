@@ -20,21 +20,21 @@ class ListSocialHolidays extends ListRecords
     {
         return [
             Action::make('importHolidays')
-                ->label('Importeer feestdagen met AI')
+                ->label(__('Importeer feestdagen met AI'))
                 ->icon('heroicon-o-sparkles')
                 ->color('primary')
                 ->form([
                     Select::make('country')
-                        ->label('Land')
+                        ->label(__('Land'))
                         ->options([
-                            'NL' => 'Nederland',
-                            'BE' => 'België',
-                            'DE' => 'Duitsland',
+                            'NL' => __('Nederland'),
+                            'BE' => __('België'),
+                            'DE' => __('Duitsland'),
                         ])
                         ->required()
                         ->default('NL'),
                     TextInput::make('year')
-                        ->label('Jaar')
+                        ->label(__('Jaar'))
                         ->numeric()
                         ->required()
                         ->default(now()->year),
@@ -68,8 +68,8 @@ class ListSocialHolidays extends ListRecords
 
                     if (! $result || empty($result['holidays'])) {
                         Notification::make()
-                            ->title('Importeren mislukt')
-                            ->body('De AI provider gaf geen bruikbaar antwoord.')
+                            ->title(__('Importeren mislukt'))
+                            ->body(__('De AI provider gaf geen bruikbaar antwoord.'))
                             ->danger()
                             ->send();
 
@@ -102,8 +102,8 @@ class ListSocialHolidays extends ListRecords
                     }
 
                     Notification::make()
-                        ->title("{$created} feestdagen geïmporteerd")
-                        ->body($skipped > 0 ? "{$skipped} bestaande feestdagen overgeslagen." : '')
+                        ->title(__(':aantal feestdagen geïmporteerd', ['aantal' => $created]))
+                        ->body($skipped > 0 ? __(':aantal bestaande feestdagen overgeslagen.', ['aantal' => $skipped]) : '')
                         ->success()
                         ->send();
                 }),
