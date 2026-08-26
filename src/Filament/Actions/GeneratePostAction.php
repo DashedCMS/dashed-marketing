@@ -14,6 +14,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DateTimePicker;
 use Dashed\DashedMarketing\Models\SocialChannel;
 use Dashed\DashedMarketing\Jobs\GenerateSocialPostJob;
+use Dashed\DashedCore\Classes\QueryHelpers\TokenizedSearch;
 
 class GeneratePostAction extends Action
 {
@@ -129,14 +130,10 @@ class GeneratePostAction extends Action
                     }
 
                     if (empty($columns)) {
-                        $query->where($model->getKeyName(), 'like', "%{$search}%");
-                    } else {
-                        $query->where(function ($q) use ($columns, $search) {
-                            foreach ($columns as $column) {
-                                $q->orWhere($column, 'like', "%{$search}%");
-                            }
-                        });
+                        $columns = [$model->getKeyName()];
                     }
+
+                    TokenizedSearch::apply($query, $search, $columns);
 
                     return $query->limit(500)->get()->mapWithKeys(
                         fn ($item) => [$item->getKey() => $item->name ?? $item->title ?? "#{$item->getKey()}"]
