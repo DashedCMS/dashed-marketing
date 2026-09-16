@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.29.2 - 2026-09-16
+
+### Changed
+- `maatwebsite/excel` mag `^3.1 || ^4.0`, voor PHP 8.5. Zie dashed-ecommerce-core v4.127.0.
+
 ## v4.21.0 - 2026-05-11
 
 ### Added
