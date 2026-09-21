@@ -124,7 +124,7 @@ class EditContentCluster extends EditRecord
                         ->send();
 
                     return redirect(ContentDraftResource::getUrl('index', [
-                        'tableFilters' => [
+                        'filters' => [
                             'content_cluster_id' => ['value' => $cluster->id],
                         ],
                     ]));
@@ -134,7 +134,7 @@ class EditContentCluster extends EditRecord
                 ->icon('heroicon-o-list-bullet')
                 ->color('gray')
                 ->url(fn () => ContentDraftResource::getUrl('index', [
-                    'tableFilters' => [
+                    'filters' => [
                         'content_cluster_id' => ['value' => $this->record->id],
                     ],
                 ])),
