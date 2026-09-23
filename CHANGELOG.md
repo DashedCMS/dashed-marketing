@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.29.4 - 2026-09-23
+
+### Fixed
+- **Dubbele publicaties bij een volle wachtrij.** `social:publish-due` draait elke minuut en selecteerde alles met status `scheduled`, terwijl `PublishSocialPostJob` de status pas op `publishing` zet zodra de job start. Stond de wachtrij vol, dan werd dezelfde post elke minuut opnieuw ingestuurd (bij Lovora 15 keer dezelfde story op Facebook en Instagram). Het commando claimt een post nu met een voorwaardelijke update voordat hij de job dispatcht.
+
 ## v4.29.2 - 2026-09-16
 
 ### Changed
