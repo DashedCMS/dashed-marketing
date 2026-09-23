@@ -48,7 +48,8 @@ class EditSocialPost extends EditRecord
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update(['retry_count' => 0]);
-                    PublishSocialPostJob::dispatch($this->record);
+                    // Bewuste actie van een beheerder: die mag wel opnieuw.
+                    PublishSocialPostJob::dispatch($this->record, force: true);
 
                     Notification::make()
                         ->title(__('Retry gestart'))

@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.29.5 - 2026-09-23
+
+### Fixed
+- **Een post die al bij de adapter ligt wordt niet nog eens gepubliceerd.** `PublishSocialPostJob` publiceerde ook als de post al een `external_id` had; elke herhaling maakte bij de adapter een nieuwe post en dus een duplicaat op het kanaal (bij Lovora 15 keer dezelfde story op 22 september). De job slaat dat nu over en logt het. De beheerdersactie "Opnieuw proberen" geeft `force: true` mee en werkt onveranderd.
+
 ## v4.29.4 - 2026-09-23
 
 ### Fixed

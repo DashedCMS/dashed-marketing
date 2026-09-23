@@ -20,11 +20,23 @@ class PublishSocialPostJob implements ShouldQueue
 
     public function __construct(
         public SocialPost $post,
+        public bool $force = false,
     ) {
     }
 
     public function handle(): void
     {
+        // Een post met een external_id ligt al bij de publicatie-adapter.
+        // Nog een keer publiceren maakt daar een tweede post van, en dus een
+        // duplicaat op het kanaal. Dat gebeurde bij Lovora: dezelfde story
+        // stond vijftien keer op Facebook en Instagram. Alleen een bewuste
+        // actie (force) mag er nog een keer overheen.
+        if ($this->post->external_id && ! $this->force) {
+            Log::info("Social post #{$this->post->id} is al gepubliceerd bij de adapter, publicatie overgeslagen.");
+
+            return;
+        }
+
         $adapter = app(PublishingAdapter::class, ['site_id' => $this->post->site_id]);
 
         $this->post->update(['status' => 'publishing']);
