@@ -35,6 +35,8 @@ use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource\Pages\CreateC
 
 class ContentDraftResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = ContentDraft::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-text';

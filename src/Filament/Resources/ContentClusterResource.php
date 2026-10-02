@@ -26,6 +26,8 @@ use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource\Pages\Creat
 
 class ContentClusterResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = ContentCluster::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-square-3-stack-3d';

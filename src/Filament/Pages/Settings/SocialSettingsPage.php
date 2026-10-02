@@ -25,6 +25,7 @@ use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
 
 class SocialSettingsPage extends Page implements HasSchemas
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesPageLabels;
     use HasSettingsPermission;
     use InteractsWithSchemas;
 

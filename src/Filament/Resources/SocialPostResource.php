@@ -40,6 +40,7 @@ use Dashed\DashedMarketing\Filament\Resources\SocialPostResource\Pages\CreateSoc
 
 class SocialPostResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
     use HasLastEditedColumn;
 
     protected static ?string $model = SocialPost::class;

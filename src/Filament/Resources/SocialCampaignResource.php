@@ -26,6 +26,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialCampaignResource\Pages\Creat
 
 class SocialCampaignResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SocialCampaign::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';

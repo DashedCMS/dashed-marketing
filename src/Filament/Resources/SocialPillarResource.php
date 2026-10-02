@@ -23,6 +23,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialPillarResource\Pages\CreateS
 
 class SocialPillarResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SocialPillar::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';

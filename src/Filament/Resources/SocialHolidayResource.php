@@ -26,6 +26,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialHolidayResource\Pages\Create
 
 class SocialHolidayResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SocialHoliday::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';

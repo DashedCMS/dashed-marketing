@@ -16,6 +16,7 @@ use Dashed\DashedMarketing\Services\ContentDraftPublisher;
 
 class ContentPublishSettingsPage extends Page implements HasSchemas
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesPageLabels;
     use HasSettingsPermission;
     use InteractsWithSchemas;
 

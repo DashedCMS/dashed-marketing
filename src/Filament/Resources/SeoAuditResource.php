@@ -24,6 +24,8 @@ use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource\Pages\ReviewSeoAu
 
 class SeoAuditResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SeoAudit::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-magnifying-glass-circle';

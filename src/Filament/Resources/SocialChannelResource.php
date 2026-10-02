@@ -29,6 +29,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialChannelResource\Pages\Create
 
 class SocialChannelResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SocialChannel::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-share';

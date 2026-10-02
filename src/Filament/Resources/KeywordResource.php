@@ -22,6 +22,8 @@ use Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 
 class KeywordResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = Keyword::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-hashtag';

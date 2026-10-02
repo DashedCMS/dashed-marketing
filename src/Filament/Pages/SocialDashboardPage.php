@@ -16,6 +16,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class SocialDashboardPage extends Page
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesPageLabels;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
     protected static string|UnitEnum|null $navigationGroup = 'Social media';

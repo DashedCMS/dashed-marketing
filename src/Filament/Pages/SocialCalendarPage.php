@@ -9,6 +9,8 @@ use Dashed\DashedMarketing\Filament\Widgets\SocialCalendarWidget;
 
 class SocialCalendarPage extends Page
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesPageLabels;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
 
     protected static string|UnitEnum|null $navigationGroup = 'Social media';

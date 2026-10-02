@@ -34,6 +34,8 @@ use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource\Pages\CreateSoc
 
 class SocialIdeaResource extends Resource
 {
+    use \Dashed\DashedCore\Filament\Concerns\TranslatesResourceLabels;
+
     protected static ?string $model = SocialIdea::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-light-bulb';
