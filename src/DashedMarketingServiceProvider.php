@@ -450,7 +450,8 @@ MARKDOWN,
                 SocialWeeklyGapsCommand::class,
                 SocialKeywordSyncCommand::class,
             ])
-            ->name(self::$name);
+            ->name(self::$name)
+            ->hasTranslations();
     }
 
     public function registeringPackage()
