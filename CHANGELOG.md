@@ -2,6 +2,12 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.31.0 - 2026-10-19
+
+### Changed
+- **Fal.ai-aanroepen in het AI-logboek.** `GenerateSocialImageJob` gaat via `FalRequest::post()` uit dashed-ai (doel `social-post-image`), zodat de kosten van sociale afbeeldingen in het logboek staan.
+
+
 ## v4.29.5 - 2026-09-23
 
 ### Fixed

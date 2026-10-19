@@ -43,10 +43,12 @@ class GenerateSocialImageJob implements ShouldQueue
             ? $this->buildKontextRequest($prompt)
             : $this->buildFluxDevRequest($prompt);
 
-        $response = Http::withHeaders([
-            'Authorization' => "Key {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->timeout(120)->post($endpoint, $payload);
+        $response = class_exists(\Dashed\DashedAi\Logging\FalRequest::class)
+            ? \Dashed\DashedAi\Logging\FalRequest::post($endpoint, $payload, $apiKey, ['site_id' => $this->post->site_id, 'purpose' => 'social-post-image'], 120)
+            : Http::withHeaders([
+                'Authorization' => "Key {$apiKey}",
+                'Content-Type' => 'application/json',
+            ])->timeout(120)->post($endpoint, $payload);
 
         if ($response->successful()) {
             $imageUrl = $response->json('images.0.url');
