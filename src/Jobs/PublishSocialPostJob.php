@@ -18,6 +18,15 @@ class PublishSocialPostJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    /**
+     * Nooit automatisch opnieuw: een afgekapte poging kan bij de adapter gewoon
+     * gelukt zijn, en een tweede poging is dan een dubbele post.
+     */
+    public int $tries = 1;
+
+    /** Ruimer dan de wachttijd van de adapter; video's duren lang. */
+    public int $timeout = 180;
+
     public function __construct(
         public SocialPost $post,
         public bool $force = false,
@@ -86,5 +95,28 @@ class PublishSocialPostJob implements ShouldQueue
 
             Log::warning("Social post publish failed for post #{$this->post->id}: {$result->error}");
         }
+    }
+
+    /**
+     * Na een afgekapte job (time-out) bleef de post anders voor altijd op
+     * 'publishing' staan, zonder dat iemand het zag.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        $post = $this->post->fresh();
+
+        if (! $post || $post->external_id) {
+            return;
+        }
+
+        $post->update([
+            'status' => 'publish_failed',
+            'external_data' => array_merge($post->external_data ?? [], [
+                'last_error' => 'Publiceren afgebroken: de post kan toch geplaatst zijn, controleer dat voordat je hem opnieuw probeert. ('.$exception->getMessage().')',
+                'last_error_at' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        Log::warning("Social post publish job failed for post #{$post->id}: {$exception->getMessage()}");
     }
 }

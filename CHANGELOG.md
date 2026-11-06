@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.31.1 - 2026-11-06
+
+### Fixed
+- **`PublishSocialPostJob` wacht langer en blijft niet hangen.** De job krijgt 180 seconden en precies één poging (bij een time-out kan de post bij de adapter toch geplaatst zijn), en een afgekapte job zet de post op `publish_failed` in plaats van voor altijd op `publishing`.
+
 ## v4.31.0 - 2026-10-19
 
 ### Changed
