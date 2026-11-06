@@ -79,7 +79,7 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
             $schedule->command('social:notify-missed')->dailyAt('09:00');
             $schedule->command('social:check-holidays')->dailyAt('07:00');
             $schedule->command('social:weekly-gaps')->weeklyOn(1, '08:30'); // Monday
-            $schedule->command('social:keyword-sync')->dailyAt('03:00');
+            $schedule->command('social:keyword-sync')->dailyAt(class_exists(\Dashed\DashedCore\Classes\ScheduleSpread::class) ? \Dashed\DashedCore\Classes\ScheduleSpread::at('03:00', 'keyword-sync') : '03:00');
         });
 
         cms()->builder('plugins', [

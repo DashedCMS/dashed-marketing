@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.31.3 - 2026-11-06
+
+### Changed
+- Geplande taken starten op een vast eigen tijdstip per site (`ScheduleSpread`), met de oude tijd op een oudere core.
+
 ## v4.31.2 - 2026-11-06
 
 ### Changed
