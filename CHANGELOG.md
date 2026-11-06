@@ -2,6 +2,11 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.31.2 - 2026-11-06
+
+### Changed
+- `social:publish-due` start alleen nog een eigen artisan-proces als er een post aan de beurt is.
+
 ## v4.31.1 - 2026-11-06
 
 ### Fixed

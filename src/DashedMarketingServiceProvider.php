@@ -71,7 +71,10 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         }
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
-            $schedule->command('social:publish-due')->everyMinute()->withoutOverlapping();
+            $schedule->command('social:publish-due')
+                ->everyMinute()
+                ->when(fn () => \Dashed\DashedMarketing\Commands\PublishDueSocialPostsCommand::hasWork())
+                ->withoutOverlapping();
             $schedule->command('social:notify-due')->dailyAt('08:00');
             $schedule->command('social:notify-missed')->dailyAt('09:00');
             $schedule->command('social:check-holidays')->dailyAt('07:00');

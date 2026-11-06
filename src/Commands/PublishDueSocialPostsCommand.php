@@ -12,6 +12,23 @@ class PublishDueSocialPostsCommand extends Command
 
     protected $description = 'Dispatch PublishSocialPostJob for scheduled posts whose scheduled_at is due.';
 
+    /**
+     * Snelle controle voor de scheduler: zonder werk start er geen eigen
+     * artisan-proces. Lukt de query niet, dan draait het commando gewoon.
+     */
+    public static function hasWork(): bool
+    {
+        return rescue(
+            fn () => SocialPost::withoutGlobalScopes()
+                ->where('status', 'scheduled')
+                ->whereNotNull('scheduled_at')
+                ->where('scheduled_at', '<=', now())
+                ->exists(),
+            true,
+            false,
+        );
+    }
+
     public function handle(): void
     {
         $posts = SocialPost::withoutGlobalScopes()
