@@ -520,6 +520,18 @@ class GenerateImageAction extends Action
                     return;
                 }
 
+                $referenceImage = trim((string) ($data['reference_image'] ?? '')) ?: null;
+
+                if ($referenceImage !== null && SubjectImageResolver::isProtectedUrl($referenceImage)) {
+                    Notification::make()
+                        ->title(__('Referentieafbeelding niet toegestaan'))
+                        ->body(__('Dit adres wijst naar een privé of beschermd bestand in de mediabibliotheek. Dat gaat niet naar de AI-dienst. Kies een ander beeld.'))
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 if (! empty($data['subject_type']) && ! empty($data['subject_id'])) {
                     $class = $data['subject_type'];
                     if (class_exists($class) && $class::query()->whereKey($data['subject_id'])->exists()) {
@@ -559,12 +571,27 @@ class GenerateImageAction extends Action
                     return;
                 }
 
+                $requested = count($promptList);
+                [$remaining, $refusal] = $this->ceilingRoom($record, $requested);
+
+                if ($remaining === 0) {
+                    Notification::make()
+                        ->title(__('Dagplafond bereikt'))
+                        ->body($refusal)
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $promptList = array_slice($promptList, 0, $remaining);
+
                 foreach ($promptList as $singlePrompt) {
                     GenerateSocialImageJob::dispatch(
                         post: $record,
                         ratio: $data['ratio'],
                         stylePreset: $data['style_preset'],
-                        referenceImageUrl: $data['reference_image'] ?? null,
+                        referenceImageUrl: $referenceImage,
                         promptOverride: $singlePrompt,
                     );
                 }
@@ -574,6 +601,41 @@ class GenerateImageAction extends Action
                     ->body(__('De afbeeldingen worden op de achtergrond gegenereerd en aan deze post toegevoegd.'))
                     ->success()
                     ->send();
+
+                if (count($promptList) < $requested) {
+                    Notification::make()
+                        ->title(__(':niet van de :totaal afbeeldingen niet in de wachtrij gezet', ['niet' => $requested - count($promptList), 'totaal' => $requested]))
+                        ->body($refusal)
+                        ->warning()
+                        ->send();
+                }
             });
+    }
+
+    /**
+     * Hoeveel afbeeldingen er vandaag nog onder het dagplafond voor AI-beelden
+     * van de site passen, met de weigertekst. Alleen een voorcontrole: de job
+     * legt elke aanroep zelf vast onder het slot van het plafond. Zonder
+     * AiSpend (een oudere dashed-files), of als de toets niet lukt, gaat
+     * alles door en beslist de job.
+     *
+     * @return array{0: int, 1: ?string}
+     */
+    private function ceilingRoom($record, int $requested): array
+    {
+        $spend = \Dashed\DashedFiles\Services\AiSpend::class;
+
+        if (! class_exists($spend)) {
+            return [$requested, null];
+        }
+
+        $siteId = $record->site_id !== null ? (string) $record->site_id : null;
+
+        return rescue(function () use ($spend, $siteId, $requested) {
+            $limit = $spend::limit($spend::KIND_GENERATE, $siteId);
+            $remaining = max(0, $limit - $spend::usedToday($spend::KIND_GENERATE, $siteId));
+
+            return [min($requested, $remaining), $spend::refusal($spend::KIND_GENERATE, $limit)];
+        }, [$requested, null], false);
     }
 }

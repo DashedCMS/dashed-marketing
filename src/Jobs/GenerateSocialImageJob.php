@@ -2,7 +2,9 @@
 
 namespace Dashed\DashedMarketing\Jobs;
 
+use Throwable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Queue\SerializesModels;
@@ -11,6 +13,7 @@ use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Services\SubjectImageResolver;
 
 class GenerateSocialImageJob implements ShouldQueue
 {
@@ -43,19 +46,95 @@ class GenerateSocialImageJob implements ShouldQueue
             ? $this->buildKontextRequest($prompt)
             : $this->buildFluxDevRequest($prompt);
 
-        $response = class_exists(\Dashed\DashedAi\Logging\FalRequest::class)
-            ? \Dashed\DashedAi\Logging\FalRequest::post($endpoint, $payload, $apiKey, ['site_id' => $this->post->site_id, 'purpose' => 'social-post-image'], 120)
-            : Http::withHeaders([
-                'Authorization' => "Key {$apiKey}",
-                'Content-Type' => 'application/json',
-            ])->timeout(120)->post($endpoint, $payload);
+        // De URL komt uit de staat van de post en kan sinds het klaarzetten
+        // veranderd zijn: vlak voor de betaalde aanroep nog een keer toetsen.
+        if ($this->referenceImageUrl && SubjectImageResolver::isProtectedUrl($this->referenceImageUrl)) {
+            Log::warning('GenerateSocialImageJob: protected reference image refused', [
+                'site_id' => $this->post->site_id,
+                'social_post_id' => $this->post->id,
+            ]);
+
+            return;
+        }
+
+        $charge = $this->charge($prompt);
+
+        if ($charge === false) {
+            return;
+        }
+
+        try {
+            $response = class_exists(\Dashed\DashedAi\Logging\FalRequest::class)
+                ? \Dashed\DashedAi\Logging\FalRequest::post($endpoint, $payload, $apiKey, ['site_id' => $this->post->site_id, 'purpose' => 'social-post-image'], 120)
+                : Http::withHeaders([
+                    'Authorization' => "Key {$apiKey}",
+                    'Content-Type' => 'application/json',
+                ])->timeout(120)->post($endpoint, $payload);
+        } catch (Throwable $exception) {
+            $this->settle($charge, false);
+
+            throw $exception;
+        }
+
+        $stored = false;
 
         if ($response->successful()) {
             $imageUrl = $response->json('images.0.url');
             if ($imageUrl) {
                 $this->downloadAndStore($imageUrl);
+                $stored = true;
             }
         }
+
+        $this->settle($charge, $stored);
+    }
+
+    /**
+     * Legt de betaalde aanroep vast bij het dagplafond voor AI-beelden van de
+     * site (dashed-files). Een beeld uit een referentie is een nieuw beeld,
+     * dus het telt als genereren, net als in de mediabibliotheek. Zonder die
+     * klasse (een oudere dashed-files) is er geen plafond en gaat het zoals
+     * voorheen. Geeft false als het plafond bereikt is: dan gaat er niets de
+     * deur uit en wordt er niets betaald, en de job stopt zonder fout, dus
+     * ook zonder herkansing.
+     */
+    private function charge(string $prompt): mixed
+    {
+        if (! class_exists(\Dashed\DashedFiles\Services\AiSpend::class)) {
+            return null;
+        }
+
+        try {
+            return \Dashed\DashedFiles\Services\AiSpend::charge(
+                \Dashed\DashedFiles\Services\AiSpend::KIND_GENERATE,
+                $this->post->site_id !== null ? (string) $this->post->site_id : null,
+                null,
+                [
+                    'params' => ['prompt' => mb_substr($prompt, 0, 2000), 'ratio' => $this->ratio],
+                    'context' => ['purpose' => 'social-post-image', 'social_post_id' => $this->post->id],
+                ],
+            );
+        } catch (\Dashed\DashedFiles\Services\AiCeilingReached $exception) {
+            Log::warning('GenerateSocialImageJob: daily AI image ceiling reached', [
+                'site_id' => $this->post->site_id,
+                'social_post_id' => $this->post->id,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /** De uitkomst op de vastgelegde aanroep; het beeld zelf staat niet in de mediabibliotheek. */
+    private function settle(mixed $charge, bool $succeeded): void
+    {
+        if (! $charge instanceof \Dashed\DashedFiles\Models\AiImageOperation) {
+            return;
+        }
+
+        rescue(fn () => $charge->update($succeeded
+            ? ['status' => \Dashed\DashedFiles\Models\AiImageOperation::STATUS_DONE]
+            : ['status' => \Dashed\DashedFiles\Models\AiImageOperation::STATUS_FAILED, 'error' => 'failed']), null, false);
     }
 
     /**
