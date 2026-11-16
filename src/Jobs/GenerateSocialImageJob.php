@@ -13,7 +13,9 @@ use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialPost;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class GenerateSocialImageJob implements ShouldQueue
 {
@@ -29,17 +31,48 @@ class GenerateSocialImageJob implements ShouldQueue
         public ?string $referenceImageUrl = null,
         public float $referenceStrength = 0.7,
         public ?string $promptOverride = null,
+        public ?string $taskKey = null,
+        public ?int $userId = null,
     ) {
     }
 
+    public const TASK_TYPE = 'social-images';
+
     public function handle(): void
+    {
+        // In het takenicoon van dashed-core: een onderdeel van de reeks die
+        // de starter opende ($taskKey), anders een eigen taak van één stap.
+        $key = MarketingTask::keyFor($this, $this->taskKey);
+        MarketingTask::open(self::TASK_TYPE, __('Afbeelding genereren voor social post'), $key, 1, $this->userId, notify: true);
+
+        $stored = $this->generate();
+
+        MarketingTask::advance(
+            self::TASK_TYPE,
+            $key,
+            $stored ? __('De afbeeldingen zijn aan de post toegevoegd.') : null,
+            MarketingTask::url(SocialPostResource::class, 'edit', ['record' => $this->post]),
+            __('Bekijk post'),
+            $stored ? null : __('Er is geen afbeelding gegenereerd.'),
+        );
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::advance(self::TASK_TYPE, MarketingTask::keyFor($this, $this->taskKey), error: $exception);
+    }
+
+    /**
+     * @return bool of er een afbeelding is opgeslagen
+     */
+    protected function generate(): bool
     {
         $apiKey = Customsetting::get('fal_api_key', $this->post->site_id);
 
         $prompt = $this->promptOverride ?: $this->post->image_prompt;
 
         if (! $apiKey || ! $prompt) {
-            return;
+            return false;
         }
 
         [$endpoint, $payload] = $this->referenceImageUrl
@@ -54,13 +87,13 @@ class GenerateSocialImageJob implements ShouldQueue
                 'social_post_id' => $this->post->id,
             ]);
 
-            return;
+            return false;
         }
 
         $charge = $this->charge($prompt);
 
         if ($charge === false) {
-            return;
+            return false;
         }
 
         try {
@@ -87,6 +120,8 @@ class GenerateSocialImageJob implements ShouldQueue
         }
 
         $this->settle($charge, $stored);
+
+        return $stored;
     }
 
     /**

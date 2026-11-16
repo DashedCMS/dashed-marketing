@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedCore\Models\Customsetting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\SocialContextSourceCollector;
 
 class GenerateSocialContextJob implements ShouldQueue
@@ -32,8 +33,20 @@ class GenerateSocialContextJob implements ShouldQueue
     ) {
     }
 
+    public const TASK_TYPE = 'social-context';
+
     public function handle(): void
     {
+        // In het takenicoon van dashed-core, zonder eigen melding: de
+        // meldingen hieronder blijven de melding in de bel.
+        $task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('Social context genereren (:site)', ['site' => $this->siteId]),
+            MarketingTask::jobKey($this),
+            null,
+            $this->userId,
+        );
+
         $collector = new SocialContextSourceCollector();
         $context = $collector->collect($this->siteId);
 
@@ -45,6 +58,7 @@ class GenerateSocialContextJob implements ShouldQueue
                 "Geen geldig antwoord van de AI voor site '{$this->siteId}'.",
                 'danger'
             );
+            $task?->fail(__('Geen geldig antwoord van de AI.'));
 
             return;
         }
@@ -66,6 +80,12 @@ class GenerateSocialContextJob implements ShouldQueue
         }
 
         $this->notifyUser('AI context generatie klaar', $body, 'success');
+        $task?->finish($body);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $exception);
     }
 
     protected function writeIfEmpty(string $key, mixed $value): bool

@@ -14,6 +14,7 @@ use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Jobs\GenerateDraftFaqsJob;
 use Dashed\DashedMarketing\Jobs\GenerateDraftMetaJob;
 use Dashed\DashedMarketing\Models\ContentDraftSection;
+use Dashed\DashedMarketing\Support\ContentDraftTask;
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Jobs\GenerateClusterConceptsJob;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
@@ -52,6 +53,7 @@ class EditContentCluster extends EditRecord
                         $this->record->id,
                         (int) $data['count'],
                         $data['briefing'] ?? null,
+                        auth()->id(),
                     );
                     Notification::make()
                         ->title(__('Concepten worden gegenereerd'))
@@ -111,6 +113,8 @@ class EditContentCluster extends EditRecord
                         );
                         $sectionJobs[] = new GenerateDraftFaqsJob($draft->id);
                         $sectionJobs[] = new GenerateDraftMetaJob($draft->id, overwrite: true);
+                        // Eén taak per concept in het takenicoon voor de hele keten.
+                        ContentDraftTask::start($draft, count($sectionJobs), auth()->id());
                         Bus::chain($sectionJobs)->dispatch();
 
                         $created++;

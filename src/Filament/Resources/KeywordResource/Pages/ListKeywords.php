@@ -78,7 +78,7 @@ class ListKeywords extends ListRecords
                         ->default('incremental'),
                 ])
                 ->action(function (array $data) {
-                    ClusterKeywordsJob::dispatch($data['locale'], $data['mode']);
+                    ClusterKeywordsJob::dispatch($data['locale'], $data['mode'], auth()->id());
                     Notification::make()->title(__('Clustering gestart'))->success()->send();
                 }),
 

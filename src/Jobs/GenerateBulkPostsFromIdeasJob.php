@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Support\MarketingTask;
 
 class GenerateBulkPostsFromIdeasJob implements ShouldQueue
 {
@@ -38,6 +39,18 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             ->where('is_active', true)
             ->orderBy('order')
             ->get();
+
+        // Eén taak in het takenicoon van dashed-core voor de hele selectie;
+        // elke post-job telt er één bij op.
+        $taskKey = MarketingTask::jobKey($this) ?? MarketingTask::key();
+        MarketingTask::start(
+            GenerateSocialPostJob::TASK_TYPE,
+            __('Social posts genereren van ideeën'),
+            $taskKey,
+            $ideas->count(),
+            $this->userId,
+            notify: true,
+        );
 
         $dispatched = 0;
         foreach ($ideas as $idea) {
@@ -71,12 +84,21 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
                 includeKeywords: false,
                 scheduledAt: null,
                 siteId: $idea->site_id ?: Sites::getActive(),
+                taskKey: $taskKey,
             );
 
             $idea->update(['status' => 'in_production']);
 
             $dispatched++;
         }
+
+        // Ideeën zonder kanaal zijn overgeslagen: het totaal is wat echt is gestart.
+        MarketingTask::total(
+            GenerateSocialPostJob::TASK_TYPE,
+            $taskKey,
+            $dispatched,
+            $dispatched === 0 ? __('Geen posts gestart: de ideeën hebben geen passend kanaal.') : __('De posts staan als concept klaar.'),
+        );
 
         if ($this->userId !== null) {
             $user = User::find($this->userId);
@@ -97,6 +119,8 @@ class GenerateBulkPostsFromIdeasJob implements ShouldQueue
             'error' => $e->getMessage(),
             'idea_ids' => $this->ideaIds,
         ]);
+
+        MarketingTask::fail(GenerateSocialPostJob::TASK_TYPE, MarketingTask::jobKey($this), $e);
 
         if ($this->userId !== null) {
             $user = User::find($this->userId);

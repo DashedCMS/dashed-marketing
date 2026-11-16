@@ -14,6 +14,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Placeholder;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Jobs\GenerateSocialImageJob;
 use Dashed\DashedMarketing\Services\SubjectImageResolver;
 use Filament\Schemas\Components\Actions as SchemaActions;
@@ -586,6 +587,17 @@ class GenerateImageAction extends Action
 
                 $promptList = array_slice($promptList, 0, $remaining);
 
+                // Eén taak in het takenicoon voor alle afbeeldingen van deze actie.
+                $taskKey = MarketingTask::key();
+                MarketingTask::start(
+                    GenerateSocialImageJob::TASK_TYPE,
+                    __('Afbeeldingen genereren voor social post'),
+                    $taskKey,
+                    count($promptList),
+                    auth()->id(),
+                    notify: true,
+                );
+
                 foreach ($promptList as $singlePrompt) {
                     GenerateSocialImageJob::dispatch(
                         post: $record,
@@ -593,6 +605,7 @@ class GenerateImageAction extends Action
                         stylePreset: $data['style_preset'],
                         referenceImageUrl: $referenceImage,
                         promptOverride: $singlePrompt,
+                        taskKey: $taskKey,
                     );
                 }
 

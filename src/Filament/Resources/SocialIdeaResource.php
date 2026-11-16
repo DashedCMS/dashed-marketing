@@ -281,6 +281,7 @@ class SocialIdeaResource extends Resource
                             includeKeywords: false,
                             scheduledAt: null,
                             siteId: $record->site_id ?: Sites::getActive(),
+                            userId: auth()->id(),
                         );
 
                         $record->update(['status' => 'in_production']);

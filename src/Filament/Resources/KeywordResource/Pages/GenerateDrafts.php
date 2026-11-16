@@ -5,6 +5,7 @@ namespace Dashed\DashedMarketing\Filament\Resources\KeywordResource\Pages;
 use Filament\Resources\Pages\Page;
 use Filament\Notifications\Notification;
 use Dashed\DashedMarketing\Models\Keyword;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\ContentMatcher;
 use Dashed\DashedMarketing\Jobs\GenerateContentDraftJob;
 use Dashed\DashedMarketing\Filament\Resources\KeywordResource;
@@ -58,12 +59,26 @@ class GenerateDrafts extends Page
 
     public function confirmGeneration(): void
     {
+        // Eén taak in het takenicoon voor de hele reeks.
+        $rows = array_filter($this->preview, fn ($row) => (($this->overrides[$row['id']] ?? [])['skip'] ?? false) !== true);
+        $taskKey = MarketingTask::key();
+        if ($rows !== []) {
+            MarketingTask::start(
+                GenerateContentDraftJob::TASK_TYPE,
+                __('Concepten genereren uit zoekwoorden'),
+                $taskKey,
+                count($rows),
+                auth()->id(),
+                notify: true,
+            );
+        }
+
         foreach ($this->preview as $row) {
             $override = $this->overrides[$row['id']] ?? [];
             if (($override['skip'] ?? false) === true) {
                 continue;
             }
-            GenerateContentDraftJob::dispatch($row['id'], $override);
+            GenerateContentDraftJob::dispatch($row['id'], $override, $taskKey);
         }
 
         Notification::make()->title(__('Generatie gestart voor :aantal keywords', ['aantal' => count($this->preview)]))->success()->send();

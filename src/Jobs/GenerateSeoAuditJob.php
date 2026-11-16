@@ -10,12 +10,15 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
+use Dashed\DashedCore\Models\BackgroundTask;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Support\FaqHeadingDetector;
 use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
+use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateSeoAuditJob implements ShouldQueue
@@ -31,6 +34,15 @@ class GenerateSeoAuditJob implements ShouldQueue
     public int $backoff = 30;
 
     public int $timeout = 600;
+
+    public const TASK_TYPE = 'seo-audit';
+
+    /** Het aantal stappen van runStep(), voor de voortgang in het takenicoon. */
+    protected const TASK_STEPS = 7;
+
+    protected ?BackgroundTask $task = null;
+
+    protected int $taskStep = 0;
 
     public function __construct(
         public string $subjectType,
@@ -48,6 +60,18 @@ class GenerateSeoAuditJob implements ShouldQueue
             return;
         }
 
+        // In het takenicoon van dashed-core. De sleutel is het uuid van de
+        // job, zodat een tweede poging en failed() dezelfde taak vinden.
+        $this->task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('SEO audit: :naam', ['naam' => $this->taskSubjectName($audit)]),
+            MarketingTask::jobKey($this),
+            self::TASK_STEPS,
+            $this->userId,
+            notify: true,
+        );
+        $this->task?->progress(0, self::TASK_STEPS);
+
         try {
             $context = $this->buildContext($audit);
         } catch (Throwable $e) {
@@ -55,6 +79,7 @@ class GenerateSeoAuditJob implements ShouldQueue
                 'status' => 'failed',
                 'error_message' => 'Context build failed: '.$e->getMessage(),
             ]);
+            $this->task?->fail($e);
 
             return;
         }
@@ -74,6 +99,12 @@ class GenerateSeoAuditJob implements ShouldQueue
             'overall_score' => $this->calcScore($audit),
             'score_breakdown' => $audit->score_breakdown ?? [],
         ]);
+
+        $this->task?->finish(
+            __('Score: :score', ['score' => $audit->overall_score]),
+            MarketingTask::url(SeoAuditResource::class, 'review', ['record' => $audit]),
+            __('Bekijk audit'),
+        );
     }
 
     public function failed(Throwable $exception): void
@@ -86,6 +117,8 @@ class GenerateSeoAuditJob implements ShouldQueue
                 'progress_message' => null,
                 'error_message' => 'Job gefaald: '.$exception->getMessage(),
             ]);
+
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $exception);
 
         $this->reportFailure($exception);
     }
@@ -116,6 +149,19 @@ class GenerateSeoAuditJob implements ShouldQueue
             'progress_message' => 'Audit start',
             'score_breakdown' => [],
         ]);
+    }
+
+    protected function taskSubjectName(SeoAudit $audit): string
+    {
+        return (string) rescue(function () use ($audit) {
+            $subject = $audit->subject;
+            $name = $subject?->name ?? $subject?->title ?? null;
+            if (is_array($name)) {
+                $name = $name[$audit->locale] ?? reset($name);
+            }
+
+            return $name ?: class_basename($this->subjectType).' #'.$this->subjectId;
+        }, class_basename($this->subjectType).' #'.$this->subjectId, report: false);
     }
 
     protected function buildContext(SeoAudit $audit): array
@@ -229,6 +275,8 @@ class GenerateSeoAuditJob implements ShouldQueue
             ]);
             $this->markStep($audit, $step, false);
         }
+
+        $this->task?->progress(++$this->taskStep, self::TASK_STEPS);
     }
 
     protected function markStep(SeoAudit $audit, string $step, bool $ok): void

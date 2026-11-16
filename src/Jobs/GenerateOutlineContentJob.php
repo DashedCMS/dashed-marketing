@@ -11,8 +11,10 @@ use Dashed\DashedMarketing\Models\Keyword;
 use Dashed\DashedMarketing\Models\SeoAudit;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Support\FaqHeadingDetector;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Filament\Resources\SeoAuditResource;
 use Dashed\DashedMarketing\Services\Prompts\SeoAuditPromptBuilder;
 
 class GenerateOutlineContentJob implements ShouldQueue
@@ -28,7 +30,9 @@ class GenerateOutlineContentJob implements ShouldQueue
 
     public int $timeout = 600;
 
-    public function __construct(public int $auditId)
+    public const TASK_TYPE = 'seo-audit-content';
+
+    public function __construct(public int $auditId, public ?int $userId = null)
     {
     }
 
@@ -51,6 +55,19 @@ class GenerateOutlineContentJob implements ShouldQueue
             return;
         }
 
+        // In het takenicoon van dashed-core: één stap per kop, plus de
+        // ontdubbelronde aan het eind.
+        $task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('SEO audit: content genereren voor :naam', ['naam' => (string) ($outline->h1 ?: '#'.$audit->id)]),
+            MarketingTask::jobKey($this),
+            count($headings) + 1,
+            $this->userId,
+            notify: true,
+        );
+        $task?->progress(0, count($headings) + 1);
+        $taskDone = 0;
+
         $audit->blockSuggestions()->where('is_new_block', true)->delete();
 
         $ctx = $this->buildContext($audit);
@@ -63,6 +80,7 @@ class GenerateOutlineContentJob implements ShouldQueue
         $generated = [];
 
         foreach ($headings as $heading) {
+            $task?->progress($taskDone++);
             $level = (int) ($heading['level'] ?? 2);
             $text = trim((string) ($heading['text'] ?? ''));
             if ($text === '') {
@@ -98,12 +116,20 @@ class GenerateOutlineContentJob implements ShouldQueue
             $sort++;
         }
 
+        $task?->progress(count($headings));
+
         $this->dedupeAcrossBlocks($audit, $outline, $ctx, $generated);
 
         $outline->update([
             'content_generated_at' => now(),
             'content_generating_at' => null,
         ]);
+
+        $task?->finish(
+            __(':aantal contentblokken voorgesteld.', ['aantal' => $sort]),
+            MarketingTask::url(SeoAuditResource::class, 'review', ['record' => $audit]),
+            __('Bekijk audit'),
+        );
     }
 
     /**
@@ -290,6 +316,8 @@ class GenerateOutlineContentJob implements ShouldQueue
 
         $audit = SeoAudit::with('outline')->find($this->auditId);
         $audit?->outline?->update(['content_generating_at' => null]);
+
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $exception);
     }
 
     /**

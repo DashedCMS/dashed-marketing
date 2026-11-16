@@ -58,6 +58,8 @@ class GenerateMetaForAllLocalesAction
                     $record->getKey(),
                     $instruction,
                     $overwrite,
+                    null,
+                    auth()->id(),
                 );
 
                 Notification::make()

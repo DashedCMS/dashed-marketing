@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftFaq;
+use Dashed\DashedMarketing\Support\ContentDraftTask;
 
 class GenerateDraftFaqsJob implements ShouldQueue
 {
@@ -36,6 +37,8 @@ class GenerateDraftFaqsJob implements ShouldQueue
             return;
         }
 
+        ContentDraftTask::begin($draft);
+
         $response = Ai::json($this->buildPrompt($draft));
 
         if ($response === null) {
@@ -57,6 +60,8 @@ class GenerateDraftFaqsJob implements ShouldQueue
                 'answer' => $faq['answer'],
             ]);
         }
+
+        ContentDraftTask::step($draft);
     }
 
     public function failed(\Throwable $exception): void
@@ -65,6 +70,8 @@ class GenerateDraftFaqsJob implements ShouldQueue
             'draft_id' => $this->draftId,
             'error' => $exception->getMessage(),
         ]);
+
+        ContentDraftTask::fail($this->draftId, $exception);
     }
 
     /**

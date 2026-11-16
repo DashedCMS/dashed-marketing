@@ -51,6 +51,7 @@ class GeneratePostAction extends Action
                     includeKeywords: (bool) ($data['include_keywords'] ?? false),
                     scheduledAt: $data['scheduled_at'] ?? null,
                     siteId: Sites::getActive(),
+                    userId: auth()->id(),
                 );
 
                 Notification::make()

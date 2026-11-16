@@ -2,6 +2,12 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.33.0 - 2026-11-16
+
+### Added
+- Het taakcentrum (het tabje Bezig) toont nu alle AI-bulkacties: social posts en ideeën, afbeeldingen, concepten, clusters, meta, FAQ's, de SEO-audit en de social-context. Een reeks jobs is één taak.
+- Een job die niet via de wachtrij loopt sluit zijn taak ook af.
+
 ## v4.31.3 - 2026-11-06
 
 ### Changed

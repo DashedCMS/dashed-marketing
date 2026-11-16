@@ -12,11 +12,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\ContentMatcher;
 use Dashed\DashedMarketing\Facades\ContentTemplates;
 use Dashed\DashedMarketing\Services\ArticleSanitizer;
 use Dashed\DashedMarketing\Services\EmbeddingService;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
 
 class GenerateContentDraftJob implements ShouldQueue
 {
@@ -31,10 +33,39 @@ class GenerateContentDraftJob implements ShouldQueue
     public function __construct(
         public int $keywordId,
         public array $overrideAction = [],
+        public ?string $taskKey = null,
     ) {
     }
 
+    public const TASK_TYPE = 'content-drafts';
+
     public function handle(
+        ContentMatcher $matcher,
+        ArticleSanitizer $sanitizer,
+        EmbeddingService $embeddings,
+    ): void {
+        // In het takenicoon van dashed-core: een onderdeel van de reeks die
+        // de starter opende ($taskKey), anders een eigen taak van één stap.
+        $key = MarketingTask::keyFor($this, $this->taskKey);
+        MarketingTask::open(self::TASK_TYPE, __('Concept genereren uit zoekwoord'), $key, 1);
+
+        $this->generate($matcher, $sanitizer, $embeddings);
+
+        MarketingTask::advance(
+            self::TASK_TYPE,
+            $key,
+            __('De concepten zijn gegenereerd.'),
+            MarketingTask::url(ContentDraftResource::class),
+            __('Bekijk concepten'),
+        );
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::advance(self::TASK_TYPE, MarketingTask::keyFor($this, $this->taskKey), error: $exception);
+    }
+
+    protected function generate(
         ContentMatcher $matcher,
         ArticleSanitizer $sanitizer,
         EmbeddingService $embeddings,

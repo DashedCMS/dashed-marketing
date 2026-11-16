@@ -383,7 +383,7 @@ class ReviewSeoAudit extends Page
         }
 
         $outline->update(['content_generating_at' => now()]);
-        GenerateOutlineContentJob::dispatch($this->record->id);
+        GenerateOutlineContentJob::dispatch($this->record->id, auth()->id());
 
         $this->outlineGenerating = true;
 

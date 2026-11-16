@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\MetaGenerator;
 use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
 
@@ -37,10 +38,40 @@ final class GenerateMetaForRecordJob implements ShouldQueue
         public int|string $subjectId,
         public ?string $instruction = null,
         public bool $overwrite = false,
+        public ?string $taskKey = null,
+        public ?int $userId = null,
     ) {
     }
 
+    public const TASK_TYPE = 'meta-generate';
+
     public function handle(): void
+    {
+        // In het takenicoon van dashed-core: een onderdeel van de bulkronde
+        // ($taskKey), anders een eigen taak van één stap.
+        $key = MarketingTask::keyFor($this, $this->taskKey);
+        MarketingTask::open(
+            self::TASK_TYPE,
+            __('Meta genereren: :naam', ['naam' => class_basename($this->subjectType).' #'.$this->subjectId]),
+            $key,
+            1,
+            $this->userId,
+            notify: true,
+        );
+
+        $this->generate();
+
+        MarketingTask::advance(self::TASK_TYPE, $key, __('De meta title en description zijn gegenereerd.'));
+    }
+
+    public function failed(Throwable $e): void
+    {
+        MarketingTask::advance(self::TASK_TYPE, MarketingTask::keyFor($this, $this->taskKey), error: $e);
+
+        $this->reportFailure($e);
+    }
+
+    private function generate(): void
     {
         if (! class_exists($this->subjectType)) {
             Log::warning('GenerateMetaForRecordJob: subject class not found', [

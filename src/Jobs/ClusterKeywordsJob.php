@@ -11,6 +11,8 @@ use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Support\MarketingTask;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 
 class ClusterKeywordsJob implements ShouldQueue
 {
@@ -22,8 +24,11 @@ class ClusterKeywordsJob implements ShouldQueue
     public function __construct(
         public string $locale,
         public string $mode = 'full',
+        public ?int $userId = null,
     ) {
     }
+
+    public const TASK_TYPE = 'cluster-keywords';
 
     public function handle(): void
     {
@@ -35,6 +40,17 @@ class ClusterKeywordsJob implements ShouldQueue
         if ($keywords->isEmpty()) {
             return;
         }
+
+        // In het takenicoon van dashed-core.
+        $task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('Zoekwoorden clusteren (:taal)', ['taal' => $this->locale]),
+            MarketingTask::jobKey($this),
+            null,
+            $this->userId,
+            notify: true,
+        );
+        $created = 0;
 
         if ($this->mode === 'full') {
             ContentCluster::query()
@@ -81,7 +97,19 @@ class ClusterKeywordsJob implements ShouldQueue
                 ->pluck('id');
 
             $cluster->keywords()->sync($keywordIds);
+            $created++;
         }
+
+        $task?->finish(
+            __(':aantal clusters aangemaakt.', ['aantal' => $created]),
+            MarketingTask::url(ContentClusterResource::class),
+            __('Bekijk clusters'),
+        );
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $exception);
     }
 
     protected function buildPrompt($keywords, $existingClusters, string $locale): string

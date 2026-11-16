@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
+use Dashed\DashedMarketing\Support\ContentDraftTask;
 
 class GenerateDraftMetaJob implements ShouldQueue
 {
@@ -35,7 +36,11 @@ class GenerateDraftMetaJob implements ShouldQueue
             return;
         }
 
+        ContentDraftTask::begin($draft);
+
         if (! $this->overwrite && ! empty($draft->meta_title) && ! empty($draft->meta_description)) {
+            ContentDraftTask::step($draft);
+
             return;
         }
 
@@ -65,6 +70,8 @@ class GenerateDraftMetaJob implements ShouldQueue
         if (! empty($updates)) {
             $draft->update($updates);
         }
+
+        ContentDraftTask::step($draft);
     }
 
     public function failed(\Throwable $exception): void
@@ -73,6 +80,8 @@ class GenerateDraftMetaJob implements ShouldQueue
             'draft_id' => $this->draftId,
             'error' => $exception->getMessage(),
         ]);
+
+        ContentDraftTask::fail($this->draftId, $exception);
     }
 
     private function extractTitle(array $response): string

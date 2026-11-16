@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Dashed\DashedMarketing\Jobs\GenerateDraftFaqsJob;
 use Dashed\DashedMarketing\Jobs\GenerateDraftMetaJob;
+use Dashed\DashedMarketing\Support\ContentDraftTask;
 use Dashed\DashedMarketing\Jobs\GenerateSectionBodyJob;
 use Dashed\DashedMarketing\Services\ContentDraftPublisher;
 use Dashed\DashedMarketing\Filament\Resources\ContentDraftResource;
@@ -71,6 +72,8 @@ class EditContentDraft extends EditRecord
                         $jobs[] = new GenerateDraftFaqsJob($this->record->id);
                         $jobs[] = new GenerateDraftMetaJob($this->record->id, overwrite: $overwrite);
                         $this->record->update(['status' => 'writing']);
+                        // Eén taak in het takenicoon voor de hele keten.
+                        ContentDraftTask::start($this->record, count($jobs), auth()->id());
                         Bus::chain($jobs)->dispatch();
                         $this->fillForm();
                     }

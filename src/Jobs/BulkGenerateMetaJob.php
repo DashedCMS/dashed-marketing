@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedCore\Jobs\Concerns\HandlesQueueFailures;
 
 /**
@@ -41,6 +42,7 @@ final class BulkGenerateMetaJob implements ShouldQueue
         public array $models,
         public ?string $instruction = null,
         public bool $overwrite = false,
+        public ?int $userId = null,
     ) {
     }
 
@@ -59,6 +61,18 @@ final class BulkGenerateMetaJob implements ShouldQueue
         }
 
         $localeCount = count(Locales::getLocalesArray());
+
+        // Eén taak in het takenicoon van dashed-core voor de hele ronde; elke
+        // record-job telt er één bij op. Het totaal volgt na het uitzetten.
+        $taskKey = MarketingTask::jobKey($this) ?? MarketingTask::key();
+        MarketingTask::start(
+            GenerateMetaForRecordJob::TASK_TYPE,
+            __('Meta genereren in bulk'),
+            $taskKey,
+            null,
+            $this->userId,
+            notify: true,
+        );
 
         $totalRecords = 0;
         $totalSkipped = 0;
@@ -88,7 +102,7 @@ final class BulkGenerateMetaJob implements ShouldQueue
             try {
                 $class::query()
                     ->select(['id'])
-                    ->chunkById(50, function ($records) use ($class, &$totalRecords, &$totalDispatched, &$totalLocalesTouched, $localeCount): void {
+                    ->chunkById(50, function ($records) use ($class, &$totalRecords, &$totalDispatched, &$totalLocalesTouched, $localeCount, $taskKey): void {
                         foreach ($records as $record) {
                             $totalRecords++;
 
@@ -98,6 +112,7 @@ final class BulkGenerateMetaJob implements ShouldQueue
                                     $record->getKey(),
                                     $this->instruction,
                                     $this->overwrite,
+                                    $taskKey,
                                 );
                                 $totalDispatched++;
                                 $totalLocalesTouched += $localeCount;
@@ -118,6 +133,13 @@ final class BulkGenerateMetaJob implements ShouldQueue
             }
         }
 
+        MarketingTask::total(
+            GenerateMetaForRecordJob::TASK_TYPE,
+            $taskKey,
+            $totalDispatched,
+            __('Meta gegenereerd voor :aantal records.', ['aantal' => $totalDispatched]),
+        );
+
         Log::info('BulkGenerateMetaJob: summary', [
             'models' => $this->models,
             'overwrite' => $this->overwrite,
@@ -126,6 +148,13 @@ final class BulkGenerateMetaJob implements ShouldQueue
             'total_skipped' => $totalSkipped,
             'total_locales_touched' => $totalLocalesTouched,
         ]);
+    }
+
+    public function failed(Throwable $e): void
+    {
+        MarketingTask::fail(GenerateMetaForRecordJob::TASK_TYPE, MarketingTask::jobKey($this), $e);
+
+        $this->reportFailure($e);
     }
 
     protected function modelSupportsMeta(string $class): bool

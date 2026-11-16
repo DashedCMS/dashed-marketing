@@ -12,6 +12,8 @@ use Dashed\DashedMarketing\Models\Keyword;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentCluster;
+use Dashed\DashedMarketing\Support\MarketingTask;
+use Dashed\DashedMarketing\Filament\Resources\ContentClusterResource;
 
 class GenerateClusterConceptsJob implements ShouldQueue
 {
@@ -24,8 +26,11 @@ class GenerateClusterConceptsJob implements ShouldQueue
         public int $clusterId,
         public int $count = 10,
         public ?string $briefing = null,
+        public ?int $userId = null,
     ) {
     }
+
+    public const TASK_TYPE = 'cluster-concepts';
 
     public function handle(): void
     {
@@ -34,6 +39,41 @@ class GenerateClusterConceptsJob implements ShouldQueue
             return;
         }
 
+        // In het takenicoon van dashed-core.
+        $task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('Concepten bedenken: :naam', ['naam' => $cluster->name]),
+            MarketingTask::jobKey($this),
+            null,
+            $this->userId,
+            notify: true,
+        );
+
+        $concepts = $this->generate($cluster);
+
+        if ($concepts === 0) {
+            $task?->fail(__('De AI leverde geen bruikbare concepten.'));
+
+            return;
+        }
+
+        $task?->finish(
+            __(':aantal concepten staan klaar.', ['aantal' => $concepts]),
+            MarketingTask::url(ContentClusterResource::class, 'edit', ['record' => $cluster]),
+            __('Bekijk cluster'),
+        );
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $exception);
+    }
+
+    /**
+     * @return int het aantal concepten dat is klaargezet
+     */
+    protected function generate(ContentCluster $cluster): int
+    {
         $mainKeywordIds = $cluster->keywords->where('type', 'primary')->pluck('id')->values()->all();
         $restKeywordIds = $cluster->keywords
             ->whereNotIn('id', $mainKeywordIds)
@@ -52,7 +92,7 @@ class GenerateClusterConceptsJob implements ShouldQueue
         if (empty($concepts)) {
             Log::warning('GenerateClusterConceptsJob: AI returned no concepts', ['cluster_id' => $cluster->id]);
 
-            return;
+            return 0;
         }
 
         $routeModels = (array) cms()->builder('routeModels');
@@ -122,7 +162,7 @@ class GenerateClusterConceptsJob implements ShouldQueue
         }
 
         if (empty($normalized)) {
-            return;
+            return 0;
         }
 
         // Hoofd-keywords hangen aan élk concept; secundaire keywords worden
@@ -139,6 +179,8 @@ class GenerateClusterConceptsJob implements ShouldQueue
         unset($concept);
 
         $cluster->update(['pending_concepts' => $normalized]);
+
+        return count($normalized);
     }
 
     protected function buildPrompt(ContentCluster $cluster): string

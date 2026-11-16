@@ -11,7 +11,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialPost;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Filament\Resources\SocialPostResource;
 
 class GenerateSocialPostJob implements ShouldQueue
 {
@@ -34,10 +36,41 @@ class GenerateSocialPostJob implements ShouldQueue
         public bool $includeKeywords,
         public ?string $scheduledAt,
         public string $siteId,
+        public ?string $taskKey = null,
+        public ?int $userId = null,
     ) {
     }
 
+    public const TASK_TYPE = 'social-posts';
+
     public function handle(): void
+    {
+        // In het takenicoon van dashed-core: een onderdeel van de reeks die
+        // de starter opende ($taskKey), anders een eigen taak van één stap.
+        $key = MarketingTask::keyFor($this, $this->taskKey);
+        MarketingTask::open(self::TASK_TYPE, __('Social post genereren'), $key, 1, $this->userId, notify: true);
+
+        $created = $this->generate();
+
+        MarketingTask::advance(
+            self::TASK_TYPE,
+            $key,
+            $created ? __('De posts staan als concept klaar.') : null,
+            MarketingTask::url(SocialPostResource::class),
+            __('Bekijk posts'),
+            $created ? null : __('De AI leverde geen bruikbare post.'),
+        );
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        MarketingTask::advance(self::TASK_TYPE, MarketingTask::keyFor($this, $this->taskKey), error: $exception);
+    }
+
+    /**
+     * @return bool of er een post is aangemaakt
+     */
+    protected function generate(): bool
     {
         $contextBuilder = new SocialContextBuilder();
         $context = $contextBuilder->build($this->type, $this->channels, $this->subject);
@@ -46,7 +79,7 @@ class GenerateSocialPostJob implements ShouldQueue
         $result = Ai::json($prompt);
 
         if (! $result || ! isset($result['channel_captions'])) {
-            return;
+            return false;
         }
 
         $firstCaption = reset($result['channel_captions']) ?: '';
@@ -69,6 +102,8 @@ class GenerateSocialPostJob implements ShouldQueue
             'campaign_id' => $this->campaignId,
             'scheduled_at' => $this->scheduledAt,
         ]);
+
+        return true;
     }
 
     private function buildChannelRules(): string

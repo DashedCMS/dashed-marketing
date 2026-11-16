@@ -14,7 +14,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\SocialIdea;
 use Dashed\DashedMarketing\Models\SocialChannel;
+use Dashed\DashedMarketing\Support\MarketingTask;
 use Dashed\DashedMarketing\Services\SocialContextBuilder;
+use Dashed\DashedMarketing\Filament\Resources\SocialIdeaResource;
 
 class GenerateBulkSocialIdeasJob implements ShouldQueue
 {
@@ -31,8 +33,20 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
     ) {
     }
 
+    public const TASK_TYPE = 'social-ideas';
+
     public function handle(): void
     {
+        // In het takenicoon van dashed-core, zonder eigen melding: de
+        // meldingen hieronder blijven de melding in de bel.
+        $task = MarketingTask::open(
+            self::TASK_TYPE,
+            __('Social ideeën genereren'),
+            MarketingTask::jobKey($this),
+            null,
+            $this->userId,
+        );
+
         try {
             $contextBuilder = new SocialContextBuilder();
             $context = $contextBuilder->build();
@@ -98,6 +112,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                     }
                 }
 
+                $task?->fail(__('De AI leverde geen geldige suggesties.'));
+
                 return;
             }
 
@@ -151,6 +167,12 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
                         ->sendToDatabase($user);
                 }
             }
+
+            $task?->finish(
+                __(':aantal ideeën aangemaakt.', ['aantal' => $created]),
+                MarketingTask::url(SocialIdeaResource::class),
+                __('Bekijk ideeën'),
+            );
         } catch (Throwable $e) {
             Log::warning('GenerateBulkSocialIdeasJob failed: '.$e->getMessage(), [
                 'exception' => $e,
@@ -199,6 +221,8 @@ class GenerateBulkSocialIdeasJob implements ShouldQueue
             'count' => $this->count,
             'focus' => $this->focus,
         ]);
+
+        MarketingTask::fail(self::TASK_TYPE, MarketingTask::jobKey($this), $e);
 
         if ($this->userId !== null) {
             $user = User::find($this->userId);

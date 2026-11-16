@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Dashed\DashedMarketing\Models\ContentDraft;
 use Dashed\DashedMarketing\Models\ContentDraftSection;
+use Dashed\DashedMarketing\Support\ContentDraftTask;
 use Dashed\DashedMarketing\Services\LinkCandidatesService;
 
 class GenerateSectionBodyJob implements ShouldQueue
@@ -43,6 +44,8 @@ class GenerateSectionBodyJob implements ShouldQueue
             return;
         }
 
+        ContentDraftTask::begin($draft);
+
         $allSections = $draft->sections()->orderBy('sort_order')->get();
         $candidates = $this->resolveCandidates($draft, $links);
         $candidates = $this->filterAlreadyUsed($candidates, $allSections, $section->id);
@@ -65,6 +68,8 @@ class GenerateSectionBodyJob implements ShouldQueue
         ]);
 
         $this->maybeUpdateDraftStatus($draft);
+
+        ContentDraftTask::step($draft);
     }
 
     public function failed(\Throwable $exception): void
@@ -87,6 +92,8 @@ class GenerateSectionBodyJob implements ShouldQueue
         if ($section->contentDraft) {
             $this->maybeUpdateDraftStatus($section->contentDraft);
         }
+
+        ContentDraftTask::fail($section->content_draft_id, $exception);
     }
 
     /**
