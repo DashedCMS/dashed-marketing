@@ -545,5 +545,21 @@
     "Social ideeën genereren": "Generate social ideas",
     "Social post genereren": "Generate social post",
     "Social posts genereren van ideeën": "Generate social posts from ideas",
-    "Zoekwoorden clusteren (:taal)": "Cluster keywords (:taal)"
+    "Zoekwoorden clusteren (:taal)": "Cluster keywords (:taal)",
+    "Socialposts": "Social posts",
+    "Social: :tekst": "Social: :tekst",
+    "Social: :tekst (ingepland)": "Social: :tekst (scheduled)",
+    "Automatische concepten": "Automatic drafts",
+    "Maakt een concept social post met AI zodra een nieuw item gepubliceerd wordt, met de afbeelding van het item. Er wordt nooit iets vanzelf geplaatst: je krijgt een melding en loopt het concept zelf na.": "Creates a draft social post with AI as soon as a new item is published, with the item's image. Nothing is ever posted automatically: you get a notification and review the draft yourself.",
+    "Automatisch een concept maken bij een nieuw item": "Automatically create a draft for a new item",
+    "Voor deze soorten": "For these types",
+    "Kanalen voor de concepten": "Channels for the drafts",
+    "Leeg: de actieve kanalen hierboven.": "Empty: the active channels above.",
+    "Dit is een aankondiging: het onderwerp is net nieuw op de website verschenen.": "This is an announcement: the subject has just appeared on the website.",
+    "Nieuw concept voor social media: :naam": "New social media draft: :naam",
+    "Er is automatisch een concept social post gemaakt omdat \":naam\" net gepubliceerd is. Hij wordt niet vanzelf geplaatst: lees hem na, pas hem aan en plan hem zelf in.": "A draft social post was created automatically because \":naam\" was just published. It will not be posted automatically: review it, edit it and schedule it yourself.",
+    "Concept bekijken": "View draft",
+    "Producten": "Products",
+    "Productgroepen": "Product groups",
+    "Artikelen": "Articles"
 }

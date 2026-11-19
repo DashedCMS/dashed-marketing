@@ -83,4 +83,10 @@ return [
     |
     */
     'seo_faq_block_types' => ['faq'],
+
+    // Automatische concepten bij een nieuw product, productgroep of artikel
+    // (AutoSocialDrafts). Hooguit zoveel per site per dag; 0 = geen grens.
+    'auto_drafts' => [
+        'max_per_day' => (int) env('DASHED_SOCIAL_AUTO_DRAFTS_PER_DAY', 10),
+    ],
 ];

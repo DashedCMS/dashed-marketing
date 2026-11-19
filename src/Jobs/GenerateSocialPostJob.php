@@ -43,6 +43,9 @@ class GenerateSocialPostJob implements ShouldQueue
 
     public const TASK_TYPE = 'social-posts';
 
+    /** Het id van de aangemaakte post, voor een aanroeper die de job zelf draait (AutoSocialDrafts). */
+    public ?int $createdPostId = null;
+
     public function handle(): void
     {
         // In het takenicoon van dashed-core: een onderdeel van de reeks die
@@ -84,7 +87,7 @@ class GenerateSocialPostJob implements ShouldQueue
 
         $firstCaption = reset($result['channel_captions']) ?: '';
 
-        SocialPost::withoutGlobalScopes()->create([
+        $post = SocialPost::withoutGlobalScopes()->create([
             'site_id' => $this->siteId,
             'type' => $this->type,
             'channels' => $this->channels,
@@ -102,6 +105,8 @@ class GenerateSocialPostJob implements ShouldQueue
             'campaign_id' => $this->campaignId,
             'scheduled_at' => $this->scheduledAt,
         ]);
+
+        $this->createdPostId = $post->id;
 
         return true;
     }

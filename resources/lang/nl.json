@@ -545,5 +545,21 @@
     "Social ideeën genereren": "Social ideeën genereren",
     "Social post genereren": "Social post genereren",
     "Social posts genereren van ideeën": "Social posts genereren van ideeën",
-    "Zoekwoorden clusteren (:taal)": "Zoekwoorden clusteren (:taal)"
+    "Zoekwoorden clusteren (:taal)": "Zoekwoorden clusteren (:taal)",
+    "Socialposts": "Socialposts",
+    "Social: :tekst": "Social: :tekst",
+    "Social: :tekst (ingepland)": "Social: :tekst (ingepland)",
+    "Automatische concepten": "Automatische concepten",
+    "Maakt een concept social post met AI zodra een nieuw item gepubliceerd wordt, met de afbeelding van het item. Er wordt nooit iets vanzelf geplaatst: je krijgt een melding en loopt het concept zelf na.": "Maakt een concept social post met AI zodra een nieuw item gepubliceerd wordt, met de afbeelding van het item. Er wordt nooit iets vanzelf geplaatst: je krijgt een melding en loopt het concept zelf na.",
+    "Automatisch een concept maken bij een nieuw item": "Automatisch een concept maken bij een nieuw item",
+    "Voor deze soorten": "Voor deze soorten",
+    "Kanalen voor de concepten": "Kanalen voor de concepten",
+    "Leeg: de actieve kanalen hierboven.": "Leeg: de actieve kanalen hierboven.",
+    "Dit is een aankondiging: het onderwerp is net nieuw op de website verschenen.": "Dit is een aankondiging: het onderwerp is net nieuw op de website verschenen.",
+    "Nieuw concept voor social media: :naam": "Nieuw concept voor social media: :naam",
+    "Er is automatisch een concept social post gemaakt omdat \":naam\" net gepubliceerd is. Hij wordt niet vanzelf geplaatst: lees hem na, pas hem aan en plan hem zelf in.": "Er is automatisch een concept social post gemaakt omdat \":naam\" net gepubliceerd is. Hij wordt niet vanzelf geplaatst: lees hem na, pas hem aan en plan hem zelf in.",
+    "Concept bekijken": "Concept bekijken",
+    "Producten": "Producten",
+    "Productgroepen": "Productgroepen",
+    "Artikelen": "Artikelen"
 }

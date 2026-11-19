@@ -22,6 +22,7 @@ use Dashed\DashedCore\Traits\HasSettingsPermission;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Dashed\DashedMarketing\Jobs\GenerateSocialContextJob;
 use Dashed\DashedMarketing\Managers\PublishingAdapterRegistry;
+use Dashed\DashedMarketing\Services\AutoDrafts\AutoSocialDrafts;
 
 class SocialSettingsPage extends Page implements HasSchemas
 {
@@ -52,6 +53,9 @@ class SocialSettingsPage extends Page implements HasSchemas
             'social_notify_missed' => (bool) Customsetting::get('social_notify_missed', null, true),
             'social_notify_weekly_gaps' => (bool) Customsetting::get('social_notify_weekly_gaps', null, true),
             'social_notify_holidays' => (bool) Customsetting::get('social_notify_holidays', null, true),
+            AutoSocialDrafts::SETTING_ENABLED => (bool) Customsetting::get(AutoSocialDrafts::SETTING_ENABLED),
+            AutoSocialDrafts::SETTING_TYPES => json_decode((string) Customsetting::get(AutoSocialDrafts::SETTING_TYPES), true) ?: [],
+            AutoSocialDrafts::SETTING_CHANNELS => json_decode((string) Customsetting::get(AutoSocialDrafts::SETTING_CHANNELS), true) ?: [],
         ]);
     }
 
@@ -136,6 +140,26 @@ class SocialSettingsPage extends Page implements HasSchemas
                         ->rows(3),
                 ]),
 
+            Section::make(__('Automatische concepten'))
+                ->description(__('Maakt een concept social post met AI zodra een nieuw item gepubliceerd wordt, met de afbeelding van het item. Er wordt nooit iets vanzelf geplaatst: je krijgt een melding en loopt het concept zelf na.'))
+                ->schema([
+                    Toggle::make(AutoSocialDrafts::SETTING_ENABLED)
+                        ->label(__('Automatisch een concept maken bij een nieuw item'))
+                        ->live(),
+                    CheckboxList::make(AutoSocialDrafts::SETTING_TYPES)
+                        ->label(__('Voor deze soorten'))
+                        ->options(collect(AutoSocialDrafts::types())->map(fn ($type) => $type['label'])->all())
+                        ->visible(fn ($get) => (bool) $get(AutoSocialDrafts::SETTING_ENABLED))
+                        ->dehydratedWhenHidden(),
+                    CheckboxList::make(AutoSocialDrafts::SETTING_CHANNELS)
+                        ->label(__('Kanalen voor de concepten'))
+                        ->helperText(__('Leeg: de actieve kanalen hierboven.'))
+                        ->options($channelOptions)
+                        ->columns(2)
+                        ->visible(fn ($get) => (bool) $get(AutoSocialDrafts::SETTING_ENABLED))
+                        ->dehydratedWhenHidden(),
+                ]),
+
             Section::make(__('Meldingen'))
                 ->schema([
                     TextInput::make('social_notification_email')
@@ -168,6 +192,9 @@ class SocialSettingsPage extends Page implements HasSchemas
             Customsetting::set('social_notify_missed', (int) ($formData['social_notify_missed'] ?? true), $site['id']);
             Customsetting::set('social_notify_weekly_gaps', (int) ($formData['social_notify_weekly_gaps'] ?? true), $site['id']);
             Customsetting::set('social_notify_holidays', (int) ($formData['social_notify_holidays'] ?? true), $site['id']);
+            Customsetting::set(AutoSocialDrafts::SETTING_ENABLED, (int) ($formData[AutoSocialDrafts::SETTING_ENABLED] ?? false), $site['id']);
+            Customsetting::set(AutoSocialDrafts::SETTING_TYPES, json_encode(array_values($formData[AutoSocialDrafts::SETTING_TYPES] ?? [])), $site['id']);
+            Customsetting::set(AutoSocialDrafts::SETTING_CHANNELS, json_encode(array_values($formData[AutoSocialDrafts::SETTING_CHANNELS] ?? [])), $site['id']);
         }
 
         Notification::make()

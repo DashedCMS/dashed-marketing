@@ -2,6 +2,12 @@
 
 All notable changes to `dashed-marketing`.
 
+## v4.34.0 - 2026-11-19
+
+### Added
+- Automatische social-concepten bij een nieuw product, productgroep of artikel (standaard uit, nooit automatisch gepubliceerd).
+- Socialposts als bron in de contentkalender.
+
 ## v4.33.0 - 2026-11-16
 
 ### Added

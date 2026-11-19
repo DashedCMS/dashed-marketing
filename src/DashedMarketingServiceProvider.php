@@ -54,6 +54,9 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
         cms()->registerNavigationGroup('Content marketing', 55);
         cms()->registerNavigationGroup('Social media', 60);
 
+        // Socialposts op de contentkalender van dashed-core (guarded in de klasse).
+        \Dashed\DashedMarketing\Classes\Calendar\SocialPostCalendarSource::register();
+
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // Resource header widgets - explicit Livewire registration so Filament v4
@@ -69,6 +72,10 @@ class DashedMarketingServiceProvider extends PackageServiceProvider
                 EnrolFormSubmitterInFlowListener::class,
             );
         }
+
+        // Concept social post bij een nieuw gepubliceerd product, productgroep
+        // of artikel; standaard uit per site. Zie AutoSocialDrafts.
+        \Dashed\DashedMarketing\Services\AutoDrafts\AutoSocialDrafts::listen();
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('social:publish-due')
